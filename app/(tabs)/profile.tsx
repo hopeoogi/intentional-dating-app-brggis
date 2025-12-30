@@ -193,7 +193,10 @@ export default function ProfileScreen() {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/subscription')}
+          >
             <View style={styles.menuItemLeft}>
               <IconSymbol
                 ios_icon_name="star.fill"
@@ -202,6 +205,27 @@ export default function ProfileScreen() {
                 color={colors.primary}
               />
               <Text style={styles.menuItemText}>Upgrade Subscription</Text>
+            </View>
+            <IconSymbol
+              ios_icon_name="chevron.right"
+              android_material_icon_name="chevron_right"
+              size={20}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/admin')}
+          >
+            <View style={styles.menuItemLeft}>
+              <IconSymbol
+                ios_icon_name="shield.lefthalf.filled"
+                android_material_icon_name="admin_panel_settings"
+                size={24}
+                color={colors.warning}
+              />
+              <Text style={styles.menuItemText}>Admin Panel</Text>
             </View>
             <IconSymbol
               ios_icon_name="chevron.right"
