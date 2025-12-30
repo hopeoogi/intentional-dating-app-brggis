@@ -52,6 +52,20 @@ export const mockUsers: User[] = [
         approved: true,
         uploadDate: new Date('2024-01-10'),
       },
+      {
+        id: 'photo-3a',
+        url: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800',
+        type: 'activity',
+        approved: true,
+        uploadDate: new Date('2024-01-10'),
+      },
+      {
+        id: 'photo-3b',
+        url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+        type: 'activity',
+        approved: true,
+        uploadDate: new Date('2024-01-10'),
+      },
     ],
     statusBadges: [
       {
@@ -139,6 +153,20 @@ export const mockUsers: User[] = [
         approved: true,
         uploadDate: new Date('2024-01-12'),
       },
+      {
+        id: 'photo-6a',
+        url: 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800',
+        type: 'activity',
+        approved: true,
+        uploadDate: new Date('2024-01-12'),
+      },
+      {
+        id: 'photo-6b',
+        url: 'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=800',
+        type: 'activity',
+        approved: true,
+        uploadDate: new Date('2024-01-12'),
+      },
     ],
     statusBadges: [
       {
@@ -194,6 +222,20 @@ export const mockUsers: User[] = [
       {
         id: 'photo-9',
         url: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=800',
+        type: 'activity',
+        approved: true,
+        uploadDate: new Date('2024-01-08'),
+      },
+      {
+        id: 'photo-9a',
+        url: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800',
+        type: 'activity',
+        approved: true,
+        uploadDate: new Date('2024-01-08'),
+      },
+      {
+        id: 'photo-9b',
+        url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800',
         type: 'activity',
         approved: true,
         uploadDate: new Date('2024-01-08'),
@@ -260,6 +302,20 @@ export const mockUsers: User[] = [
       {
         id: 'photo-12',
         url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800',
+        type: 'activity',
+        approved: true,
+        uploadDate: new Date('2024-01-14'),
+      },
+      {
+        id: 'photo-12a',
+        url: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800',
+        type: 'activity',
+        approved: true,
+        uploadDate: new Date('2024-01-14'),
+      },
+      {
+        id: 'photo-12b',
+        url: 'https://images.unsplash.com/photo-1483721310020-03333e577078?w=800',
         type: 'activity',
         approved: true,
         uploadDate: new Date('2024-01-14'),
@@ -366,6 +422,20 @@ export const currentUser: User = {
     {
       id: 'photo-15',
       url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800',
+      type: 'activity',
+      approved: true,
+      uploadDate: new Date('2024-01-05'),
+    },
+    {
+      id: 'photo-15a',
+      url: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800',
+      type: 'activity',
+      approved: true,
+      uploadDate: new Date('2024-01-05'),
+    },
+    {
+      id: 'photo-15b',
+      url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
       type: 'activity',
       approved: true,
       uploadDate: new Date('2024-01-05'),
