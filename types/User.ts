@@ -52,6 +52,12 @@ export interface Match {
   conversationStarted: boolean;
   conversationEnded: boolean;
   lastMessageDate?: Date;
+  pendingResponseFrom?: string;
+  responseDeadline?: Date;
+  notNowCount?: number;
+  endedBy?: string;
+  endedAt?: Date;
+  endedReason?: string;
 }
 
 export interface Message {
@@ -73,4 +79,19 @@ export interface Conversation {
   mustRespond: boolean;
   respondBy?: Date;
   ended: boolean;
+}
+
+export interface PromoCode {
+  id: string;
+  code: string;
+  description: string;
+  discountType: 'percentage' | 'fixed_amount' | 'free_months';
+  discountValue: number;
+  applicableTiers: string[];
+  maxUses: number | null;
+  currentUses: number;
+  validFrom: Date;
+  validUntil: Date | null;
+  active: boolean;
+  createdAt: Date;
 }

@@ -1,185 +1,146 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/app/integrations/supabase/client';
-import { Conversation, Match, Message, User } from '@/types/User';
+import { Conversation, Match, User, Message } from '@/types/User';
 
-interface SupabaseMatch {
-  id: string;
-  user_id: string;
-  matched_user_id: string;
-  match_date: string;
-  conversation_started: boolean;
-  conversation_ended: boolean;
-  last_message_date: string | null;
-  matched_user: {
-    id: string;
-    name: string;
-    age: number;
-    bio: string | null;
-    city: string;
-    state: string;
-    verified: boolean;
-    user_photos: Array<{
-      id: string;
-      url: string;
-      photo_type: 'selfie' | 'fullbody' | 'activity';
-      approved: boolean;
-      upload_date: string;
-    }>;
-    status_badges: Array<{
-      id: string;
-      badge_type: string;
-      tier: 'basic' | 'elite' | 'star';
-      verified: boolean;
-      verification_date: string;
-    }>;
-  };
-  messages: Array<{
-    id: string;
-    sender_id: string;
-    receiver_id: string;
-    content: string;
-    timestamp: string;
-    read: boolean;
-  }>;
-}
-
-export function useConversations(currentUserId?: string) {
+export function useConversations(userId: string) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (currentUserId) {
-      fetchConversations();
-    }
-  }, [currentUserId]);
-
-  const fetchConversations = async () => {
-    if (!currentUserId) {
-      console.log('No current user ID provided');
-      setLoading(false);
-      return;
-    }
-
+  const loadConversations = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching conversations for user:', currentUserId);
-
-      const { data, error: fetchError } = await supabase
+      // Fetch matches for the user
+      const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
         .select(`
           *,
-          matched_user:users!matches_matched_user_id_fkey (
-            *,
-            user_photos (*),
-            status_badges (*)
-          ),
-          messages (*)
+          matched_user:users!matches_matched_user_id_fkey(
+            id,
+            name,
+            age,
+            bio,
+            city,
+            state,
+            photos:user_photos(id, url, photo_type, approved),
+            badges:status_badges(id, badge_type, tier, verified)
+          )
         `)
-        .eq('user_id', currentUserId)
-        .eq('conversation_started', true)
+        .eq('user_id', userId)
         .eq('conversation_ended', false)
         .order('last_message_date', { ascending: false });
 
-      if (fetchError) {
-        console.error('Error fetching conversations:', fetchError);
-        throw fetchError;
-      }
+      if (matchesError) throw matchesError;
 
-      console.log('Fetched conversations:', data?.length || 0);
-
-      if (!data || data.length === 0) {
-        console.log('No conversations found');
+      if (!matchesData || matchesData.length === 0) {
         setConversations([]);
+        setLoading(false);
         return;
       }
 
-      // Transform Supabase data to Conversation type
-      const transformedConversations: Conversation[] = data.map((match: SupabaseMatch) => {
-        const matchedUser: User = {
-          id: match.matched_user.id,
-          name: match.matched_user.name,
-          age: match.matched_user.age,
-          bio: match.matched_user.bio || '',
-          location: {
-            city: match.matched_user.city,
-            state: match.matched_user.state,
-          },
-          photos: match.matched_user.user_photos.map(photo => ({
-            id: photo.id,
-            url: photo.url,
-            type: photo.photo_type,
-            approved: photo.approved,
-            uploadDate: new Date(photo.upload_date),
-          })),
-          statusBadges: match.matched_user.status_badges.map(badge => ({
-            id: badge.id,
-            type: badge.badge_type,
-            tier: badge.tier,
-            verified: badge.verified,
-            verificationDate: new Date(badge.verification_date),
-          })),
-          verified: match.matched_user.verified,
-          onboardingComplete: true,
-          createdAt: new Date(),
-          lastActive: new Date(),
-          preferences: {
-            minAge: 18,
-            maxAge: 100,
-            maxDistance: 50,
-            interestedIn: ['all'],
-          },
-        };
+      // Fetch messages for each match
+      const conversationsWithMessages = await Promise.all(
+        matchesData.map(async (match) => {
+          const { data: messagesData } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('match_id', match.id)
+            .order('timestamp', { ascending: true });
 
-        const transformedMatch: Match = {
-          id: match.id,
-          userId: match.user_id,
-          matchedUserId: match.matched_user_id,
-          matchedUser,
-          matchDate: new Date(match.match_date),
-          conversationStarted: match.conversation_started,
-          conversationEnded: match.conversation_ended,
-          lastMessageDate: match.last_message_date ? new Date(match.last_message_date) : undefined,
-        };
+          const messages = (messagesData || []).map((msg) => ({
+            id: msg.id,
+            matchId: msg.match_id,
+            senderId: msg.sender_id,
+            receiverId: msg.receiver_id,
+            content: msg.content,
+            timestamp: new Date(msg.timestamp),
+            read: msg.read,
+          }));
 
-        const messages: Message[] = match.messages.map(msg => ({
-          id: msg.id,
-          matchId: match.id,
-          senderId: msg.sender_id,
-          receiverId: msg.receiver_id,
-          content: msg.content,
-          timestamp: new Date(msg.timestamp),
-          read: msg.read,
-        }));
+          const lastMessage = messages.length > 0 ? messages[messages.length - 1] : undefined;
 
-        const sortedMessages = messages.sort((a, b) => 
-          b.timestamp.getTime() - a.timestamp.getTime()
-        );
+          // Check if user must respond
+          const mustRespond = match.pending_response_from === userId;
+          const respondBy = match.response_deadline ? new Date(match.response_deadline) : undefined;
 
-        const lastMessage = sortedMessages[0];
-        const mustRespond = lastMessage && lastMessage.senderId !== currentUserId;
+          return {
+            id: match.id,
+            matchId: match.id,
+            match: {
+              id: match.id,
+              userId: match.user_id,
+              matchedUserId: match.matched_user_id,
+              matchedUser: {
+                id: match.matched_user.id,
+                name: match.matched_user.name,
+                age: match.matched_user.age,
+                bio: match.matched_user.bio || '',
+                location: {
+                  city: match.matched_user.city,
+                  state: match.matched_user.state,
+                },
+                photos: match.matched_user.photos.map((p: any) => ({
+                  id: p.id,
+                  url: p.url,
+                  type: p.photo_type,
+                  approved: p.approved,
+                  uploadDate: new Date(),
+                })),
+                statusBadges: match.matched_user.badges.map((b: any) => ({
+                  id: b.id,
+                  type: b.badge_type,
+                  tier: b.tier,
+                  verified: b.verified,
+                })),
+                verified: true,
+                onboardingComplete: true,
+                createdAt: new Date(),
+                lastActive: new Date(),
+                preferences: {
+                  minAge: 18,
+                  maxAge: 100,
+                  maxDistance: 50,
+                  interestedIn: ['all'],
+                },
+              },
+              matchDate: new Date(match.match_date),
+              conversationStarted: match.conversation_started,
+              conversationEnded: match.conversation_ended,
+              lastMessageDate: match.last_message_date ? new Date(match.last_message_date) : undefined,
+            },
+            messages,
+            lastMessage,
+            mustRespond,
+            respondBy,
+            ended: match.conversation_ended,
+          };
+        })
+      );
 
-        return {
-          id: match.id,
-          match: transformedMatch,
-          messages,
-          lastMessage,
-          mustRespond,
-        };
-      });
-
-      console.log('Transformed conversations:', transformedConversations.length);
-      setConversations(transformedConversations);
-    } catch (err) {
-      console.error('Error in fetchConversations:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch conversations');
+      setConversations(conversationsWithMessages);
+    } catch (err: any) {
+      console.error('Error loading conversations:', err);
+      setError(err.message || 'Failed to load conversations');
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
-  return { conversations, loading, error, refetch: fetchConversations };
+  useEffect(() => {
+    loadConversations();
+  }, [loadConversations]);
+
+  const refreshConversations = useCallback(() => {
+    loadConversations();
+  }, [loadConversations]);
+
+  return {
+    conversations,
+    loading,
+    error,
+    refreshConversations,
+  };
 }
