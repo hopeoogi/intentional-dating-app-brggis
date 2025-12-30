@@ -7,38 +7,36 @@ import { colors } from '@/styles/commonStyles';
 interface StatusBadgeProps {
   badge: StatusBadgeType;
   size?: 'small' | 'medium' | 'large';
-  mode?: 'dating' | 'social';
-  style?: any;
 }
 
-export default function StatusBadge({ badge, size = 'small', mode = 'dating', style }: StatusBadgeProps) {
+export default function StatusBadge({ badge, size = 'small' }: StatusBadgeProps) {
   const getBadgeColor = () => {
     switch (badge.tier) {
       case 'basic':
-        return mode === 'dating' ? '#3B82F6' : '#60A5FA';
+        return colors.basicBadge;
       case 'elite':
-        return mode === 'dating' ? '#8B5CF6' : '#A78BFA';
+        return colors.eliteBadge;
       case 'star':
-        return mode === 'dating' ? '#F59E0B' : '#FBBF24';
+        return colors.starBadge;
       default:
-        return '#3B82F6';
+        return colors.basicBadge;
     }
   };
 
   const sizeStyles = {
     small: {
-      paddingHorizontal: 10,
-      paddingVertical: 5,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
       fontSize: 10,
     },
     medium: {
-      paddingHorizontal: 14,
-      paddingVertical: 7,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
       fontSize: 12,
     },
     large: {
-      paddingHorizontal: 18,
-      paddingVertical: 9,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
       fontSize: 14,
     },
   };
@@ -52,11 +50,10 @@ export default function StatusBadge({ badge, size = 'small', mode = 'dating', st
           paddingHorizontal: sizeStyles[size].paddingHorizontal,
           paddingVertical: sizeStyles[size].paddingVertical,
         },
-        style,
       ]}
     >
       <Text style={[styles.badgeText, { fontSize: sizeStyles[size].fontSize }]}>
-        {badge.type.toUpperCase()}
+        {badge.type}
       </Text>
     </View>
   );
@@ -64,14 +61,13 @@ export default function StatusBadge({ badge, size = 'small', mode = 'dating', st
 
 const styles = StyleSheet.create({
   badge: {
-    borderRadius: 6,
+    borderRadius: 12,
     alignSelf: 'flex-start',
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-    elevation: 2,
+    marginRight: 6,
+    marginBottom: 6,
   },
   badgeText: {
     color: '#FFFFFF',
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontWeight: '600',
   },
 });

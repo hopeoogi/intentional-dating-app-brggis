@@ -6,60 +6,39 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
   KeyboardAvoidingView,
   Platform,
   Alert,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
 import { colors, commonStyles } from '@/styles/commonStyles';
-import { IconSymbol } from '@/components/IconSymbol';
-import { mockConversations, mockMessages } from '@/data/mockData';
+import { mockMessages, mockMatches } from '@/data/mockData';
 import { Message } from '@/types/User';
+import { IconSymbol } from '@/components/IconSymbol';
+import { router } from 'expo-router';
 
 export default function ChatScreen() {
-  const params = useLocalSearchParams();
-  const conversationId = params.id as string;
-  
-  const conversation = mockConversations.find((c) => c.id === conversationId);
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [inputText, setInputText] = useState('');
-  const [canSendMessage, setCanSendMessage] = useState(true);
-  const flatListRef = useRef<FlatList>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const match = mockMatches[0];
+  const otherUser = match.matchedUser;
 
   useEffect(() => {
-    if (messages.length > 0) {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }
+    scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
-
-  if (!conversation) {
-    return null;
-  }
-
-  const matchedUser = conversation.match.matchedUser;
-  const lastMessage = messages[messages.length - 1];
-  const isMyTurn = lastMessage?.senderId !== 'user-1';
 
   const handleSend = () => {
     if (inputText.trim().length < 2) {
-      Alert.alert('Message too short', 'Please enter at least 2 characters.');
-      return;
-    }
-
-    if (!canSendMessage) {
-      Alert.alert(
-        'Wait for a response',
-        'You must wait for the other person to reply before sending another message.'
-      );
+      Alert.alert('Message Too Short', 'Please enter at least 2 characters.');
       return;
     }
 
     const newMessage: Message = {
       id: `msg-${Date.now()}`,
-      matchId: conversation.matchId,
+      matchId: match.id,
       senderId: 'user-1',
-      receiverId: matchedUser.id,
+      receiverId: otherUser.id,
       content: inputText.trim(),
       timestamp: new Date(),
       read: false,
@@ -67,71 +46,39 @@ export default function ChatScreen() {
 
     setMessages([...messages, newMessage]);
     setInputText('');
-    setCanSendMessage(false);
   };
 
   const handleEndConversation = () => {
     Alert.alert(
       'End Conversation',
-      'Are you sure you want to end this conversation? This action cannot be undone.',
+      'Are you sure you want to end this conversation? This action cannot be undone and you will not be able to message this person again.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'End Conversation',
           style: 'destructive',
           onPress: () => {
-            router.push('/rejection-feedback');
+            Alert.alert('Conversation Ended', 'This conversation has been ended.');
+            router.back();
           },
         },
       ]
     );
   };
 
-  const renderMessage = ({ item }: { item: Message }) => {
-    const isMyMessage = item.senderId === 'user-1';
-
-    return (
-      <View
-        style={[
-          styles.messageContainer,
-          isMyMessage ? styles.myMessageContainer : styles.theirMessageContainer,
-        ]}
-      >
-        <View
-          style={[
-            styles.messageBubble,
-            isMyMessage ? styles.myMessageBubble : styles.theirMessageBubble,
-          ]}
-        >
-          <Text
-            style={[
-              styles.messageText,
-              isMyMessage ? styles.myMessageText : styles.theirMessageText,
-            ]}
-          >
-            {item.content}
-          </Text>
-          <Text
-            style={[
-              styles.messageTime,
-              isMyMessage ? styles.myMessageTime : styles.theirMessageTime,
-            ]}
-          >
-            {new Date(item.timestamp).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </Text>
-        </View>
-      </View>
-    );
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
   };
 
   return (
     <KeyboardAvoidingView
       style={commonStyles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -143,10 +90,10 @@ export default function ChatScreen() {
           />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.headerName}>{matchedUser.name}</Text>
+          <Text style={styles.headerName}>{otherUser.name}</Text>
           <Text style={styles.headerStatus}>Active now</Text>
         </View>
-        <TouchableOpacity onPress={handleEndConversation} style={styles.endButton}>
+        <TouchableOpacity onPress={handleEndConversation}>
           <IconSymbol
             ios_icon_name="xmark.circle.fill"
             android_material_icon_name="cancel"
@@ -156,57 +103,83 @@ export default function ChatScreen() {
         </TouchableOpacity>
       </View>
 
-      {!isMyTurn && (
-        <View style={styles.warningBanner}>
-          <IconSymbol
-            ios_icon_name="clock.fill"
-            android_material_icon_name="schedule"
-            size={16}
-            color={colors.warning}
-          />
-          <Text style={styles.warningText}>
-            Waiting for {matchedUser.name} to respond
-          </Text>
-        </View>
-      )}
-
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.messagesList}
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.messagesContainer}
+        contentContainerStyle={styles.messagesContent}
         showsVerticalScrollIndicator={false}
-      />
+      >
+        {messages.map((message, index) => {
+          const isCurrentUser = message.senderId === 'user-1';
+          return (
+            <React.Fragment key={index}>
+              <View
+                style={[
+                  styles.messageBubble,
+                  isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.messageText,
+                    isCurrentUser ? styles.currentUserText : styles.otherUserText,
+                  ]}
+                >
+                  {message.content}
+                </Text>
+                <Text
+                  style={[
+                    styles.messageTime,
+                    isCurrentUser ? styles.currentUserTime : styles.otherUserTime,
+                  ]}
+                >
+                  {formatTime(message.timestamp)}
+                </Text>
+              </View>
+            </React.Fragment>
+          );
+        })}
+      </ScrollView>
 
       <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Type a message..."
-          placeholderTextColor={colors.textSecondary}
-          value={inputText}
-          onChangeText={setInputText}
-          multiline
-          maxLength={500}
-        />
-        <TouchableOpacity
-          style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
-          onPress={handleSend}
-          disabled={!inputText.trim()}
-        >
+        <View style={styles.warningBanner}>
           <IconSymbol
-            ios_icon_name="arrow.up.circle.fill"
-            android_material_icon_name="send"
-            size={32}
-            color={inputText.trim() ? colors.primary : colors.textSecondary}
+            ios_icon_name="info.circle"
+            android_material_icon_name="info"
+            size={16}
+            color={colors.primary}
           />
-        </TouchableOpacity>
-      </View>
+          <Text style={styles.warningText}>
+            No double messaging. Wait for a response or end the conversation.
+          </Text>
+        </View>
 
-      <View style={styles.infoBar}>
-        <Text style={styles.infoText}>
-          No double messaging • Be respectful • Stay intentional
-        </Text>
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.input}
+            placeholder="Type a message (min 2 characters)..."
+            placeholderTextColor={colors.textSecondary}
+            value={inputText}
+            onChangeText={setInputText}
+            multiline
+            maxLength={500}
+          />
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              inputText.trim().length < 2 && styles.sendButtonDisabled,
+            ]}
+            onPress={handleSend}
+            disabled={inputText.trim().length < 2}
+          >
+            <IconSymbol
+              ios_icon_name="arrow.up.circle.fill"
+              android_material_icon_name="send"
+              size={32}
+              color={inputText.trim().length >= 2 ? colors.primary : colors.textSecondary}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -216,131 +189,114 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 12,
-    backgroundColor: colors.background,
+    paddingBottom: 16,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   backButton: {
-    padding: 8,
+    marginRight: 12,
   },
   headerInfo: {
     flex: 1,
-    alignItems: 'center',
   },
   headerName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: colors.text,
   },
   headerStatus: {
-    fontSize: 12,
-    color: colors.primary,
+    fontSize: 13,
+    color: colors.textSecondary,
   },
-  endButton: {
-    padding: 8,
+  messagesContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
-  warningBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.warningLight || colors.card,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  warningText: {
-    fontSize: 12,
-    color: colors.warning,
-    fontWeight: '500',
-  },
-  messagesList: {
-    padding: 16,
-    paddingBottom: 8,
-  },
-  messageContainer: {
-    marginBottom: 12,
-  },
-  myMessageContainer: {
-    alignItems: 'flex-end',
-  },
-  theirMessageContainer: {
-    alignItems: 'flex-start',
+  messagesContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   messageBubble: {
     maxWidth: '75%',
     borderRadius: 20,
-    padding: 12,
-    paddingBottom: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginBottom: 12,
   },
-  myMessageBubble: {
+  currentUserBubble: {
+    alignSelf: 'flex-end',
     backgroundColor: colors.primary,
-    borderBottomRightRadius: 4,
   },
-  theirMessageBubble: {
+  otherUserBubble: {
+    alignSelf: 'flex-start',
     backgroundColor: colors.card,
-    borderBottomLeftRadius: 4,
   },
   messageText: {
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
     marginBottom: 4,
   },
-  myMessageText: {
+  currentUserText: {
     color: '#FFFFFF',
   },
-  theirMessageText: {
+  otherUserText: {
     color: colors.text,
   },
   messageTime: {
-    fontSize: 10,
-    alignSelf: 'flex-end',
+    fontSize: 11,
   },
-  myMessageTime: {
+  currentUserTime: {
     color: 'rgba(255, 255, 255, 0.7)',
   },
-  theirMessageTime: {
+  otherUserTime: {
     color: colors.textSecondary,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors.background,
+    backgroundColor: colors.card,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    gap: 8,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 20,
+  },
+  warningBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.accent,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 12,
+  },
+  warningText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginLeft: 8,
+    flex: 1,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
   },
   input: {
     flex: 1,
-    backgroundColor: colors.card,
+    backgroundColor: colors.background,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    fontSize: 15,
+    fontSize: 16,
     color: colors.text,
     maxHeight: 100,
+    marginRight: 8,
   },
   sendButton: {
-    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sendButtonDisabled: {
     opacity: 0.5,
-  },
-  infoBar: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: colors.background,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  infoText: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    textAlign: 'center',
   },
 });

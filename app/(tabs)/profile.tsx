@@ -1,22 +1,26 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { router } from 'expo-router';
-import { colors, commonStyles } from '@/styles/commonStyles';
-import { IconSymbol } from '@/components/IconSymbol';
-import { useUser } from '@/contexts/UserContext';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
+import { currentUser } from '@/data/mockData';
 import StatusBadge from '@/components/StatusBadge';
-import { SUBSCRIPTION_LIMITS } from '@/types/MatchFilters';
+import { IconSymbol } from '@/components/IconSymbol';
+import { router } from 'expo-router';
 
 export default function ProfileScreen() {
-  const { currentUser, subscriptionTier } = useUser();
-  
-  if (!currentUser) {
-    return null;
-  }
+  const user = currentUser;
 
-  const limits = SUBSCRIPTION_LIMITS[subscriptionTier];
-  const mainPhoto = currentUser.photos.find((p) => p.type === 'selfie') || currentUser.photos[0];
+  const handleEditProfile = () => {
+    Alert.alert('Edit Profile', 'Profile editing coming soon!');
+  };
+
+  const handleAddStatusBadge = () => {
+    Alert.alert('Add Status Badge', 'Apply for a new status badge to showcase your achievements and identity.');
+  };
+
+  const handleSettings = () => {
+    Alert.alert('Settings', 'Settings coming soon!');
+  };
 
   return (
     <View style={commonStyles.container}>
@@ -27,7 +31,7 @@ export default function ProfileScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.title}>Profile</Text>
-          <TouchableOpacity style={styles.settingsButton}>
+          <TouchableOpacity onPress={handleSettings}>
             <IconSymbol
               ios_icon_name="gearshape.fill"
               android_material_icon_name="settings"
@@ -37,118 +41,118 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.profileCard}>
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: mainPhoto.url }} style={styles.profileImage} />
-            <View style={styles.badgeContainer}>
-              {currentUser.statusBadges.slice(0, 2).map((badge, index) => (
-                <StatusBadge
-                  key={badge.id}
-                  badge={badge}
-                  size="medium"
-                  style={{ marginLeft: index > 0 ? -12 : 0 }}
+        <View style={styles.profileHeader}>
+          <View style={styles.photoContainer}>
+            <Image
+              source={{ uri: user.photos[0]?.url }}
+              style={styles.profilePhoto}
+            />
+            {user.verified && (
+              <View style={styles.verifiedBadge}>
+                <IconSymbol
+                  ios_icon_name="checkmark.seal.fill"
+                  android_material_icon_name="verified"
+                  size={32}
+                  color={colors.primary}
                 />
-              ))}
-            </View>
+              </View>
+            )}
           </View>
 
-          <Text style={styles.name}>{currentUser.name}, {currentUser.age}</Text>
+          <Text style={styles.name}>{user.name}, {user.age}</Text>
           <Text style={styles.location}>
-            {currentUser.location.city}, {currentUser.location.state}
+            {user.location.city}, {user.location.state}
           </Text>
 
-          <View style={styles.tierBadge}>
-            <Text style={styles.tierBadgeText}>
-              {subscriptionTier.toUpperCase()} MEMBER
-            </Text>
-          </View>
+          <TouchableOpacity
+            style={[buttonStyles.primary, styles.editButton]}
+            onPress={handleEditProfile}
+          >
+            <Text style={commonStyles.buttonText}>Edit Profile</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About Me</Text>
           <View style={styles.card}>
-            <Text style={styles.bioText}>{currentUser.bio}</Text>
+            <Text style={styles.bioText}>{user.bio}</Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>My Statuses</Text>
-          <View style={styles.statusGrid}>
-            {currentUser.statusBadges.map((badge) => (
-              <View key={badge.id} style={styles.statusItem}>
-                <StatusBadge badge={badge} size="small" />
-                <Text style={styles.statusText}>{badge.type}</Text>
-              </View>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Status Badges</Text>
+            <TouchableOpacity onPress={handleAddStatusBadge}>
+              <IconSymbol
+                ios_icon_name="plus.circle.fill"
+                android_material_icon_name="add_circle"
+                size={24}
+                color={colors.primary}
+              />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.badgesContainer}>
+            {user.statusBadges.map((badge, index) => (
+              <React.Fragment key={index}>
+                <StatusBadge badge={badge} size="medium" />
+              </React.Fragment>
+            ))}
+          </View>
+
+          <View style={styles.badgeInfo}>
+            <Text style={styles.badgeInfoText}>
+              Status badges verify your identity and achievements. You can have up to 9 badges across three tiers: Basic (Blue), Elite (Purple), and Star (Gold).
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Photos</Text>
+          <View style={styles.photosGrid}>
+            {user.photos.map((photo, index) => (
+              <React.Fragment key={index}>
+                <View style={styles.photoItem}>
+                  <Image source={{ uri: photo.url }} style={styles.gridPhoto} />
+                  <View style={styles.photoTypeLabel}>
+                    <Text style={styles.photoTypeText}>
+                      {photo.type === 'selfie' ? 'Selfie' : photo.type === 'fullbody' ? 'Full Body' : 'Activity'}
+                    </Text>
+                  </View>
+                </View>
+              </React.Fragment>
             ))}
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Subscription Benefits</Text>
+          <Text style={styles.sectionTitle}>Preferences</Text>
           <View style={styles.card}>
-            <View style={styles.benefitRow}>
-              <IconSymbol
-                ios_icon_name="location.fill"
-                android_material_icon_name="location_on"
-                size={20}
-                color={colors.primary}
-              />
-              <Text style={styles.benefitText}>
-                Search up to {limits.maxDistance} miles
+            <View style={styles.preferenceRow}>
+              <Text style={styles.preferenceLabel}>Age Range</Text>
+              <Text style={styles.preferenceValue}>
+                {user.preferences.minAge} - {user.preferences.maxAge}
               </Text>
             </View>
-            <View style={styles.benefitRow}>
-              <IconSymbol
-                ios_icon_name="person.2.fill"
-                android_material_icon_name="people"
-                size={20}
-                color={colors.primary}
-              />
-              <Text style={styles.benefitText}>
-                {limits.dailyMatches} daily matches
-              </Text>
-            </View>
-            <View style={styles.benefitRow}>
-              <IconSymbol
-                ios_icon_name="checkmark.shield.fill"
-                android_material_icon_name="verified_user"
-                size={20}
-                color={colors.primary}
-              />
-              <Text style={styles.benefitText}>
-                Up to {limits.maxStatuses} verification statuses
-              </Text>
-            </View>
-            <View style={styles.benefitRow}>
-              <IconSymbol
-                ios_icon_name="message.fill"
-                android_material_icon_name="message"
-                size={20}
-                color={colors.primary}
-              />
-              <Text style={styles.benefitText}>
-                {limits.dailyConversations} daily conversations
+            <View style={styles.preferenceRow}>
+              <Text style={styles.preferenceLabel}>Max Distance</Text>
+              <Text style={styles.preferenceValue}>
+                {user.preferences.maxDistance} miles
               </Text>
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Settings</Text>
-          
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => router.push('/match-filters')}
-          >
-            <View style={styles.menuItemLeft}>
-              <IconSymbol
-                ios_icon_name="slider.horizontal.3"
-                android_material_icon_name="tune"
-                size={24}
-                color={colors.primary}
-              />
-              <Text style={styles.menuItemText}>Match Filters</Text>
-            </View>
+          <Text style={styles.sectionTitle}>Safety & Community</Text>
+          <TouchableOpacity style={styles.menuItem}>
+            <IconSymbol
+              ios_icon_name="shield.fill"
+              android_material_icon_name="shield"
+              size={24}
+              color={colors.primary}
+            />
+            <Text style={styles.menuItemText}>Safety Center</Text>
             <IconSymbol
               ios_icon_name="chevron.right"
               android_material_icon_name="chevron_right"
@@ -158,15 +162,13 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              <IconSymbol
-                ios_icon_name="bell.fill"
-                android_material_icon_name="notifications"
-                size={24}
-                color={colors.primary}
-              />
-              <Text style={styles.menuItemText}>Notifications</Text>
-            </View>
+            <IconSymbol
+              ios_icon_name="flag.fill"
+              android_material_icon_name="flag"
+              size={24}
+              color={colors.primary}
+            />
+            <Text style={styles.menuItemText}>Report an Issue</Text>
             <IconSymbol
               ios_icon_name="chevron.right"
               android_material_icon_name="chevron_right"
@@ -176,57 +178,13 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              <IconSymbol
-                ios_icon_name="lock.fill"
-                android_material_icon_name="lock"
-                size={24}
-                color={colors.primary}
-              />
-              <Text style={styles.menuItemText}>Privacy & Security</Text>
-            </View>
             <IconSymbol
-              ios_icon_name="chevron.right"
-              android_material_icon_name="chevron_right"
-              size={20}
-              color={colors.textSecondary}
+              ios_icon_name="book.fill"
+              android_material_icon_name="menu_book"
+              size={24}
+              color={colors.primary}
             />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => router.push('/subscription')}
-          >
-            <View style={styles.menuItemLeft}>
-              <IconSymbol
-                ios_icon_name="star.fill"
-                android_material_icon_name="star"
-                size={24}
-                color={colors.primary}
-              />
-              <Text style={styles.menuItemText}>Upgrade Subscription</Text>
-            </View>
-            <IconSymbol
-              ios_icon_name="chevron.right"
-              android_material_icon_name="chevron_right"
-              size={20}
-              color={colors.textSecondary}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => router.push('/admin')}
-          >
-            <View style={styles.menuItemLeft}>
-              <IconSymbol
-                ios_icon_name="shield.lefthalf.filled"
-                android_material_icon_name="admin_panel_settings"
-                size={24}
-                color={colors.warning}
-              />
-              <Text style={styles.menuItemText}>Admin Panel</Text>
-            </View>
+            <Text style={styles.menuItemText}>Community Guidelines</Text>
             <IconSymbol
               ios_icon_name="chevron.right"
               android_material_icon_name="chevron_right"
@@ -260,32 +218,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
-  settingsButton: {
-    padding: 8,
-  },
-  profileCard: {
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    padding: 20,
+  profileHeader: {
     alignItems: 'center',
-    marginBottom: 24,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
-    elevation: 2,
+    marginBottom: 32,
   },
-  imageContainer: {
+  photoContainer: {
     position: 'relative',
     marginBottom: 16,
   },
-  profileImage: {
+  profilePhoto: {
     width: 120,
     height: 120,
     borderRadius: 60,
+    borderWidth: 3,
+    borderColor: colors.primary,
   },
-  badgeContainer: {
+  verifiedBadge: {
     position: 'absolute',
     bottom: 0,
-    right: -8,
-    flexDirection: 'row',
+    right: 0,
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 2,
   },
   name: {
     fontSize: 24,
@@ -298,24 +252,21 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 16,
   },
-  tierBadge: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  tierBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
+  editButton: {
+    paddingHorizontal: 32,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 32,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.text,
     marginBottom: 12,
   },
@@ -327,39 +278,75 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   bioText: {
-    fontSize: 15,
+    fontSize: 16,
     color: colors.text,
-    lineHeight: 22,
+    lineHeight: 24,
   },
-  statusGrid: {
+  badgesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
+    marginBottom: 12,
   },
-  statusItem: {
-    alignItems: 'center',
-    gap: 8,
+  badgeInfo: {
+    backgroundColor: colors.accent,
+    borderRadius: 12,
+    padding: 12,
   },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.text,
+  badgeInfoText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 18,
   },
-  benefitRow: {
+  photosGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 12,
+  },
+  photoItem: {
+    width: '31%',
+    aspectRatio: 0.75,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  gridPhoto: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  photoTypeLabel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  photoTypeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  preferenceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 8,
   },
-  benefitText: {
-    fontSize: 15,
+  preferenceLabel: {
+    fontSize: 16,
     color: colors.text,
-    flex: 1,
+  },
+  preferenceValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
@@ -367,14 +354,10 @@ const styles = StyleSheet.create({
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
     elevation: 2,
   },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
   menuItemText: {
+    flex: 1,
     fontSize: 16,
-    fontWeight: '500',
     color: colors.text,
+    marginLeft: 12,
   },
 });

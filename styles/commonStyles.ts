@@ -1,117 +1,124 @@
 
-import { StyleSheet, useColorScheme } from 'react-native';
+import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
-const lightColors = {
+export const colors = {
+  background: '#F8F8FF',
+  text: '#282828',
+  textSecondary: '#707070',
   primary: '#6A5ACD',
-  primaryLight: '#E6E3F5',
-  secondary: '#FF6B9D',
-  background: '#FFFFFF',
-  card: '#F8F9FA',
-  text: '#1A1A1A',
-  textSecondary: '#6B7280',
-  border: '#E5E7EB',
-  error: '#EF4444',
-  success: '#10B981',
-  warning: '#F59E0B',
-  warningLight: '#FEF3C7',
-  info: '#3B82F6',
-  accent: '#F0F4FF',
-  basicBadge: '#3B82F6',
-  eliteBadge: '#8B5CF6',
-  starBadge: '#F59E0B',
+  secondary: '#B0E2FF',
+  accent: '#E6E6FA',
+  card: '#FFFFFF',
+  highlight: '#FFD700',
+  basicBadge: '#6A5ACD',
+  eliteBadge: '#9370DB',
+  starBadge: '#FFD700',
+  error: '#FF3B30',
+  success: '#34C759',
+  warning: '#FF9500',
+  border: '#E6E6FA',
 };
 
-const darkColors = {
-  primary: '#8B7FD8',
-  primaryLight: '#2A2640',
-  secondary: '#FF8AB5',
-  background: '#1A1A1A',
-  card: '#2A2A2A',
-  text: '#FFFFFF',
-  textSecondary: '#9CA3AF',
-  border: '#374151',
-  error: '#F87171',
-  success: '#34D399',
-  warning: '#FBBF24',
-  warningLight: '#78350F',
-  info: '#60A5FA',
-  accent: '#1E1E2E',
-  basicBadge: '#60A5FA',
-  eliteBadge: '#A78BFA',
-  starBadge: '#FBBF24',
-};
-
-export const colors = lightColors;
-
-export function useThemeColors() {
-  const colorScheme = useColorScheme();
-  return colorScheme === 'dark' ? darkColors : lightColors;
-}
+export const buttonStyles = StyleSheet.create({
+  primary: {
+    backgroundColor: colors.primary,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondary: {
+    backgroundColor: colors.secondary,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outline: {
+    backgroundColor: 'transparent',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  danger: {
+    backgroundColor: colors.error,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 export const commonStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
-  safeArea: {
+  content: {
     flex: 1,
+    paddingHorizontal: 20,
   },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 8,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  subtitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
   },
-  spaceBetween: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  text: {
+    fontSize: 16,
+    color: colors.text,
+    lineHeight: 24,
   },
-  shadow: {
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+  textSecondary: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    elevation: 2,
+  },
+  input: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: colors.text,
+    marginBottom: 16,
   },
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
   },
-});
-
-export const buttonStyles = StyleSheet.create({
-  primary: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
+  buttonTextPrimary: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  centerContent: {
+    flex: 1,
     justifyContent: 'center',
-  },
-  secondary: {
-    backgroundColor: colors.card,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  text: {
-    backgroundColor: 'transparent',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  disabled: {
-    opacity: 0.5,
   },
 });

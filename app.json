@@ -1,69 +1,48 @@
-
 {
   "expo": {
-    "name": "Intentional",
-    "slug": "intentional-dating",
+    "name": "Intentional Dating",
+    "slug": "Intentional Dating",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/final_quest_240x240.png",
-    "scheme": "intentional",
+    "icon": "./assets/images/natively-dark.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/natively-dark.png",
       "resizeMode": "contain",
-      "backgroundColor": "#6A5ACD"
+      "backgroundColor": "#000000"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.intentional.dating",
+      "bundleIdentifier": "com.anonymous.Natively",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Intentional uses your location to find matches near you.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Intentional uses your location to find matches near you, even when the app is in the background.",
-        "UIBackgroundModes": ["location", "remote-notification"]
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/final_quest_240x240.png",
-        "backgroundColor": "#6A5ACD"
+        "foregroundImage": "./assets/images/natively-dark.png",
+        "backgroundColor": "#000000"
       },
-      "package": "com.intentional.dating",
-      "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION",
-        "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_LOCATION",
-        "POST_NOTIFICATIONS",
-        "READ_MEDIA_IMAGES"
-      ]
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.Natively"
     },
     "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/final_quest_240x240.png"
+      "favicon": "./assets/images/final_quest_240x240.png",
+      "bundler": "metro"
     },
     "plugins": [
+      "expo-font",
       "expo-router",
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Allow Intentional to use your location to find matches near you."
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/final_quest_240x240.png",
-          "color": "#6A5ACD",
-          "defaultChannel": "default",
-          "enableBackgroundRemoteNotifications": true
-        }
-      ]
+      "expo-web-browser"
     ],
+    "scheme": "natively",
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {}
     }
-  }
+  },
+  "scheme": "Intentional Dating"
 }
