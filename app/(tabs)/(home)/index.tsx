@@ -1,22 +1,59 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { mockUsers, mockConversations } from '@/data/mockData';
+import { User, isActiveUser } from '@/types/User';
 import ProfileCard from '@/components/ProfileCard';
 import { IconSymbol } from '@/components/IconSymbol';
 import { router } from 'expo-router';
+import { useUser } from '@/contexts/UserContext';
+import { SUBSCRIPTION_LIMITS } from '@/types/MatchFilters';
 
 export default function HomeScreen() {
-  const [dailyMatches] = useState(mockUsers);
+  const { subscriptionTier, matchFilters } = useUser();
+  const limits = SUBSCRIPTION_LIMITS[subscriptionTier];
+  
+  const [dailyMatches, setDailyMatches] = useState<User[]>([]);
   const [selectedUserIndex, setSelectedUserIndex] = useState(0);
   const activeConversations = mockConversations.filter((c) => !c.ended);
 
+  useEffect(() => {
+    const filteredMatches = mockUsers.filter((user) => {
+      if (!isActiveUser(user.lastActive)) {
+        return false;
+      }
+
+      const userTier = user.subscriptionTier || 'basic';
+      if (!matchFilters.allowedTiers.includes(userTier)) {
+        return false;
+      }
+
+      if (matchFilters.selectedStatuses.length > 0) {
+        const hasMatchingStatus = user.statusBadges.some((badge) =>
+          matchFilters.selectedStatuses.includes(badge.type)
+        );
+        if (!hasMatchingStatus) {
+          return false;
+        }
+      }
+
+      if (user.age < matchFilters.ageRange.min || user.age > matchFilters.ageRange.max) {
+        return false;
+      }
+
+      return true;
+    });
+
+    const limitedMatches = filteredMatches.slice(0, limits.dailyMatches);
+    setDailyMatches(limitedMatches);
+  }, [subscriptionTier, matchFilters]);
+
   const handleStartConversation = () => {
-    if (activeConversations.length > 0) {
+    if (activeConversations.length >= limits.dailyConversations) {
       Alert.alert(
-        'Clear Conversations First',
-        'You must clear your active conversations before starting new ones. Reply to pending messages or end conversations to continue.',
+        'Conversation Limit Reached',
+        `You can only have ${limits.dailyConversations} active conversations with your ${subscriptionTier} subscription. Clear some conversations to start new ones.`,
         [{ text: 'OK' }]
       );
       return;
@@ -26,6 +63,14 @@ export default function HomeScreen() {
 
   const handleViewProfile = () => {
     router.push('/profile-detail');
+  };
+
+  const handlePass = () => {
+    router.push('/rejection-feedback');
+  };
+
+  const handleOpenFilters = () => {
+    router.push('/match-filters');
   };
 
   const selectedUser = dailyMatches[selectedUserIndex];
@@ -38,9 +83,25 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Today&apos;s Matches</Text>
-          <Text style={styles.subtitle}>
-            {dailyMatches.length} intentional connections
+          <View>
+            <Text style={styles.title}>Today&apos;s Matches</Text>
+            <Text style={styles.subtitle}>
+              {dailyMatches.length} of {limits.dailyMatches} intentional connections
+            </Text>
+          </View>
+          <TouchableOpacity onPress={handleOpenFilters} style={styles.filterButton}>
+            <IconSymbol
+              ios_icon_name="slider.horizontal.3"
+              android_material_icon_name="tune"
+              size={24}
+              color={colors.primary}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.tierBadge}>
+          <Text style={styles.tierBadgeText}>
+            {subscriptionTier.toUpperCase()} TIER
           </Text>
         </View>
 
@@ -55,60 +116,68 @@ export default function HomeScreen() {
             <View style={styles.warningText}>
               <Text style={styles.warningTitle}>Active Conversations</Text>
               <Text style={styles.warningSubtitle}>
-                Clear your {activeConversations.length} conversation{activeConversations.length > 1 ? 's' : ''} to view new matches
+                {activeConversations.length} of {limits.dailyConversations} conversation slots used
               </Text>
             </View>
           </View>
         )}
 
-        <View style={styles.cardContainer}>
-          {selectedUser && (
-            <ProfileCard
-              user={selectedUser}
-              onPress={handleViewProfile}
-              showDistance
-              distance={Math.floor(Math.random() * 20) + 5}
-            />
-          )}
-        </View>
-
-        <View style={styles.matchCounter}>
-          <Text style={styles.matchCounterText}>
-            {selectedUserIndex + 1} of {dailyMatches.length}
-          </Text>
-        </View>
-
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.passButton}
-            onPress={() => {
-              if (selectedUserIndex < dailyMatches.length - 1) {
-                setSelectedUserIndex(selectedUserIndex + 1);
-              } else {
-                Alert.alert('No More Matches', 'Check back tomorrow for new matches!');
-              }
-            }}
-          >
+        {dailyMatches.length === 0 ? (
+          <View style={styles.emptyState}>
             <IconSymbol
-              ios_icon_name="xmark"
-              android_material_icon_name="close"
-              size={32}
-              color={colors.error}
+              ios_icon_name="magnifyingglass"
+              android_material_icon_name="search"
+              size={64}
+              color={colors.textSecondary}
             />
-          </TouchableOpacity>
+            <Text style={styles.emptyTitle}>No Matches Found</Text>
+            <Text style={styles.emptyText}>
+              Try adjusting your filters to see more potential matches
+            </Text>
+            <TouchableOpacity style={styles.adjustFiltersButton} onPress={handleOpenFilters}>
+              <Text style={styles.adjustFiltersText}>Adjust Filters</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <React.Fragment>
+            <View style={styles.cardContainer}>
+              {selectedUser && (
+                <ProfileCard
+                  user={selectedUser}
+                  onPress={handleViewProfile}
+                  showDistance
+                  distance={Math.floor(Math.random() * matchFilters.maxDistance) + 5}
+                />
+              )}
+            </View>
 
-          <TouchableOpacity
-            style={styles.messageButton}
-            onPress={handleStartConversation}
-          >
-            <IconSymbol
-              ios_icon_name="message.fill"
-              android_material_icon_name="message"
-              size={32}
-              color="#FFFFFF"
-            />
-          </TouchableOpacity>
-        </View>
+            <View style={styles.matchCounter}>
+              <Text style={styles.matchCounterText}>
+                {selectedUserIndex + 1} of {dailyMatches.length}
+              </Text>
+            </View>
+
+            <View style={styles.actionButtons}>
+              <TouchableOpacity style={styles.passButton} onPress={handlePass}>
+                <IconSymbol
+                  ios_icon_name="xmark"
+                  android_material_icon_name="close"
+                  size={32}
+                  color={colors.error}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.messageButton} onPress={handleStartConversation}>
+                <IconSymbol
+                  ios_icon_name="heart.fill"
+                  android_material_icon_name="favorite"
+                  size={32}
+                  color="#FFFFFF"
+                />
+              </TouchableOpacity>
+            </View>
+          </React.Fragment>
+        )}
 
         <View style={styles.infoSection}>
           <View style={styles.infoCard}>
@@ -136,6 +205,19 @@ export default function HomeScreen() {
               Every member is manually verified by our team
             </Text>
           </View>
+
+          <View style={styles.infoCard}>
+            <IconSymbol
+              ios_icon_name="clock.fill"
+              android_material_icon_name="schedule"
+              size={24}
+              color={colors.primary}
+            />
+            <Text style={styles.infoTitle}>Active Users Only</Text>
+            <Text style={styles.infoText}>
+              All matches have been active within the last 7 days
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -152,7 +234,10 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   header: {
-    marginBottom: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
   },
   title: {
     fontSize: 32,
@@ -163,6 +248,30 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: colors.textSecondary,
+  },
+  filterButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    elevation: 2,
+  },
+  tierBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  tierBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   warningCard: {
     flexDirection: 'row',
@@ -187,6 +296,36 @@ const styles = StyleSheet.create({
   warningSubtitle: {
     fontSize: 14,
     color: colors.textSecondary,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: 24,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+    paddingHorizontal: 40,
+    lineHeight: 22,
+  },
+  adjustFiltersButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  adjustFiltersText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   cardContainer: {
     alignItems: 'center',

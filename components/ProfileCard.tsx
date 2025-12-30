@@ -1,13 +1,9 @@
 
 import React from 'react';
-import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import { User } from '@/types/User';
-import { colors, commonStyles } from '@/styles/commonStyles';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { User, getLastActiveText } from '@/types/User';
+import { colors } from '@/styles/commonStyles';
 import StatusBadge from './StatusBadge';
-import { IconSymbol } from './IconSymbol';
-
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = width - 40;
 
 interface ProfileCardProps {
   user: User;
@@ -18,85 +14,68 @@ interface ProfileCardProps {
 
 export default function ProfileCard({ user, onPress, showDistance, distance }: ProfileCardProps) {
   const mainPhoto = user.photos.find((p) => p.type === 'selfie') || user.photos[0];
+  const lastActiveText = getLastActiveText(user.lastActive);
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={styles.container}
       onPress={onPress}
-      activeOpacity={0.95}
-      disabled={!onPress}
+      activeOpacity={0.9}
     >
       <View style={styles.imageContainer}>
-        <Image source={{ uri: mainPhoto?.url }} style={styles.image} />
-        
-        {user.statusBadges.length > 0 && (
-          <View style={styles.badgeContainer}>
-            <StatusBadge badge={user.statusBadges[0]} size="small" />
-          </View>
-        )}
+        <Image source={{ uri: mainPhoto.url }} style={styles.image} />
+        <View style={styles.badgeContainer}>
+          {user.statusBadges.slice(0, 2).map((badge, index) => (
+            <StatusBadge key={badge.id} badge={badge} size="small" style={{ marginLeft: index > 0 ? -8 : 0 }} />
+          ))}
+        </View>
+      </View>
 
-        <View style={styles.gradient} />
-        
-        <View style={styles.infoContainer}>
-          <View style={styles.nameRow}>
-            <Text style={styles.name}>{user.name}, {user.age}</Text>
-            {user.verified && (
-              <IconSymbol
-                ios_icon_name="checkmark.seal.fill"
-                android_material_icon_name="verified"
-                size={20}
-                color={colors.primary}
-              />
-            )}
-          </View>
-          
-          <View style={styles.locationRow}>
-            <IconSymbol
-              ios_icon_name="location.fill"
-              android_material_icon_name="location_on"
-              size={14}
-              color="#FFFFFF"
-            />
-            <Text style={styles.location}>
-              {user.location.city}, {user.location.state}
-              {showDistance && distance && ` • ${distance} mi`}
-            </Text>
-          </View>
-
-          {user.bio && (
-            <Text style={styles.bio} numberOfLines={2}>
-              {user.bio}
-            </Text>
-          )}
-
-          {user.statusBadges.length > 1 && (
-            <View style={styles.additionalBadges}>
-              {user.statusBadges.slice(1, 3).map((badge, index) => (
-                <React.Fragment key={index}>
-                  <StatusBadge badge={badge} size="small" />
-                </React.Fragment>
-              ))}
-            </View>
+      <View style={styles.infoContainer}>
+        <View style={styles.nameRow}>
+          <Text style={styles.name}>{user.name}, {user.age}</Text>
+          {showDistance && distance && (
+            <Text style={styles.distance}>{distance} miles away</Text>
           )}
         </View>
+        
+        <Text style={styles.lastActive}>{lastActiveText}</Text>
+        
+        <Text style={styles.location}>
+          {user.location.city}, {user.location.state}
+        </Text>
+
+        <Text style={styles.bio} numberOfLines={3}>
+          {user.bio}
+        </Text>
+
+        {user.statusBadges.length > 0 && (
+          <View style={styles.statusList}>
+            {user.statusBadges.map((badge) => (
+              <View key={badge.id} style={styles.statusTag}>
+                <Text style={styles.statusTagText}>{badge.type}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    width: CARD_WIDTH,
-    height: CARD_WIDTH * 1.4,
+  container: {
+    backgroundColor: colors.card,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: colors.card,
-    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
-    elevation: 5,
-    marginBottom: 20,
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+    elevation: 4,
+    width: '100%',
+    maxWidth: 400,
   },
   imageContainer: {
-    flex: 1,
+    width: '100%',
+    aspectRatio: 3 / 4,
     position: 'relative',
   },
   image: {
@@ -108,55 +87,58 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 16,
     right: 16,
-    zIndex: 2,
-  },
-  gradient: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '50%',
-    backgroundColor: 'transparent',
-    background: 'linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.7))',
+    flexDirection: 'row',
   },
   infoContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     padding: 20,
-    zIndex: 1,
   },
   nameRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   name: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
-    color: '#FFFFFF',
-    marginRight: 8,
+    color: colors.text,
   },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  distance: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  lastActive: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '500',
     marginBottom: 8,
   },
   location: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    marginLeft: 4,
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginBottom: 12,
   },
   bio: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    lineHeight: 20,
-    marginBottom: 8,
+    fontSize: 15,
+    color: colors.text,
+    lineHeight: 22,
+    marginBottom: 16,
   },
-  additionalBadges: {
+  statusList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 4,
+    gap: 8,
+  },
+  statusTag: {
+    backgroundColor: colors.primaryLight || colors.border,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  statusTagText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
   },
 });
