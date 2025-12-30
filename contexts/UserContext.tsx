@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User } from '@/types/User';
 import { MatchFilters, SubscriptionTier, SUBSCRIPTION_LIMITS } from '@/types/MatchFilters';
 import { currentUser as mockCurrentUser } from '@/data/mockData';
@@ -26,11 +26,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
     allowedTiers: ['basic'],
   });
 
-  useEffect(() => {
-    loadUserPreferences();
+  const updateFiltersForTier = useCallback((tier: SubscriptionTier) => {
+    const limits = SUBSCRIPTION_LIMITS[tier];
+    setMatchFilters((prev) => ({
+      ...prev,
+      maxDistance: Math.min(prev.maxDistance, limits.maxDistance),
+      maxStatuses: limits.maxStatuses,
+      allowedTiers: limits.allowedMatchTiers,
+    }));
   }, []);
 
-  const loadUserPreferences = async () => {
+  const loadUserPreferences = useCallback(async () => {
     try {
       const savedTier = await AsyncStorage.getItem('subscriptionTier');
       const savedFilters = await AsyncStorage.getItem('matchFilters');
@@ -47,17 +53,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error loading user preferences:', error);
     }
-  };
+  }, [updateFiltersForTier]);
 
-  const updateFiltersForTier = (tier: SubscriptionTier) => {
-    const limits = SUBSCRIPTION_LIMITS[tier];
-    setMatchFilters((prev) => ({
-      ...prev,
-      maxDistance: Math.min(prev.maxDistance, limits.maxDistance),
-      maxStatuses: limits.maxStatuses,
-      allowedTiers: limits.allowedMatchTiers,
-    }));
-  };
+  useEffect(() => {
+    loadUserPreferences();
+  }, [loadUserPreferences]);
 
   const updateMatchFilters = async (filters: Partial<MatchFilters>) => {
     const newFilters = { ...matchFilters, ...filters };
