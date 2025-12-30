@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, ActivityIndicator } from 'react-native';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { router } from 'expo-router';
 import { supabase } from '@/app/integrations/supabase/client';
+import { useSubscriptionPaywall, useSuperwallIntegration } from '@/hooks/useSuperwall';
 
 const subscriptionTiers = [
   {
@@ -60,6 +61,18 @@ export default function SubscriptionScreen() {
   const [promoApplied, setPromoApplied] = useState<any>(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
+
+  // Superwall integration
+  const { subscriptionStatus, isSubscribed } = useSuperwallIntegration();
+  const { showPaywall, paywallState } = useSubscriptionPaywall('subscription_upgrade', () => {
+    Alert.alert('Success!', 'Your subscription has been activated.');
+    setSelectedTier(null);
+  });
+
+  useEffect(() => {
+    console.log('Subscription status:', subscriptionStatus);
+    console.log('Is subscribed:', isSubscribed);
+  }, [subscriptionStatus, isSubscribed]);
 
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) {
@@ -141,25 +154,15 @@ export default function SubscriptionScreen() {
       ? `\n\nOriginal: $${tier.price}/month\nWith promo: $${finalPrice.toFixed(2)}/month`
       : '';
 
-    Alert.alert(
-      'Subscription Required',
-      `To access ${tier.name} features, you need to subscribe via In-App Purchase.${discountText}\n\nNote: This is a placeholder. In production, this will trigger the native IAP flow (Apple/Google Play Billing).`,
-      [
-        { text: 'Cancel', style: 'cancel', onPress: () => setSelectedTier(null) },
-        {
-          text: 'Continue',
-          onPress: async () => {
-            // In production, this would trigger Superwall or native IAP
-            // For now, we'll simulate the subscription
-            Alert.alert(
-              'Success',
-              'Subscription activated! (This is a demo - integrate Superwall for production)',
-              [{ text: 'OK', onPress: () => setSelectedTier(null) }]
-            );
-          },
-        },
-      ]
-    );
+    // Trigger Superwall paywall
+    try {
+      await showPaywall();
+    } catch (error) {
+      console.error('Error showing paywall:', error);
+      Alert.alert('Error', 'Failed to show subscription options. Please try again.');
+    } finally {
+      setSelectedTier(null);
+    }
   };
 
   const handleRemovePromo = () => {
@@ -341,7 +344,8 @@ export default function SubscriptionScreen() {
             - All subscriptions are billed monthly via Apple/Google Play{'\n'}
             - You can cancel or change your plan at any time{'\n'}
             - Changes take effect at the start of your next billing cycle{'\n'}
-            - Promo codes are applied at checkout
+            - Promo codes are applied at checkout{'\n'}
+            - Powered by Superwall for secure native payments
           </Text>
         </View>
       </ScrollView>

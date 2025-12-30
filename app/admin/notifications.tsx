@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,60 +9,86 @@ import {
   TextInput,
   Alert,
   Switch,
+  ActivityIndicator,
 } from 'react-native';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { router } from 'expo-router';
 import * as Notifications from 'expo-notifications';
+import { supabase } from '@/app/integrations/supabase/client';
 
 interface NotificationTemplate {
   id: string;
-  name: string;
+  template_key: string;
   title: string;
   body: string;
+  category: string;
   enabled: boolean;
 }
 
 export default function NotificationManagement() {
-  const [templates, setTemplates] = useState<NotificationTemplate[]>([
-    {
-      id: '1',
-      name: 'New Match',
-      title: 'You have a new match!',
-      body: 'Check out your new intentional connection.',
-      enabled: true,
-    },
-    {
-      id: '2',
-      name: 'Message Received',
-      title: 'New message from {name}',
-      body: '{message}',
-      enabled: true,
-    },
-    {
-      id: '3',
-      name: 'Daily Reminder',
-      title: 'New matches are waiting!',
-      body: 'Check out today&apos;s intentional connections.',
-      enabled: true,
-    },
-    {
-      id: '4',
-      name: 'Conversation Expiring',
-      title: 'Respond to keep the conversation going',
-      body: 'Your conversation with {name} needs a response.',
-      enabled: true,
-    },
-  ]);
-
+  const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
   const [scheduledTitle, setScheduledTitle] = useState('');
   const [scheduledBody, setScheduledBody] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
+  const [sending, setSending] = useState(false);
 
-  const handleToggleTemplate = (id: string) => {
-    setTemplates((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, enabled: !t.enabled } : t))
-    );
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  const loadTemplates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notification_templates')
+        .select('*')
+        .order('category', { ascending: true });
+
+      if (error) throw error;
+
+      setTemplates(data || []);
+    } catch (error) {
+      console.error('Error loading templates:', error);
+      Alert.alert('Error', 'Failed to load notification templates');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleTemplate = async (id: string, currentEnabled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('notification_templates')
+        .update({ enabled: !currentEnabled, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setTemplates((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, enabled: !currentEnabled } : t))
+      );
+    } catch (error) {
+      console.error('Error toggling template:', error);
+      Alert.alert('Error', 'Failed to update template');
+    }
+  };
+
+  const handleUpdateTemplate = async (id: string, title: string, body: string) => {
+    try {
+      const { error } = await supabase
+        .from('notification_templates')
+        .update({ title, body, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      Alert.alert('Success', 'Template updated successfully');
+      loadTemplates();
+    } catch (error) {
+      console.error('Error updating template:', error);
+      Alert.alert('Error', 'Failed to update template');
+    }
   };
 
   const handleScheduleNotification = async () => {
@@ -71,29 +97,57 @@ export default function NotificationManagement() {
       return;
     }
 
+    setSending(true);
     try {
-      // TODO: Implement actual scheduling with backend
-      // For now, schedule a local notification as a demo
+      // Get current user (admin)
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in to schedule notifications');
+        return;
+      }
+
+      // Create scheduled notification in database
+      const scheduledFor = scheduleTime 
+        ? new Date(scheduleTime).toISOString()
+        : new Date().toISOString();
+
+      const { error } = await supabase
+        .from('scheduled_notifications')
+        .insert({
+          template_id: null, // Custom notification
+          scheduled_for: scheduledFor,
+          target_audience: { all: true },
+          status: 'pending',
+          created_by: user.id,
+        });
+
+      if (error) throw error;
+
+      // For demo purposes, also schedule a local notification
       await Notifications.scheduleNotificationAsync({
         content: {
           title: scheduledTitle,
           body: scheduledBody,
         },
-        trigger: {
-          seconds: 10,
-        },
+        trigger: scheduleTime ? { date: new Date(scheduleTime) } : { seconds: 10 },
       });
 
       Alert.alert(
         'Success',
-        'Notification scheduled successfully! (Demo: will send in 10 seconds)'
+        scheduleTime 
+          ? `Notification scheduled for ${new Date(scheduleTime).toLocaleString()}`
+          : 'Notification will be sent in 10 seconds (demo mode)'
       );
+      
       setScheduledTitle('');
       setScheduledBody('');
       setScheduleTime('');
     } catch (error) {
       console.error('Error scheduling notification:', error);
       Alert.alert('Error', 'Failed to schedule notification.');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -112,6 +166,15 @@ export default function NotificationManagement() {
       Alert.alert('Error', 'Failed to send test notification.');
     }
   };
+
+  if (loading) {
+    return (
+      <View style={[commonStyles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Loading templates...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={commonStyles.container}>
@@ -143,17 +206,63 @@ export default function NotificationManagement() {
             <View key={template.id} style={styles.templateCard}>
               <View style={styles.templateHeader}>
                 <View style={styles.templateInfo}>
-                  <Text style={styles.templateName}>{template.name}</Text>
+                  <Text style={styles.templateName}>{template.category}</Text>
                   <Text style={styles.templateTitle}>{template.title}</Text>
                   <Text style={styles.templateBody}>{template.body}</Text>
                 </View>
                 <Switch
                   value={template.enabled}
-                  onValueChange={() => handleToggleTemplate(template.id)}
+                  onValueChange={() => handleToggleTemplate(template.id, template.enabled)}
                   trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor="#FFFFFF"
                 />
               </View>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => {
+                  Alert.prompt(
+                    'Edit Template',
+                    'Enter new title',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Next',
+                        onPress: (newTitle) => {
+                          if (newTitle) {
+                            Alert.prompt(
+                              'Edit Template',
+                              'Enter new body',
+                              [
+                                { text: 'Cancel', style: 'cancel' },
+                                {
+                                  text: 'Save',
+                                  onPress: (newBody) => {
+                                    if (newBody) {
+                                      handleUpdateTemplate(template.id, newTitle, newBody);
+                                    }
+                                  },
+                                },
+                              ],
+                              'plain-text',
+                              template.body
+                            );
+                          }
+                        },
+                      },
+                    ],
+                    'plain-text',
+                    template.title
+                  );
+                }}
+              >
+                <IconSymbol
+                  ios_icon_name="pencil"
+                  android_material_icon_name="edit"
+                  size={16}
+                  color={colors.primary}
+                />
+                <Text style={styles.editButtonText}>Edit</Text>
+              </TouchableOpacity>
             </View>
           ))}
         </View>
@@ -200,14 +309,24 @@ export default function NotificationManagement() {
             <Text style={styles.inputHint}>Leave blank to send immediately</Text>
           </View>
 
-          <TouchableOpacity style={styles.scheduleButton} onPress={handleScheduleNotification}>
-            <IconSymbol
-              ios_icon_name="paperplane.fill"
-              android_material_icon_name="send"
-              size={20}
-              color="#FFFFFF"
-            />
-            <Text style={styles.scheduleButtonText}>Schedule Notification</Text>
+          <TouchableOpacity 
+            style={styles.scheduleButton} 
+            onPress={handleScheduleNotification}
+            disabled={sending}
+          >
+            {sending ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <IconSymbol
+                  ios_icon_name="paperplane.fill"
+                  android_material_icon_name="send"
+                  size={20}
+                  color="#FFFFFF"
+                />
+                <Text style={styles.scheduleButtonText}>Schedule Notification</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -232,9 +351,16 @@ export default function NotificationManagement() {
             color={colors.primary}
           />
           <Text style={styles.infoText}>
-            Note: This is a demo interface. In production, notifications would be sent via a
-            backend service (e.g., Supabase Edge Functions) to all users with notifications
-            enabled. The backend would handle scheduling, targeting, and delivery.
+            <Text style={styles.boldText}>Push Notification Setup:{'\n\n'}</Text>
+            <Text style={styles.boldText}>iOS (APNs):{'\n'}</Text>
+            1. Create an Apple Push Notification service key in Apple Developer Portal{'\n'}
+            2. Upload the .p8 key file to your backend{'\n'}
+            3. Configure your app&apos;s bundle ID and team ID{'\n\n'}
+            <Text style={styles.boldText}>Android (FCM):{'\n'}</Text>
+            1. Create a Firebase project and add your Android app{'\n'}
+            2. Download google-services.json{'\n'}
+            3. Enable Cloud Messaging API in Google Cloud Console{'\n\n'}
+            Notifications are sent via Supabase Edge Functions to all users with push_notifications_enabled = true.
           </Text>
         </View>
       </ScrollView>
@@ -250,6 +376,15 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 120,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: colors.text,
+    marginTop: 16,
   },
   header: {
     flexDirection: 'row',
@@ -293,6 +428,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    marginBottom: 12,
   },
   templateInfo: {
     flex: 1,
@@ -303,6 +439,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
     marginBottom: 8,
+    textTransform: 'capitalize',
   },
   templateTitle: {
     fontSize: 14,
@@ -314,6 +451,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     lineHeight: 18,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 8,
+  },
+  editButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.primary,
   },
   inputContainer: {
     marginBottom: 16,
@@ -382,11 +530,16 @@ const styles = StyleSheet.create({
     gap: 12,
     borderWidth: 1,
     borderColor: colors.primary + '30',
+    alignItems: 'flex-start',
   },
   infoText: {
     flex: 1,
     fontSize: 13,
     color: colors.text,
-    lineHeight: 18,
+    lineHeight: 20,
+  },
+  boldText: {
+    fontWeight: '600',
+    color: colors.text,
   },
 });
