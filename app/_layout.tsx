@@ -25,10 +25,27 @@ export const unstable_settings = {
   initialRouteName: "(tabs)", // Ensure any route can link back to `/`
 };
 
-// Replace with your actual Superwall API keys from the Superwall dashboard
+// ============================================================================
+// SUPERWALL API KEYS SETUP
+// ============================================================================
+// 
+// TO GET YOUR SUPERWALL API KEYS:
+// 
+// 1. Go to https://superwall.com/ and sign up or log in
+// 2. Create a new app in the Superwall dashboard
+// 3. Navigate to Settings > API Keys
+// 4. Copy your iOS API key (starts with "pk_")
+// 5. Copy your Android API key (starts with "pk_")
+// 6. Replace the placeholder keys below with your actual keys
+// 
+// IMPORTANT: Keep these keys secure and never commit them to public repositories
+// For production, use environment variables instead
+// 
+// ============================================================================
+
 const SUPERWALL_API_KEYS = {
-  ios: "pk_d1c3c5e8e8f8e8e8e8e8e8e8e8e8e8e8", // Replace with your iOS API key
-  android: "pk_a1c3c5e8e8f8e8e8e8e8e8e8e8e8e8e8", // Replace with your Android API key
+  ios: "pk_YOUR_IOS_API_KEY_HERE", // Replace with your iOS API key from Superwall dashboard
+  android: "pk_YOUR_ANDROID_API_KEY_HERE", // Replace with your Android API key from Superwall dashboard
 };
 
 export default function RootLayout() {
