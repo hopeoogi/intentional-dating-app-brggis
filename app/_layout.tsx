@@ -44,8 +44,8 @@ export const unstable_settings = {
 // ============================================================================
 
 const SUPERWALL_API_KEYS = {
-  ios: "pk_YOUR_IOS_API_KEY_HERE", // Replace with your iOS API key from Superwall dashboard
-  android: "pk_YOUR_ANDROID_API_KEY_HERE", // Replace with your Android API key from Superwall dashboard
+  ios: "pk_xkkuCQn_Hl7drbMIjHXfa", // Superwall public key
+  android: "pk_xkkuCQn_Hl7drbMIjHXfa", // Superwall public key
 };
 
 export default function RootLayout() {
