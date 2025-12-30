@@ -17,6 +17,12 @@ export function useNotifications() {
   const [notification, setNotification] = useState<Notifications.Notification | undefined>(undefined);
 
   useEffect(() => {
+    // Skip push notification setup on web
+    if (Platform.OS === 'web') {
+      console.log('Push notifications are not supported on web');
+      return;
+    }
+
     registerForPushNotificationsAsync().then((token) => {
       if (token) {
         setExpoPushToken(token);
@@ -38,6 +44,12 @@ export function useNotifications() {
   }, []);
 
   const scheduleEngagementNotification = async (hours: number = 24) => {
+    // Skip on web
+    if (Platform.OS === 'web') {
+      console.log('Notifications not supported on web');
+      return;
+    }
+
     try {
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -56,6 +68,12 @@ export function useNotifications() {
   };
 
   const scheduleMessageNotification = async (matchName: string) => {
+    // Skip on web
+    if (Platform.OS === 'web') {
+      console.log('Notifications not supported on web');
+      return;
+    }
+
     try {
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -81,6 +99,11 @@ export function useNotifications() {
 }
 
 async function registerForPushNotificationsAsync() {
+  // Skip on web
+  if (Platform.OS === 'web') {
+    return undefined;
+  }
+
   let token;
 
   if (Platform.OS === 'android') {
