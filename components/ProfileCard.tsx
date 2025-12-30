@@ -2,113 +2,103 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { User } from '@/types/User';
-import { colors, commonStyles } from '@/styles/commonStyles';
+import { colors } from '@/styles/commonStyles';
 import StatusBadge from './StatusBadge';
 import { IconSymbol } from './IconSymbol';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = width - 40;
+const { width, height } = Dimensions.get('window');
 
 interface ProfileCardProps {
   user: User;
-  onPress?: () => void;
-  showDistance?: boolean;
-  distance?: number;
+  onPass?: () => void;
+  onMessage?: () => void;
+  showActions?: boolean;
 }
 
-export default function ProfileCard({ user, onPress, showDistance, distance }: ProfileCardProps) {
+export default function ProfileCard({ user, onPass, onMessage, showActions = true }: ProfileCardProps) {
   const mainPhoto = user.photos.find((p) => p.type === 'selfie') || user.photos[0];
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={onPress}
-      activeOpacity={0.95}
-      disabled={!onPress}
-    >
-      <View style={styles.imageContainer}>
+    <View style={styles.container}>
+      <View style={styles.card}>
         <Image source={{ uri: mainPhoto?.url }} style={styles.image} />
         
-        {user.statusBadges.length > 0 && (
-          <View style={styles.badgeContainer}>
-            <StatusBadge badge={user.statusBadges[0]} size="small" />
+        <LinearGradient
+          colors={['transparent', 'rgba(0, 0, 0, 0.3)', 'rgba(0, 0, 0, 0.85)']}
+          style={styles.gradient}
+          locations={[0, 0.5, 1]}
+        />
+        
+        {showActions && (
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity
+              style={styles.passButton}
+              onPress={onPass}
+              activeOpacity={0.8}
+            >
+              <IconSymbol
+                ios_icon_name="xmark"
+                android_material_icon_name="close"
+                size={32}
+                color="#FFFFFF"
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.messageButton}
+              onPress={onMessage}
+              activeOpacity={0.8}
+            >
+              <IconSymbol
+                ios_icon_name="message.fill"
+                android_material_icon_name="message"
+                size={28}
+                color="#FFFFFF"
+              />
+            </TouchableOpacity>
           </View>
         )}
 
-        <View style={styles.gradient} />
-        
         <View style={styles.infoContainer}>
-          <View style={styles.nameRow}>
-            <Text style={styles.name}>{user.name}, {user.age}</Text>
-            {user.verified && (
-              <IconSymbol
-                ios_icon_name="checkmark.seal.fill"
-                android_material_icon_name="verified"
-                size={20}
-                color={colors.primary}
-              />
-            )}
-          </View>
+          <Text style={styles.name}>
+            {user.name} <Text style={styles.age}>{user.age}</Text>
+          </Text>
           
-          <View style={styles.locationRow}>
-            <IconSymbol
-              ios_icon_name="location.fill"
-              android_material_icon_name="location_on"
-              size={14}
-              color="#FFFFFF"
-            />
-            <Text style={styles.location}>
-              {user.location.city}, {user.location.state}
-              {showDistance && distance && ` • ${distance} mi`}
-            </Text>
-          </View>
+          <Text style={styles.location}>
+            {user.location.city}, {user.location.state}
+          </Text>
 
-          {user.bio && (
-            <Text style={styles.bio} numberOfLines={2}>
-              {user.bio}
-            </Text>
-          )}
-
-          {user.statusBadges.length > 1 && (
-            <View style={styles.additionalBadges}>
-              {user.statusBadges.slice(1, 3).map((badge, index) => (
+          {user.statusBadges.length > 0 && (
+            <View style={styles.badgesContainer}>
+              {user.statusBadges.map((badge, index) => (
                 <React.Fragment key={index}>
-                  <StatusBadge badge={badge} size="small" />
+                  <StatusBadge badge={badge} size="medium" />
                 </React.Fragment>
               ))}
             </View>
           )}
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    width: CARD_WIDTH,
-    height: CARD_WIDTH * 1.4,
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: colors.card,
-    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
-    elevation: 5,
-    marginBottom: 20,
+  container: {
+    flex: 1,
+    width: width,
+    height: height,
   },
-  imageContainer: {
+  card: {
     flex: 1,
     position: 'relative',
+    backgroundColor: '#000000',
   },
   image: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-  },
-  badgeContainer: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    zIndex: 2,
   },
   gradient: {
     position: 'absolute',
@@ -116,47 +106,68 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '50%',
-    backgroundColor: 'transparent',
-    background: 'linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.7))',
+    zIndex: 1,
   },
   infoContainer: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 160,
     left: 0,
     right: 0,
-    padding: 20,
-    zIndex: 1,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
+    paddingHorizontal: 24,
+    zIndex: 2,
   },
   name: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginRight: 8,
+    marginBottom: 4,
   },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
+  age: {
+    fontSize: 32,
+    fontWeight: '400',
+    color: '#FFFFFF',
   },
   location: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#FFFFFF',
-    marginLeft: 4,
+    marginBottom: 12,
+    opacity: 0.95,
+    fontWeight: '400',
   },
-  bio: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  additionalBadges: {
+  badgesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 4,
+    alignItems: 'flex-start',
+  },
+  actionsContainer: {
+    position: 'absolute',
+    bottom: 60,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 80,
+    zIndex: 3,
+  },
+  passButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(100, 100, 100, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  messageButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(100, 100, 100, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
 });

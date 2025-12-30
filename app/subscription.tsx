@@ -1,87 +1,79 @@
 
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { colors, commonStyles } from '@/styles/commonStyles';
-import { PRICING_TIERS, PricingTier } from '@/constants/Pricing';
 import { IconSymbol } from '@/components/IconSymbol';
 import { router } from 'expo-router';
 
-type PlanType = 'monthly' | 'semiAnnual' | 'annual';
+const subscriptionTiers = [
+  {
+    id: 'basic',
+    name: 'Basic',
+    price: 15,
+    color: '#00BFFF',
+    features: [
+      '1 verification badge (blue)',
+      '50 mile match range',
+      'Change location once every 6 months',
+      '3 matches per day',
+      'Basic status matches only',
+      '3 new conversations per day',
+    ],
+  },
+  {
+    id: 'elite',
+    name: 'Elite',
+    price: 50,
+    color: '#9370DB',
+    features: [
+      'Up to 3 verification badges (blue)',
+      '100 mile match range',
+      'Change location once every 3 months',
+      '15 matches per day',
+      'Access to Elite status matches',
+      '15 new conversations per day',
+      'Advanced match filters',
+    ],
+  },
+  {
+    id: 'star',
+    name: 'Star',
+    price: 125,
+    color: '#FFD700',
+    features: [
+      'Up to 6 verification badges (gold)',
+      '200 mile match range',
+      'Change location anytime',
+      '23 matches per day',
+      'Access to Elite & Star matches',
+      '23 new conversations per day',
+      'Premium match filters',
+      'Priority support',
+    ],
+  },
+];
 
 export default function SubscriptionScreen() {
-  const [selectedTier, setSelectedTier] = useState<'basic' | 'elite' | 'star'>('basic');
-  const [selectedPlan, setSelectedPlan] = useState<PlanType>('monthly');
-  const [loading, setLoading] = useState(false);
+  const currentTier = 'elite';
 
-  const currentTier = PRICING_TIERS.find((t) => t.id === selectedTier);
-
-  const handleSubscribe = async () => {
-    if (!currentTier) {
+  const handleSelectTier = (tierId: string) => {
+    if (tierId === currentTier) {
+      Alert.alert('Current Plan', 'You are already subscribed to this plan.');
       return;
     }
 
-    setLoading(true);
-
-    try {
-      // TODO: Integrate with Superwall
-      // For now, show a placeholder alert
-      const plan = currentTier.plans[selectedPlan];
-      Alert.alert(
-        'Subscription',
-        `You selected ${currentTier.name} - ${plan.period} for $${plan.price}. Superwall integration will handle the actual purchase.`,
-        [{ text: 'OK' }]
-      );
-    } catch (error) {
-      console.error('Subscription error:', error);
-      Alert.alert('Error', 'Failed to process subscription. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const renderPlanButton = (planType: PlanType, label: string) => {
-    const isSelected = selectedPlan === planType;
-    const plan = currentTier?.plans[planType];
-    if (!plan) {
-      return null;
-    }
-
-    const showDiscount = planType !== 'monthly';
-
-    return (
-      <TouchableOpacity
-        style={[styles.planButton, isSelected && styles.planButtonSelected]}
-        onPress={() => setSelectedPlan(planType)}
-      >
-        <View style={styles.planButtonContent}>
-          <View style={styles.planButtonLeft}>
-            <Text style={[styles.planButtonLabel, isSelected && styles.planButtonLabelSelected]}>
-              {label}
-            </Text>
-            {showDiscount && (
-              <View style={styles.discountBadge}>
-                <Text style={styles.discountText}>{plan.discount}% OFF</Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.planButtonRight}>
-            <Text style={[styles.planButtonPrice, isSelected && styles.planButtonPriceSelected]}>
-              ${plan.price}
-            </Text>
-            {showDiscount && (
-              <Text style={styles.planButtonMonthly}>${plan.monthlyPrice}/month</Text>
-            )}
-          </View>
-        </View>
-      </TouchableOpacity>
+    Alert.alert(
+      'Change Subscription',
+      `Would you like to upgrade to ${tierId.charAt(0).toUpperCase() + tierId.slice(1)}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Confirm',
+          onPress: () => {
+            Alert.alert('Success', 'Your subscription has been updated!');
+          },
+        },
+      ]
     );
   };
 
@@ -93,7 +85,10 @@ export default function SubscriptionScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
             <IconSymbol
               ios_icon_name="chevron.left"
               android_material_icon_name="arrow_back"
@@ -101,78 +96,85 @@ export default function SubscriptionScreen() {
               color={colors.text}
             />
           </TouchableOpacity>
-          <Text style={styles.title}>Choose Your Plan</Text>
-          <View style={styles.backButton} />
+          <Text style={styles.title}>Subscription</Text>
         </View>
 
-        <View style={styles.tierSelector}>
-          {PRICING_TIERS.map((tier) => (
+        <Text style={styles.subtitle}>
+          Choose the plan that&apos;s right for you
+        </Text>
+
+        {subscriptionTiers.map((tier) => (
+          <View
+            key={tier.id}
+            style={[
+              styles.tierCard,
+              currentTier === tier.id && styles.currentTierCard,
+            ]}
+          >
+            <View style={styles.tierHeader}>
+              <View>
+                <Text style={[styles.tierName, { color: tier.color }]}>
+                  {tier.name}
+                </Text>
+                <Text style={styles.tierPrice}>
+                  ${tier.price}
+                  <Text style={styles.tierPriceUnit}>/month</Text>
+                </Text>
+              </View>
+              {currentTier === tier.id && (
+                <View style={styles.currentBadge}>
+                  <Text style={styles.currentBadgeText}>Current</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.featuresContainer}>
+              {tier.features.map((feature, index) => (
+                <View key={index} style={styles.featureRow}>
+                  <IconSymbol
+                    ios_icon_name="checkmark.circle.fill"
+                    android_material_icon_name="check_circle"
+                    size={20}
+                    color={tier.color}
+                  />
+                  <Text style={styles.featureText}>{feature}</Text>
+                </View>
+              ))}
+            </View>
+
             <TouchableOpacity
-              key={tier.id}
               style={[
-                styles.tierButton,
-                selectedTier === tier.id && styles.tierButtonSelected,
-                { borderColor: tier.color },
+                styles.selectButton,
+                currentTier === tier.id && styles.currentButton,
+                { backgroundColor: currentTier === tier.id ? colors.border : tier.color },
               ]}
-              onPress={() => setSelectedTier(tier.id)}
+              onPress={() => handleSelectTier(tier.id)}
+              disabled={currentTier === tier.id}
             >
               <Text
                 style={[
-                  styles.tierButtonText,
-                  selectedTier === tier.id && styles.tierButtonTextSelected,
+                  styles.selectButtonText,
+                  currentTier === tier.id && styles.currentButtonText,
                 ]}
               >
-                {tier.name}
+                {currentTier === tier.id ? 'Current Plan' : 'Select Plan'}
               </Text>
             </TouchableOpacity>
-          ))}
+          </View>
+        ))}
+
+        <View style={styles.infoCard}>
+          <IconSymbol
+            ios_icon_name="info.circle.fill"
+            android_material_icon_name="info"
+            size={24}
+            color={colors.primary}
+          />
+          <Text style={styles.infoText}>
+            All subscriptions are billed monthly. You can cancel or change your plan at any time.
+            Changes take effect at the start of your next billing cycle.
+          </Text>
         </View>
-
-        {currentTier && (
-          <React.Fragment>
-            <View style={[styles.tierCard, { borderColor: currentTier.color }]}>
-              <Text style={styles.tierName}>{currentTier.name}</Text>
-              <View style={styles.featuresContainer}>
-                {currentTier.features.map((feature, index) => (
-                  <View key={index} style={styles.featureRow}>
-                    <IconSymbol
-                      ios_icon_name="checkmark.circle.fill"
-                      android_material_icon_name="check_circle"
-                      size={20}
-                      color={currentTier.color}
-                    />
-                    <Text style={styles.featureText}>{feature}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.plansContainer}>
-              <Text style={styles.sectionTitle}>Select Billing Period</Text>
-              {renderPlanButton('monthly', 'Monthly')}
-              {renderPlanButton('semiAnnual', 'Semi-Annual')}
-              {renderPlanButton('annual', 'Annual')}
-            </View>
-
-            <TouchableOpacity
-              style={[styles.subscribeButton, { backgroundColor: currentTier.color }]}
-              onPress={handleSubscribe}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.subscribeButtonText}>Subscribe Now</Text>
-              )}
-            </TouchableOpacity>
-
-            <Text style={styles.disclaimer}>
-              Subscriptions automatically renew unless cancelled at least 24 hours before the end
-              of the current period. Manage your subscription in your App Store or Google Play
-              account settings.
-            </Text>
-          </React.Fragment>
-        )}
       </ScrollView>
     </View>
   );
@@ -189,155 +191,116 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 12,
   },
   backButton: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: '700',
     color: colors.text,
   },
-  tierSelector: {
-    flexDirection: 'column',
-    gap: 12,
-    marginBottom: 24,
-  },
-  tierButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    borderWidth: 2,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-  },
-  tierButtonSelected: {
-    backgroundColor: colors.primary + '20',
-  },
-  tierButtonText: {
+  subtitle: {
     fontSize: 16,
-    fontWeight: '600',
     color: colors.textSecondary,
-  },
-  tierButtonTextSelected: {
-    color: colors.text,
-    fontWeight: '700',
+    marginBottom: 24,
   },
   tierCard: {
     backgroundColor: colors.card,
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
+  },
+  currentTierCard: {
     borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  tierHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
   },
   tierName: {
     fontSize: 28,
     fontWeight: '700',
+    marginBottom: 4,
+  },
+  tierPrice: {
+    fontSize: 24,
+    fontWeight: '600',
     color: colors.text,
-    marginBottom: 20,
+  },
+  tierPriceUnit: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: colors.textSecondary,
+  },
+  currentBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  currentBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   featuresContainer: {
-    gap: 12,
+    marginBottom: 20,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    marginBottom: 12,
   },
   featureText: {
     fontSize: 15,
     color: colors.text,
+    marginLeft: 12,
     flex: 1,
-    lineHeight: 20,
   },
-  plansContainer: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 16,
-  },
-  planButton: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  planButtonSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary + '10',
-  },
-  planButtonContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  selectButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
   },
-  planButtonLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  currentButton: {
+    backgroundColor: colors.border,
   },
-  planButtonLabel: {
+  selectButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
-  },
-  planButtonLabelSelected: {
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  discountBadge: {
-    backgroundColor: colors.success,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  discountText: {
-    fontSize: 12,
-    fontWeight: '700',
     color: '#FFFFFF',
   },
-  planButtonRight: {
-    alignItems: 'flex-end',
-  },
-  planButtonPrice: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  planButtonPriceSelected: {
-    color: colors.primary,
-  },
-  planButtonMonthly: {
-    fontSize: 12,
+  currentButtonText: {
     color: colors.textSecondary,
-    marginTop: 2,
   },
-  subscribeButton: {
-    paddingVertical: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginBottom: 16,
+  infoCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    elevation: 2,
   },
-  subscribeButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  disclaimer: {
-    fontSize: 12,
+  infoText: {
+    flex: 1,
+    fontSize: 14,
     color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 20,
+    marginLeft: 12,
   },
 });

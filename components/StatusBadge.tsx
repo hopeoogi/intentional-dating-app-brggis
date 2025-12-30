@@ -2,72 +2,111 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { StatusBadge as StatusBadgeType } from '@/types/User';
-import { colors } from '@/styles/commonStyles';
 
 interface StatusBadgeProps {
   badge: StatusBadgeType;
   size?: 'small' | 'medium' | 'large';
 }
 
-export default function StatusBadge({ badge, size = 'small' }: StatusBadgeProps) {
+export default function StatusBadge({ badge, size = 'medium' }: StatusBadgeProps) {
   const getBadgeColor = () => {
     switch (badge.tier) {
       case 'basic':
-        return colors.basicBadge;
+        return '#00BFFF'; // Bright blue
       case 'elite':
-        return colors.eliteBadge;
+        return '#9370DB'; // Purple
       case 'star':
-        return colors.starBadge;
+        return '#FFD700'; // Gold
       default:
-        return colors.basicBadge;
+        return '#00BFFF';
     }
   };
 
   const sizeStyles = {
     small: {
-      paddingHorizontal: 8,
-      paddingVertical: 4,
+      paddingHorizontal: 12,
+      paddingVertical: 5,
       fontSize: 10,
+      height: 22,
     },
     medium: {
-      paddingHorizontal: 12,
+      paddingHorizontal: 16,
       paddingVertical: 6,
       fontSize: 12,
+      height: 26,
     },
     large: {
-      paddingHorizontal: 16,
+      paddingHorizontal: 20,
       paddingVertical: 8,
       fontSize: 14,
+      height: 32,
     },
   };
 
   return (
     <View
       style={[
-        styles.badge,
+        styles.badgeContainer,
         {
-          backgroundColor: getBadgeColor(),
-          paddingHorizontal: sizeStyles[size].paddingHorizontal,
-          paddingVertical: sizeStyles[size].paddingVertical,
+          height: sizeStyles[size].height,
         },
       ]}
     >
-      <Text style={[styles.badgeText, { fontSize: sizeStyles[size].fontSize }]}>
-        {badge.type}
-      </Text>
+      <View
+        style={[
+          styles.badge,
+          {
+            backgroundColor: getBadgeColor(),
+            paddingHorizontal: sizeStyles[size].paddingHorizontal,
+            paddingVertical: sizeStyles[size].paddingVertical,
+          },
+        ]}
+      >
+        <Text style={[styles.badgeText, { fontSize: sizeStyles[size].fontSize }]}>
+          {badge.type.toUpperCase()}
+        </Text>
+      </View>
+      <View
+        style={[
+          styles.badgeTriangle,
+          {
+            borderTopColor: getBadgeColor(),
+            borderTopWidth: sizeStyles[size].height,
+          },
+        ]}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  badgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 4,
+    marginBottom: 4,
+  },
   badge: {
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginRight: 6,
-    marginBottom: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ skewX: '-15deg' }],
   },
   badgeText: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  badgeTriangle: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderRightWidth: 8,
+    borderBottomWidth: 0,
+    borderLeftWidth: 0,
+    borderRightColor: 'transparent',
+    transform: [{ translateX: -1 }],
   },
 });

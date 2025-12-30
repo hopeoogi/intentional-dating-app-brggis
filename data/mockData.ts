@@ -23,12 +23,12 @@ export const mockStatusBadges: StatusBadge[] = [
 export const mockUsers: User[] = [
   {
     id: 'user-2',
-    name: 'Emma',
-    age: 26,
+    name: 'Sarah',
+    age: 22,
     bio: 'Coffee enthusiast, bookworm, and adventure seeker. Looking for someone who can keep up with deep conversations and spontaneous road trips.',
     location: {
-      city: 'San Francisco',
-      state: 'CA',
+      city: 'Winnipeg',
+      state: 'Manitoba',
     },
     photos: [
       {
@@ -56,15 +56,43 @@ export const mockUsers: User[] = [
     statusBadges: [
       {
         id: 'badge-3',
-        type: 'Designer',
-        tier: 'elite',
+        type: 'Student',
+        tier: 'basic',
         verified: true,
         verificationDate: new Date('2024-01-20'),
       },
       {
         id: 'badge-4',
-        type: 'Yoga Instructor',
+        type: 'Professional',
         tier: 'basic',
+        verified: true,
+        verificationDate: new Date('2024-01-25'),
+      },
+      {
+        id: 'badge-5',
+        type: 'Traveller',
+        tier: 'basic',
+        verified: true,
+        verificationDate: new Date('2024-01-25'),
+      },
+      {
+        id: 'badge-6',
+        type: 'Influencer',
+        tier: 'elite',
+        verified: true,
+        verificationDate: new Date('2024-01-25'),
+      },
+      {
+        id: 'badge-7',
+        type: 'Nurse',
+        tier: 'elite',
+        verified: true,
+        verificationDate: new Date('2024-01-25'),
+      },
+      {
+        id: 'badge-8',
+        type: 'Investor',
+        tier: 'star',
         verified: true,
         verificationDate: new Date('2024-01-25'),
       },
@@ -82,8 +110,8 @@ export const mockUsers: User[] = [
   },
   {
     id: 'user-3',
-    name: 'Sophia',
-    age: 28,
+    name: 'Emma',
+    age: 26,
     bio: 'Tech professional by day, artist by night. Love exploring new restaurants and hiking trails. Seeking genuine connections.',
     location: {
       city: 'San Francisco',
@@ -114,9 +142,16 @@ export const mockUsers: User[] = [
     ],
     statusBadges: [
       {
-        id: 'badge-5',
-        type: 'Engineer',
-        tier: 'star',
+        id: 'badge-9',
+        type: 'Designer',
+        tier: 'elite',
+        verified: true,
+        verificationDate: new Date('2024-01-18'),
+      },
+      {
+        id: 'badge-10',
+        type: 'Artist',
+        tier: 'basic',
         verified: true,
         verificationDate: new Date('2024-01-18'),
       },
@@ -134,11 +169,11 @@ export const mockUsers: User[] = [
   },
   {
     id: 'user-4',
-    name: 'Olivia',
-    age: 25,
+    name: 'Sophia',
+    age: 28,
     bio: 'Medical student with a passion for travel and photography. Looking for someone who values meaningful conversations and shared adventures.',
     location: {
-      city: 'San Francisco',
+      city: 'Los Angeles',
       state: 'CA',
     },
     photos: [
@@ -166,15 +201,22 @@ export const mockUsers: User[] = [
     ],
     statusBadges: [
       {
-        id: 'badge-6',
-        type: 'Medical Student',
-        tier: 'elite',
+        id: 'badge-11',
+        type: 'Doctor',
+        tier: 'star',
         verified: true,
         verificationDate: new Date('2024-01-22'),
       },
       {
-        id: 'badge-7',
+        id: 'badge-12',
         type: 'Photographer',
+        tier: 'elite',
+        verified: true,
+        verificationDate: new Date('2024-01-28'),
+      },
+      {
+        id: 'badge-13',
+        type: 'Traveller',
         tier: 'basic',
         verified: true,
         verificationDate: new Date('2024-01-28'),
@@ -188,6 +230,65 @@ export const mockUsers: User[] = [
       minAge: 24,
       maxAge: 32,
       maxDistance: 40,
+      interestedIn: ['men'],
+    },
+  },
+  {
+    id: 'user-5',
+    name: 'Isabella',
+    age: 24,
+    bio: 'Entrepreneur and fitness enthusiast. Building my dream business while staying healthy and balanced.',
+    location: {
+      city: 'New York',
+      state: 'NY',
+    },
+    photos: [
+      {
+        id: 'photo-10',
+        url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800',
+        type: 'selfie',
+        approved: true,
+        uploadDate: new Date('2024-01-14'),
+      },
+      {
+        id: 'photo-11',
+        url: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?w=800',
+        type: 'fullbody',
+        approved: true,
+        uploadDate: new Date('2024-01-14'),
+      },
+      {
+        id: 'photo-12',
+        url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800',
+        type: 'activity',
+        approved: true,
+        uploadDate: new Date('2024-01-14'),
+      },
+    ],
+    statusBadges: [
+      {
+        id: 'badge-14',
+        type: 'CEO',
+        tier: 'star',
+        verified: true,
+        verificationDate: new Date('2024-01-20'),
+      },
+      {
+        id: 'badge-15',
+        type: 'Entrepreneur',
+        tier: 'elite',
+        verified: true,
+        verificationDate: new Date('2024-01-20'),
+      },
+    ],
+    verified: true,
+    onboardingComplete: true,
+    createdAt: new Date('2024-01-07'),
+    lastActive: new Date(),
+    preferences: {
+      minAge: 25,
+      maxAge: 35,
+      maxDistance: 50,
       interestedIn: ['men'],
     },
   },
@@ -236,17 +337,7 @@ export const mockMessages: Message[] = [
   },
 ];
 
-export const mockConversations: Conversation[] = [
-  {
-    id: 'conv-1',
-    matchId: 'match-1',
-    match: mockMatches[0],
-    messages: mockMessages,
-    lastMessage: mockMessages[mockMessages.length - 1],
-    mustRespond: false,
-    ended: false,
-  },
-];
+export const mockConversations: Conversation[] = [];
 
 export const currentUser: User = {
   id: currentUserId,
@@ -259,21 +350,21 @@ export const currentUser: User = {
   },
   photos: [
     {
-      id: 'photo-10',
+      id: 'photo-13',
       url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
       type: 'selfie',
       approved: true,
       uploadDate: new Date('2024-01-05'),
     },
     {
-      id: 'photo-11',
+      id: 'photo-14',
       url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800',
       type: 'fullbody',
       approved: true,
       uploadDate: new Date('2024-01-05'),
     },
     {
-      id: 'photo-12',
+      id: 'photo-15',
       url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800',
       type: 'activity',
       approved: true,

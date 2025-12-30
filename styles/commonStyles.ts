@@ -1,5 +1,5 @@
 
-import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 export const colors = {
   background: '#F8F8FF',
@@ -10,7 +10,7 @@ export const colors = {
   accent: '#E6E6FA',
   card: '#FFFFFF',
   highlight: '#FFD700',
-  basicBadge: '#6A5ACD',
+  basicBadge: '#00BFFF',
   eliteBadge: '#9370DB',
   starBadge: '#FFD700',
   error: '#FF3B30',
