@@ -20,6 +20,8 @@ const { width } = Dimensions.get('window');
 export default function ProfileDetailScreen() {
   const user = mockUsers[0];
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [mode, setMode] = useState<'dating' | 'social'>('dating');
+  const [showBio, setShowBio] = useState(false);
 
   const handleNextPhoto = () => {
     if (currentPhotoIndex < user.photos.length - 1) {
@@ -31,6 +33,15 @@ export default function ProfileDetailScreen() {
     if (currentPhotoIndex > 0) {
       setCurrentPhotoIndex(currentPhotoIndex - 1);
     }
+  };
+
+  const toggleMode = () => {
+    setMode(mode === 'dating' ? 'social' : 'dating');
+    setShowBio(false);
+  };
+
+  const toggleContent = () => {
+    setShowBio(!showBio);
   };
 
   return (
@@ -57,6 +68,25 @@ export default function ProfileDetailScreen() {
             style={styles.photo}
           />
           
+          <View style={styles.modeToggle}>
+            <TouchableOpacity
+              style={[styles.modeButton, mode === 'dating' && styles.modeButtonActive]}
+              onPress={toggleMode}
+            >
+              <Text style={[styles.modeButtonText, mode === 'dating' && styles.modeButtonTextActive]}>
+                DATING MODE
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modeButton, mode === 'social' && styles.modeButtonActive]}
+              onPress={toggleMode}
+            >
+              <Text style={[styles.modeButtonText, mode === 'social' && styles.modeButtonTextActive]}>
+                SOCIAL MODE
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.photoNavigation}>
             <TouchableOpacity
               style={[styles.navButton, currentPhotoIndex === 0 && styles.navButtonDisabled]}
@@ -100,48 +130,52 @@ export default function ProfileDetailScreen() {
               />
             </TouchableOpacity>
           </View>
+
+          <View style={styles.infoOverlay}>
+            <View style={styles.nameRow}>
+              <Text style={styles.name}>{user.name} {user.age}</Text>
+            </View>
+            <Text style={styles.location}>
+              {user.location.city}, {user.location.state}
+            </Text>
+
+            <TouchableOpacity onPress={toggleContent} style={styles.toggleButton}>
+              <Text style={styles.toggleButtonText}>
+                {showBio ? 'Show Badges' : 'Show Bio'}
+              </Text>
+            </TouchableOpacity>
+
+            {!showBio && user.statusBadges.length > 0 && (
+              <View style={styles.badgesContainer}>
+                {user.statusBadges.map((badge, index) => (
+                  <React.Fragment key={index}>
+                    <StatusBadge badge={badge} size="medium" mode={mode} />
+                  </React.Fragment>
+                ))}
+              </View>
+            )}
+
+            {showBio && (
+              <Text style={styles.bioText}>{user.bio}</Text>
+            )}
+          </View>
         </View>
 
         <View style={styles.content}>
-          <View style={styles.nameSection}>
-            <View style={styles.nameRow}>
-              <Text style={styles.name}>{user.name}, {user.age}</Text>
-              {user.verified && (
-                <IconSymbol
-                  ios_icon_name="checkmark.seal.fill"
-                  android_material_icon_name="verified"
-                  size={28}
-                  color={colors.primary}
-                />
-              )}
-            </View>
-            <View style={styles.locationRow}>
-              <IconSymbol
-                ios_icon_name="location.fill"
-                android_material_icon_name="location_on"
-                size={16}
-                color={colors.textSecondary}
-              />
-              <Text style={styles.location}>
-                {user.location.city}, {user.location.state} • 8 miles away
-              </Text>
-            </View>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>About</Text>
+            <Text style={styles.bioFullText}>{user.bio}</Text>
           </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Status Badges</Text>
-            <View style={styles.badgesContainer}>
+            <View style={styles.badgesGrid}>
               {user.statusBadges.map((badge, index) => (
                 <React.Fragment key={index}>
-                  <StatusBadge badge={badge} size="medium" />
+                  <StatusBadge badge={badge} size="large" mode={mode} />
                 </React.Fragment>
               ))}
             </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>About</Text>
-            <Text style={styles.bioText}>{user.bio}</Text>
           </View>
 
           <View style={styles.section}>
@@ -212,9 +246,37 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
+  modeToggle: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  modeButton: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    alignItems: 'center',
+  },
+  modeButtonActive: {
+    backgroundColor: 'rgba(106, 90, 205, 0.9)',
+  },
+  modeButtonText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  modeButtonTextActive: {
+    color: '#FFFFFF',
+  },
   photoNavigation: {
     position: 'absolute',
-    bottom: 20,
+    top: '50%',
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -247,32 +309,55 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     width: 24,
   },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-  },
-  nameSection: {
-    marginBottom: 24,
+  infoOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   name: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.text,
-    marginRight: 8,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    color: '#FFFFFF',
   },
   location: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 12,
+  },
+  toggleButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginBottom: 12,
+  },
+  toggleButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  badgesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  bioText: {
     fontSize: 15,
-    color: colors.textSecondary,
-    marginLeft: 4,
+    color: '#FFFFFF',
+    lineHeight: 22,
+  },
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
   },
   section: {
     marginBottom: 24,
@@ -283,11 +368,12 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 12,
   },
-  badgesContainer: {
+  badgesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 10,
   },
-  bioText: {
+  bioFullText: {
     fontSize: 16,
     color: colors.text,
     lineHeight: 24,

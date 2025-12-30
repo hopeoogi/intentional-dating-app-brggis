@@ -66,7 +66,15 @@ export default function HomeScreen() {
   };
 
   const handlePass = () => {
-    router.push('/rejection-feedback');
+    if (selectedUserIndex < dailyMatches.length - 1) {
+      setSelectedUserIndex(selectedUserIndex + 1);
+    } else {
+      Alert.alert(
+        'No More Matches',
+        'You have viewed all your matches for today. Check back tomorrow for more!',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const handleOpenFilters = () => {
@@ -145,6 +153,8 @@ export default function HomeScreen() {
                 <ProfileCard
                   user={selectedUser}
                   onPress={handleViewProfile}
+                  onMessagePress={handleStartConversation}
+                  onPassPress={handlePass}
                   showDistance
                   distance={Math.floor(Math.random() * matchFilters.maxDistance) + 5}
                 />
@@ -155,26 +165,6 @@ export default function HomeScreen() {
               <Text style={styles.matchCounterText}>
                 {selectedUserIndex + 1} of {dailyMatches.length}
               </Text>
-            </View>
-
-            <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.passButton} onPress={handlePass}>
-                <IconSymbol
-                  ios_icon_name="xmark"
-                  android_material_icon_name="close"
-                  size={32}
-                  color={colors.error}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.messageButton} onPress={handleStartConversation}>
-                <IconSymbol
-                  ios_icon_name="heart.fill"
-                  android_material_icon_name="favorite"
-                  size={32}
-                  color="#FFFFFF"
-                />
-              </TouchableOpacity>
             </View>
           </React.Fragment>
         )}
@@ -333,44 +323,16 @@ const styles = StyleSheet.create({
   },
   matchCounter: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   matchCounterText: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.textSecondary,
   },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 32,
-    gap: 40,
-  },
-  passButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.card,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.error,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
-    elevation: 3,
-  },
-  messageButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    boxShadow: '0px 4px 12px rgba(106, 90, 205, 0.3)',
-    elevation: 5,
-  },
   infoSection: {
     gap: 16,
+    marginTop: 20,
   },
   infoCard: {
     backgroundColor: colors.card,

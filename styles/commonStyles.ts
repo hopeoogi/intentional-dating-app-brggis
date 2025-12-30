@@ -16,6 +16,9 @@ const lightColors = {
   warningLight: '#FEF3C7',
   info: '#3B82F6',
   accent: '#F0F4FF',
+  basicBadge: '#3B82F6',
+  eliteBadge: '#8B5CF6',
+  starBadge: '#F59E0B',
 };
 
 const darkColors = {
@@ -33,6 +36,9 @@ const darkColors = {
   warningLight: '#78350F',
   info: '#60A5FA',
   accent: '#1E1E2E',
+  basicBadge: '#60A5FA',
+  eliteBadge: '#A78BFA',
+  starBadge: '#FBBF24',
 };
 
 export const colors = lightColors;
@@ -73,6 +79,11 @@ export const commonStyles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
 

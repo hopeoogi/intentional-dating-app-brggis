@@ -60,10 +60,6 @@
           "defaultChannel": "default",
           "enableBackgroundRemoteNotifications": true
         }
-      ],
-      [
-        "expo-screen-capture",
-        {}
       ]
     ],
     "experiments": {
