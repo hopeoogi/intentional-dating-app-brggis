@@ -1,19 +1,17 @@
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { colors } from '@/styles/commonStyles';
-import { mockUsers, mockConversations } from '@/data/mockData';
 import ProfileCard from '@/components/ProfileCard';
 import { router } from 'expo-router';
-
-const { height } = Dimensions.get('window');
+import { useUsers } from '@/hooks/useUsers';
 
 export default function HomeScreen() {
-  const [dailyMatches] = useState(mockUsers);
+  const { users, loading, error } = useUsers();
   const [selectedUserIndex, setSelectedUserIndex] = useState(0);
 
   const handlePass = () => {
-    if (selectedUserIndex < dailyMatches.length - 1) {
+    if (selectedUserIndex < users.length - 1) {
       setSelectedUserIndex(selectedUserIndex + 1);
     } else {
       Alert.alert(
@@ -25,19 +23,37 @@ export default function HomeScreen() {
   };
 
   const handleMessage = () => {
-    // Removed double messaging restriction - users can now start conversations freely
     router.push({
       pathname: '/start-conversation',
-      params: { userId: dailyMatches[selectedUserIndex].id }
+      params: { userId: users[selectedUserIndex].id }
     });
   };
 
-  const selectedUser = dailyMatches[selectedUserIndex];
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Loading matches...</Text>
+      </View>
+    );
+  }
 
-  if (!selectedUser) {
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.errorText}>Error loading matches</Text>
+        <Text style={styles.errorDetailText}>{error}</Text>
+      </View>
+    );
+  }
+
+  const selectedUser = users[selectedUserIndex];
+
+  if (!selectedUser || users.length === 0) {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <Text style={styles.emptyText}>No matches available</Text>
+        <Text style={styles.emptySubText}>Check back later for new connections!</Text>
       </View>
     );
   }
@@ -53,7 +69,7 @@ export default function HomeScreen() {
       
       <View style={styles.matchCounter}>
         <Text style={styles.matchCounterText}>
-          {selectedUserIndex + 1} / {dailyMatches.length}
+          {selectedUserIndex + 1} / {users.length}
         </Text>
       </View>
     </View>
@@ -69,10 +85,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    marginTop: 16,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#FF6B6B',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  errorDetailText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    opacity: 0.7,
+    paddingHorizontal: 32,
+  },
   emptyText: {
     fontSize: 18,
     color: '#FFFFFF',
     textAlign: 'center',
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    opacity: 0.7,
+    marginTop: 8,
   },
   matchCounter: {
     position: 'absolute',

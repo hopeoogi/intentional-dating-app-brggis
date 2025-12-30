@@ -1,13 +1,17 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { colors, commonStyles } from '@/styles/commonStyles';
-import { mockConversations } from '@/data/mockData';
 import { IconSymbol } from '@/components/IconSymbol';
 import { router } from 'expo-router';
+import { useConversations } from '@/hooks/useConversations';
+
+// For now, we'll use a placeholder user ID
+// In a real app, this would come from authentication
+const CURRENT_USER_ID = '550e8400-e29b-41d4-a716-446655440001';
 
 export default function ConversationsScreen() {
-  const conversations = mockConversations;
+  const { conversations, loading, error } = useConversations(CURRENT_USER_ID);
 
   const formatTime = (date: Date) => {
     const now = new Date();
@@ -24,6 +28,24 @@ export default function ConversationsScreen() {
       return `${days}d ago`;
     }
   };
+
+  if (loading) {
+    return (
+      <View style={[commonStyles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Loading conversations...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[commonStyles.container, styles.centerContent]}>
+        <Text style={styles.errorText}>Error loading conversations</Text>
+        <Text style={styles.errorDetailText}>{error}</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={commonStyles.container}>
@@ -130,6 +152,28 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 120,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: colors.text,
+    marginTop: 16,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#FF6B6B',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  errorDetailText: {
+    fontSize: 14,
+    color: colors.text,
+    textAlign: 'center',
+    opacity: 0.7,
+    paddingHorizontal: 32,
   },
   header: {
     marginBottom: 24,
