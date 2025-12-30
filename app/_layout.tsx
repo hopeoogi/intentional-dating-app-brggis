@@ -16,36 +16,12 @@ import {
 } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
-import { SuperwallProvider } from "expo-superwall";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
   initialRouteName: "(tabs)", // Ensure any route can link back to `/`
-};
-
-// ============================================================================
-// SUPERWALL API KEYS SETUP
-// ============================================================================
-// 
-// TO GET YOUR SUPERWALL API KEYS:
-// 
-// 1. Go to https://superwall.com/ and sign up or log in
-// 2. Create a new app in the Superwall dashboard
-// 3. Navigate to Settings > API Keys
-// 4. Copy your iOS API key (starts with "pk_")
-// 5. Copy your Android API key (starts with "pk_")
-// 6. Replace the placeholder keys below with your actual keys
-// 
-// IMPORTANT: Keep these keys secure and never commit them to public repositories
-// For production, use environment variables instead
-// 
-// ============================================================================
-
-const SUPERWALL_API_KEYS = {
-  ios: "pk_xkkuCQn_Hl7drbMIjHXfa", // Superwall public key
-  android: "pk_xkkuCQn_Hl7drbMIjHXfa", // Superwall public key
 };
 
 export default function RootLayout() {
@@ -105,53 +81,45 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="auto" animated />
-      <SuperwallProvider
-        apiKeys={SUPERWALL_API_KEYS}
-        onConfigurationError={(error) => {
-          console.error("Superwall configuration error:", error);
-          // You can log this to your error tracking service (e.g., Sentry)
-        }}
+      <ThemeProvider
+        value={colorScheme === "dark" ? CustomDarkTheme : CustomDefaultTheme}
       >
-        <ThemeProvider
-          value={colorScheme === "dark" ? CustomDarkTheme : CustomDefaultTheme}
-        >
-          <WidgetProvider>
-            <GestureHandlerRootView>
-              <Stack>
-                {/* Main app with tabs */}
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <WidgetProvider>
+          <GestureHandlerRootView>
+            <Stack>
+              {/* Main app with tabs */}
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-                {/* Modal Demo Screens */}
-                <Stack.Screen
-                  name="modal"
-                  options={{
-                    presentation: "modal",
-                    title: "Standard Modal",
-                  }}
-                />
-                <Stack.Screen
-                  name="formsheet"
-                  options={{
-                    presentation: "formSheet",
-                    title: "Form Sheet Modal",
-                    sheetGrabberVisible: true,
-                    sheetAllowedDetents: [0.5, 0.8, 1.0],
-                    sheetCornerRadius: 20,
-                  }}
-                />
-                <Stack.Screen
-                  name="transparent-modal"
-                  options={{
-                    presentation: "transparentModal",
-                    headerShown: false,
-                  }}
-                />
-              </Stack>
-              <SystemBars style={"auto"} />
-            </GestureHandlerRootView>
-          </WidgetProvider>
-        </ThemeProvider>
-      </SuperwallProvider>
+              {/* Modal Demo Screens */}
+              <Stack.Screen
+                name="modal"
+                options={{
+                  presentation: "modal",
+                  title: "Standard Modal",
+                }}
+              />
+              <Stack.Screen
+                name="formsheet"
+                options={{
+                  presentation: "formSheet",
+                  title: "Form Sheet Modal",
+                  sheetGrabberVisible: true,
+                  sheetAllowedDetents: [0.5, 0.8, 1.0],
+                  sheetCornerRadius: 20,
+                }}
+              />
+              <Stack.Screen
+                name="transparent-modal"
+                options={{
+                  presentation: "transparentModal",
+                  headerShown: false,
+                }}
+              />
+            </Stack>
+            <SystemBars style={"auto"} />
+          </GestureHandlerRootView>
+        </WidgetProvider>
+      </ThemeProvider>
     </>
   );
 }

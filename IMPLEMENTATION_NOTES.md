@@ -23,19 +23,20 @@ This document outlines the major updates implemented based on the feedback provi
 - Maintains moderation tools (report/block) for safety
 
 ### 2. Billing Flow Alignment with App Store Policies
-**Location:** `app/subscription.tsx`
+**Location:** `app/subscription.tsx`, `hooks/useSubscription.ts`
 
 **Changes:**
-- Removed credit card collection during onboarding
+- Removed Superwall dependency for simplified early deployment
 - Application and verification steps are now free
-- Subscription purchase via IAP/Play Billing presented after approval
-- Added promo code support for store-supported offer mechanics
-- Placeholder for Superwall integration (recommended payment solution)
+- Subscription purchase via native IAP/Play Billing after approval
+- Added promo code support
+- Direct integration with App Store and Play Store
 
 **Implementation Notes:**
-- In production, integrate Superwall SDK for native IAP handling
+- Uses native platform payment sheets (Apple/Google)
 - Promo codes can be applied before subscription purchase
 - Supports Apple In-App Purchase and Google Play Billing requirements
+- Simplified architecture for faster deployment
 
 ### 3. Promo Code System
 **Location:** `app/admin/promo-codes.tsx`, `app/subscription.tsx`
@@ -153,6 +154,11 @@ This document outlines the major updates implemented based on the feedback provi
    - Target specific audiences
    - Track delivery status
 
+5. **user_subscriptions**
+   - Tracks active subscriptions
+   - Stores subscription tier and expiration
+   - Links to App Store/Play Store product IDs
+
 ### Updated Tables:
 1. **matches**
    - Added conversation management fields
@@ -161,21 +167,27 @@ This document outlines the major updates implemented based on the feedback provi
 
 ## Integration Requirements
 
-### Superwall (Payments)
-**Package:** `expo-superwall`
+### Native In-App Purchases
+**Implementation:** Direct App Store and Play Store integration
 
 **Setup Required:**
-1. Install: `npx expo install expo-superwall`
-2. Wrap app with `<SuperwallProvider apiKeys={{ ios: "YOUR_KEY" }}>`
-3. Configure paywalls in Superwall dashboard
-4. Use `usePlacement` hook to trigger subscription flow
-5. Handle subscription status with `useUser` hook
+1. Configure products in App Store Connect (iOS)
+2. Configure products in Google Play Console (Android)
+3. Implement IAP SDK (e.g., expo-in-app-purchases or react-native-iap)
+4. Set up server-side receipt verification
+5. Update subscription status in Supabase after verification
 
 **Benefits:**
-- Native IAP/Play Billing compliance
-- Promo code support via store mechanics
-- A/B testing capabilities
-- Analytics and conversion tracking
+- No third-party payment dependencies
+- Direct control over pricing and products
+- Simplified architecture for early deployment
+- Lower operational complexity
+- Full compliance with App Store and Play Store policies
+
+**Product IDs (from constants/Pricing.ts):**
+- Basic: `intentional_basic_monthly`, `intentional_basic_semiannual`, `intentional_basic_annual`
+- Elite: `intentional_elite_monthly`, `intentional_elite_semiannual`, `intentional_elite_annual`
+- Star: `intentional_star_monthly`, `intentional_star_semiannual`, `intentional_star_annual`
 
 ### Expo Notifications
 **Package:** `expo-notifications` (already installed)
@@ -189,11 +201,13 @@ This document outlines the major updates implemented based on the feedback provi
 ## Recommended Next Steps
 
 ### Immediate (V1 Launch):
-1. Integrate Superwall for payments
-2. Reduce badge count to 1 per tier
-3. Build notification management UI
-4. Test conversation flow thoroughly
-5. Set up moderation workflows
+1. Implement native IAP SDK integration
+2. Set up products in App Store Connect and Play Console
+3. Build server-side receipt verification
+4. Reduce badge count to 1 per tier
+5. Build notification management UI
+6. Test conversation flow thoroughly
+7. Set up moderation workflows
 
 ### Short-term (Post-Launch):
 1. Analyze promo code effectiveness
@@ -201,6 +215,7 @@ This document outlines the major updates implemented based on the feedback provi
 3. Track "Not Now" usage patterns
 4. Gather user feedback on new flow
 5. Optimize manual review process
+6. Monitor subscription conversion rates
 
 ### Long-term (Scale):
 1. Increase badge offerings based on demand
@@ -208,6 +223,7 @@ This document outlines the major updates implemented based on the feedback provi
 3. Build advanced analytics dashboard
 4. Implement ML-based moderation
 5. Expand to additional markets
+6. Consider migration to Superwall if needed for advanced features
 
 ## Testing Checklist
 
@@ -215,6 +231,10 @@ This document outlines the major updates implemented based on the feedback provi
 - [ ] Promo code creation and validation
 - [ ] Promo code application at checkout
 - [ ] Subscription flow (post-approval)
+- [ ] IAP purchase flow (iOS)
+- [ ] IAP purchase flow (Android)
+- [ ] Receipt verification
+- [ ] Restore purchases functionality
 - [ ] Report/block functionality
 - [ ] Admin promo code management
 - [ ] Database RLS policies
@@ -224,7 +244,12 @@ This document outlines the major updates implemented based on the feedback provi
 
 ## Notes for Developers
 
-1. **Superwall Integration:** The subscription screen currently shows a placeholder. Integrate Superwall SDK for production.
+1. **IAP Integration:** The subscription screen currently shows a placeholder for the native payment flow. You'll need to:
+   - Install an IAP library (e.g., `expo-in-app-purchases` or `react-native-iap`)
+   - Configure products in App Store Connect and Play Console
+   - Implement purchase flow in `hooks/useSubscription.ts`
+   - Set up server-side receipt verification (Supabase Edge Function recommended)
+   - Update `user_subscriptions` table after successful verification
 
 2. **Promo Codes:** The system validates codes server-side. Ensure proper error handling for expired/invalid codes.
 
@@ -240,6 +265,8 @@ This document outlines the major updates implemented based on the feedback provi
    - Promo code conversion rates
    - Manual review time per applicant
    - Badge verification fraud attempts
+   - Subscription conversion rates by tier
+   - IAP success/failure rates
 
 ## Security Considerations
 
@@ -248,17 +275,42 @@ This document outlines the major updates implemented based on the feedback provi
 3. **Promo Codes:** Server-side validation prevents tampering
 4. **User Data:** Encrypted at rest and in transit
 5. **Payment Data:** Handled by Apple/Google (no PCI compliance needed)
+6. **Receipt Verification:** Must be done server-side to prevent fraud
 
 ## Support & Documentation
 
-- Superwall Docs: https://superwall.com/docs/home
+- Expo In-App Purchases: https://docs.expo.dev/versions/latest/sdk/in-app-purchases/
+- React Native IAP: https://github.com/dooboolab/react-native-iap
+- App Store Server API: https://developer.apple.com/documentation/appstoreserverapi
+- Google Play Billing: https://developer.android.com/google/play/billing
 - Expo Notifications: https://docs.expo.dev/versions/latest/sdk/notifications/
 - Supabase RLS: https://supabase.com/docs/guides/auth/row-level-security
 - App Store Guidelines: https://developer.apple.com/app-store/review/guidelines/
 - Google Play Policies: https://play.google.com/about/developer-content-policy/
 
+## Migration from Superwall (Completed)
+
+**Changes Made:**
+- Removed `expo-superwall` dependency from `app/_layout.tsx`
+- Removed `SuperwallProvider` wrapper
+- Deleted `hooks/useSuperwall.ts`
+- Created new `hooks/useSubscription.ts` for native IAP management
+- Updated `app/subscription.tsx` to use native payment flow
+- Deleted `SUPERWALL_SETUP_GUIDE.md`
+- Updated documentation to reflect native IAP approach
+
+**Benefits of Removal:**
+- Simplified architecture for early deployment
+- Reduced dependencies and potential points of failure
+- Direct control over payment flow
+- Lower operational costs (no Superwall subscription needed)
+- Easier to debug and maintain
+
+**Future Consideration:**
+If you need advanced features like A/B testing, paywall templates, or sophisticated analytics, you can always add Superwall back later. For now, the native approach keeps things simple and focused on core functionality.
+
 ---
 
 **Last Updated:** December 2024
-**Version:** 1.0.0
-**Status:** Ready for Integration Testing
+**Version:** 1.1.0
+**Status:** Superwall Removed - Ready for Native IAP Integration
