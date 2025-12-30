@@ -64,9 +64,10 @@ export default function StatusBadge({ badge, size = 'small', mode = 'dating', st
 
 const styles = StyleSheet.create({
   badge: {
-    borderRadius: 4,
+    borderRadius: 6,
     alignSelf: 'flex-start',
-    transform: [{ skewX: '-10deg' }],
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+    elevation: 2,
   },
   badgeText: {
     color: '#FFFFFF',

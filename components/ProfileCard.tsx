@@ -27,7 +27,6 @@ export default function ProfileCard({
   distance 
 }: ProfileCardProps) {
   const [mode, setMode] = useState<'dating' | 'social'>('dating');
-  const [showBio, setShowBio] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   
   const mainPhoto = user.photos[currentPhotoIndex] || user.photos[0];
@@ -35,7 +34,6 @@ export default function ProfileCard({
 
   const toggleMode = () => {
     setMode(mode === 'dating' ? 'social' : 'dating');
-    setShowBio(false);
   };
 
   const handleNextPhoto = () => {
@@ -52,21 +50,38 @@ export default function ProfileCard({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.card}
-        onPress={onPress}
-        activeOpacity={0.95}
-      >
-        <View style={styles.imageContainer}>
+      <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.imageContainer}
+          onPress={onPress}
+          activeOpacity={0.95}
+        >
           <Image source={{ uri: mainPhoto.url }} style={styles.image} />
           
+          {/* Photo Navigation Areas */}
+          {user.photos.length > 1 && (
+            <React.Fragment>
+              <TouchableOpacity
+                style={styles.photoNavLeft}
+                onPress={handlePrevPhoto}
+                activeOpacity={0.7}
+              />
+              <TouchableOpacity
+                style={styles.photoNavRight}
+                onPress={handleNextPhoto}
+                activeOpacity={0.7}
+              />
+            </React.Fragment>
+          )}
+
+          {/* Mode Toggle */}
           <View style={styles.modeToggle}>
             <TouchableOpacity
               style={[styles.modeButton, mode === 'dating' && styles.modeButtonActive]}
               onPress={toggleMode}
             >
               <Text style={[styles.modeButtonText, mode === 'dating' && styles.modeButtonTextActive]}>
-                DATING MODE
+                DATING
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -74,11 +89,12 @@ export default function ProfileCard({
               onPress={toggleMode}
             >
               <Text style={[styles.modeButtonText, mode === 'social' && styles.modeButtonTextActive]}>
-                SOCIAL MODE
+                SOCIAL
               </Text>
             </TouchableOpacity>
           </View>
 
+          {/* Photo Indicators */}
           {user.photos.length > 1 && (
             <View style={styles.photoIndicators}>
               {user.photos.map((_, index) => (
@@ -92,19 +108,39 @@ export default function ProfileCard({
               ))}
             </View>
           )}
-        </View>
 
+          {/* Last Active Badge */}
+          <View style={styles.lastActiveBadge}>
+            <Text style={styles.lastActiveText}>{lastActiveText}</Text>
+          </View>
+
+          {/* Distance Badge */}
+          {showDistance && distance && (
+            <View style={styles.distanceBadge}>
+              <IconSymbol
+                ios_icon_name="location.fill"
+                android_material_icon_name="location_on"
+                size={14}
+                color="#FFFFFF"
+              />
+              <Text style={styles.distanceText}>{distance} miles away</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* Info Container */}
         <View style={styles.infoContainer}>
           <View style={styles.nameRow}>
-            <Text style={styles.name}>{user.name} {user.age}</Text>
+            <Text style={styles.name}>{user.name}, {user.age}</Text>
             <Text style={styles.location}>
               {user.location.city}, {user.location.state}
             </Text>
           </View>
 
-          {!showBio && user.statusBadges.length > 0 && (
+          {/* Status Badges */}
+          {user.statusBadges.length > 0 && (
             <View style={styles.badgesContainer}>
-              {user.statusBadges.slice(0, 6).map((badge, index) => (
+              {user.statusBadges.slice(0, 6).map((badge) => (
                 <StatusBadge 
                   key={badge.id} 
                   badge={badge} 
@@ -115,14 +151,14 @@ export default function ProfileCard({
             </View>
           )}
 
-          {showBio && (
-            <Text style={styles.bio} numberOfLines={4}>
-              {user.bio}
-            </Text>
-          )}
+          {/* Bio Preview */}
+          <Text style={styles.bio} numberOfLines={3}>
+            {user.bio}
+          </Text>
         </View>
-      </TouchableOpacity>
+      </View>
 
+      {/* Action Buttons */}
       <View style={styles.actionButtons}>
         <TouchableOpacity 
           style={styles.passButton} 
@@ -176,6 +212,22 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
+  photoNavLeft: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: '40%',
+    zIndex: 10,
+  },
+  photoNavRight: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: '40%',
+    zIndex: 10,
+  },
   modeToggle: {
     position: 'absolute',
     top: 16,
@@ -183,20 +235,22 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: 'row',
     gap: 8,
+    zIndex: 20,
   },
   modeButton: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     alignItems: 'center',
+    backdropFilter: 'blur(10px)',
   },
   modeButtonActive: {
-    backgroundColor: 'rgba(106, 90, 205, 0.9)',
+    backgroundColor: 'rgba(106, 90, 205, 0.95)',
   },
   modeButtonText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.5,
@@ -206,26 +260,61 @@ const styles = StyleSheet.create({
   },
   photoIndicators: {
     position: 'absolute',
-    top: 60,
+    top: 70,
     left: 0,
     right: 0,
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 4,
+    gap: 6,
+    paddingHorizontal: 16,
+    zIndex: 15,
   },
   indicator: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    flex: 1,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    maxWidth: 40,
   },
   indicatorActive: {
     backgroundColor: '#FFFFFF',
-    width: 20,
+  },
+  lastActiveBadge: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backdropFilter: 'blur(10px)',
+  },
+  lastActiveText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  distanceBadge: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backdropFilter: 'blur(10px)',
+  },
+  distanceText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   infoContainer: {
     padding: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: colors.card,
   },
   nameRow: {
     marginBottom: 12,
@@ -233,21 +322,22 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 4,
   },
   location: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: colors.textSecondary,
   },
   badgesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 12,
   },
   bio: {
     fontSize: 15,
-    color: '#FFFFFF',
+    color: colors.text,
     lineHeight: 22,
   },
   actionButtons: {

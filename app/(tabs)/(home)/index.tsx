@@ -19,6 +19,10 @@ export default function HomeScreen() {
   const activeConversations = mockConversations.filter((c) => !c.ended);
 
   useEffect(() => {
+    console.log('HomeScreen mounted');
+    console.log('Subscription tier:', subscriptionTier);
+    console.log('Match filters:', matchFilters);
+    
     const filteredMatches = mockUsers.filter((user) => {
       if (!isActiveUser(user.lastActive)) {
         return false;
@@ -46,10 +50,12 @@ export default function HomeScreen() {
     });
 
     const limitedMatches = filteredMatches.slice(0, limits.dailyMatches);
+    console.log('Daily matches count:', limitedMatches.length);
     setDailyMatches(limitedMatches);
   }, [subscriptionTier, matchFilters]);
 
   const handleStartConversation = () => {
+    console.log('Start conversation pressed');
     if (activeConversations.length >= limits.dailyConversations) {
       Alert.alert(
         'Conversation Limit Reached',
@@ -62,10 +68,12 @@ export default function HomeScreen() {
   };
 
   const handleViewProfile = () => {
+    console.log('View profile pressed');
     router.push('/profile-detail');
   };
 
   const handlePass = () => {
+    console.log('Pass pressed');
     if (selectedUserIndex < dailyMatches.length - 1) {
       setSelectedUserIndex(selectedUserIndex + 1);
     } else {
@@ -78,10 +86,14 @@ export default function HomeScreen() {
   };
 
   const handleOpenFilters = () => {
+    console.log('Open filters pressed');
     router.push('/match-filters');
   };
 
   const selectedUser = dailyMatches[selectedUserIndex];
+
+  console.log('Rendering HomeScreen with', dailyMatches.length, 'matches');
+  console.log('Selected user:', selectedUser?.name);
 
   return (
     <View style={commonStyles.container}>
