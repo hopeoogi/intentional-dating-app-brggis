@@ -18,7 +18,8 @@
       "distribution": "internal",
       "env": {
         "NODE_ENV": "production",
-        "EXPO_NO_METRO_LAZY": "0"
+        "EXPO_NO_METRO_LAZY": "1",
+        "EXPO_USE_METRO_WORKSPACE_ROOT": "1"
       },
       "cache": {
         "disabled": false
@@ -28,7 +29,8 @@
       "autoIncrement": true,
       "env": {
         "NODE_ENV": "production",
-        "EXPO_NO_METRO_LAZY": "0"
+        "EXPO_NO_METRO_LAZY": "1",
+        "EXPO_USE_METRO_WORKSPACE_ROOT": "1"
       },
       "cache": {
         "disabled": false

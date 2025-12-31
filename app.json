@@ -22,7 +22,9 @@
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload profile pictures.",
         "NSCameraUsageDescription": "This app needs access to your camera to take profile pictures.",
         "NSLocationWhenInUseUsageDescription": "This app needs your location to show you matches nearby.",
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
@@ -72,6 +74,9 @@
     },
     "runtimeVersion": {
       "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/plnfluykallohjimxnja"
     }
   }
 }

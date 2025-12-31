@@ -16,7 +16,7 @@ module.exports = function (api) {
     plugins: [
       ...EDITABLE_COMPONENTS,
       "@babel/plugin-proposal-export-namespace-from",
-      "react-native-worklets/plugin",
+      "react-native-worklets/plugin", // Must be last
     ],
   };
 };
