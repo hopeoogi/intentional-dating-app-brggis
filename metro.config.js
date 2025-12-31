@@ -3,26 +3,25 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
-// Enable package exports to resolve module issues
+// Ensure proper resolution of node_modules
 config.resolver = {
   ...config.resolver,
-  unstable_enablePackageExports: true,
   sourceExts: [...(config.resolver?.sourceExts || []), 'jsx', 'js', 'ts', 'tsx', 'json'],
   assetExts: [...(config.resolver?.assetExts || []).filter(ext => ext !== 'svg')],
 };
 
-// Minimal transformer config
+// Transformer options for better compatibility
 config.transformer = {
   ...config.transformer,
-  getTransformOptions: async () => ({
-    transform: {
-      experimentalImportSupport: false,
-      inlineRequires: true,
+  minifierConfig: {
+    ...config.transformer?.minifierConfig,
+    keep_classnames: true,
+    keep_fnames: true,
+    mangle: {
+      keep_classnames: true,
+      keep_fnames: true,
     },
-  }),
+  },
 };
-
-// Always reset cache to prevent adapter errors
-config.resetCache = true;
 
 module.exports = config;

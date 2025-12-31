@@ -7,9 +7,6 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "cache": {
-        "disabled": true
-      },
       "ios": {
         "simulator": true,
         "autoIncrement": true
@@ -20,9 +17,6 @@
     },
     "preview": {
       "distribution": "internal",
-      "cache": {
-        "disabled": true
-      },
       "ios": {
         "autoIncrement": true
       },
@@ -31,10 +25,6 @@
       }
     },
     "production": {
-      "cache": {
-        "disabled": false,
-        "clear": true
-      },
       "ios": {
         "autoIncrement": true,
         "buildConfiguration": "Release"
