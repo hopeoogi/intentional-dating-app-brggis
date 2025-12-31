@@ -16,11 +16,13 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.Natively",
+      "buildNumber": "1.0.0",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload profile pictures.",
         "NSCameraUsageDescription": "This app needs access to your camera to take profile pictures.",
-        "NSLocationWhenInUseUsageDescription": "This app needs your location to show you matches nearby."
+        "NSLocationWhenInUseUsageDescription": "This app needs your location to show you matches nearby.",
+        "UIBackgroundModes": ["remote-notification"]
       }
     },
     "android": {
@@ -30,6 +32,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.Natively",
+      "versionCode": 1,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
@@ -45,17 +48,30 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/natively-dark.png",
+          "color": "#000000",
+          "sounds": []
+        }
+      ]
     ],
     "scheme": "intentional-dating",
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "router": {},
+      "router": {
+        "origin": false
+      },
       "eas": {
         "projectId": "plnfluykallohjimxnja"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }

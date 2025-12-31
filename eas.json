@@ -1,6 +1,7 @@
+
 {
   "cli": {
-    "version": ">= 5.0.0"
+    "version": ">= 12.0.0"
   },
   "build": {
     "development": {
@@ -8,16 +9,47 @@
       "distribution": "internal",
       "ios": {
         "simulator": true
+      },
+      "env": {
+        "NODE_ENV": "development"
       }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "cache": {
+        "disabled": false
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "cache": {
+        "disabled": false
+      },
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "buildType": "apk"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "your-apple-id@example.com",
+        "ascAppId": "your-asc-app-id",
+        "appleTeamId": "your-team-id"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./path-to-service-account.json",
+        "track": "internal"
+      }
+    }
   }
 }

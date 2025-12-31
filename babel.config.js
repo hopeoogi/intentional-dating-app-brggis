@@ -21,13 +21,17 @@ module.exports = function (api) {
           extensions: [
             ".ios.ts",
             ".android.ts",
+            ".native.ts",
             ".ts",
             ".ios.tsx",
             ".android.tsx",
+            ".native.tsx",
             ".tsx",
             ".jsx",
             ".js",
             ".json",
+            ".cjs",
+            ".mjs",
           ],
           alias: {
             "@": "./",
@@ -36,12 +40,13 @@ module.exports = function (api) {
             "@hooks": "./hooks",
             "@types": "./types",
             "@contexts": "./contexts",
+            "@supabase/supabase-js": "./node_modules/@supabase/supabase-js/dist/main/index.js",
           },
         },
       ],
       ...EDITABLE_COMPONENTS,
       "@babel/plugin-proposal-export-namespace-from",
-      "react-native-worklets/plugin", // react-native-worklets/plugin must be listed last!
+      "react-native-worklets/plugin",
     ],
   };
 };
