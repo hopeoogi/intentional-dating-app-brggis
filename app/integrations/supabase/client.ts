@@ -1,5 +1,4 @@
 
-import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Database } from './types';
 import { createClient } from '@supabase/supabase-js';
@@ -15,6 +14,7 @@ console.log('[Supabase] URL:', SUPABASE_URL);
 // CRITICAL FIX: Simplified Supabase client initialization
 // This configuration prevents the "(h.adapter || o.adapter) is not a function" error
 // by using native fetch and minimal configuration
+// NOTE: react-native-url-polyfill is imported in index.ts and app/_layout.tsx
 export const supabase = createClient<Database>(
   SUPABASE_URL, 
   SUPABASE_PUBLISHABLE_KEY, 

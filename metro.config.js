@@ -47,6 +47,9 @@ config.resolver.nodeModulesPaths = [
 
 // Disable require cycles to prevent circular dependency issues
 config.resolver.unstable_enableSymlinks = false;
+
+// CRITICAL: Proper condition names order for React Native
+// This ensures React Native-specific exports are prioritized
 config.resolver.unstable_conditionNames = [
   'react-native',
   'browser',

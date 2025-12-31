@@ -1,4 +1,7 @@
 
+// CRITICAL: Import URL polyfill FIRST before any other imports
+// This ensures URL parsing is available for all modules
+import 'react-native-url-polyfill/auto';
 import "react-native-reanimated";
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
