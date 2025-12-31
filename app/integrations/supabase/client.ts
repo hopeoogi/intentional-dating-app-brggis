@@ -52,6 +52,7 @@ let supabaseClient: ReturnType<typeof createClient<Database>> | null = null;
 export const getSupabaseClient = () => {
   if (!supabaseClient) {
     try {
+      console.log('Creating new Supabase client instance...');
       supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
         auth: {
           storage: createStorageAdapter(),
@@ -59,31 +60,40 @@ export const getSupabaseClient = () => {
           persistSession: true,
           detectSessionInUrl: Platform.OS === 'web',
         },
+        global: {
+          headers: {
+            'X-Client-Info': 'supabase-js-react-native',
+          },
+        },
       });
       console.log('Supabase client initialized successfully');
     } catch (error) {
       console.error('Failed to initialize Supabase client:', error);
-      throw error;
+      // Return a minimal client that won't crash the app
+      throw new Error(`Supabase initialization failed: ${error}`);
     }
   }
   return supabaseClient;
 };
 
+// Export the client instance
 export const supabase = getSupabaseClient();
 
 // Test the connection asynchronously (don't block initialization)
-setTimeout(() => {
-  supabase
-    .from('users')
-    .select('count')
-    .then(({ data, error }) => {
-      if (error) {
-        console.error('Supabase connection test failed:', error);
-      } else {
-        console.log('Supabase connection test successful');
-      }
-    })
-    .catch((err) => {
-      console.error('Supabase connection test error:', err);
-    });
-}, 1000);
+if (Platform.OS !== 'web') {
+  setTimeout(() => {
+    supabase
+      .from('users')
+      .select('count')
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Supabase connection test failed:', error);
+        } else {
+          console.log('Supabase connection test successful');
+        }
+      })
+      .catch((err) => {
+        console.error('Supabase connection test error:', err);
+      });
+  }, 1000);
+}
