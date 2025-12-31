@@ -1,8 +1,7 @@
-
 {
   "expo": {
     "name": "Intentional Dating",
-    "slug": "intentional-dating",
+    "slug": "Intentional Dating",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -75,5 +74,6 @@
     "updates": {
       "url": "https://u.expo.dev/plnfluykallohjimxnja"
     }
-  }
+  },
+  "scheme": "Intentional Dating"
 }

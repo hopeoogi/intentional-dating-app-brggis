@@ -29,10 +29,10 @@ export const supabase = createClient<Database>(
       flowType: 'pkce',
     },
     global: {
-      // CRITICAL: Use native fetch with arrow function
+      // CRITICAL: Use native fetch with bind to globalThis
       // This ensures the correct fetch implementation is used
       // and prevents adapter-related errors
-      fetch: (...args) => fetch(...args),
+      fetch: fetch.bind(globalThis),
       headers: {
         'X-Client-Info': `supabase-js-react-native/${Platform.OS}`,
       },
