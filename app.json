@@ -3,7 +3,7 @@
   "expo": {
     "name": "Intentional Dating",
     "slug": "intentional-dating",
-    "version": "1.0.4",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
     "userInterfaceStyle": "automatic",
@@ -16,11 +16,15 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.Natively",
-      "buildNumber": "5",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload profile pictures.",
-        "NSCameraUsageDescription": "This app needs access to your camera to take profile pictures."
+        "NSCameraUsageDescription": "This app needs access to your camera to take profile pictures.",
+        "NSLocationWhenInUseUsageDescription": "This app needs your location to show you matches nearby."
+      },
+      "entitlements": {
+        "com.apple.developer.usernotifications.filtering": true,
+        "aps-environment": "production"
       }
     },
     "android": {
@@ -30,11 +34,13 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.Natively",
-      "versionCode": 5,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -45,11 +51,11 @@
       "expo-font",
       "expo-router",
       [
-        "expo-splash-screen",
+        "expo-notifications",
         {
-          "backgroundColor": "#000000",
-          "image": "./assets/images/natively-dark.png",
-          "imageWidth": 200
+          "icon": "./assets/images/natively-dark.png",
+          "color": "#000000",
+          "sounds": []
         }
       ],
       [

@@ -1,22 +1,12 @@
-
 const { getDefaultConfig } = require('expo/metro-config');
+const { FileStore } = require('metro-cache');
+const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
-config.resolver = {
-  ...config.resolver,
-  sourceExts: ['jsx', 'js', 'ts', 'tsx', 'json', 'mjs', 'cjs'],
-  assetExts: config.resolver.assetExts.filter((ext) => ext !== 'svg'),
-};
-
-config.transformer = {
-  ...config.transformer,
-  minifierPath: require.resolve('metro-minify-terser'),
-  minifierConfig: {
-    compress: {
-      drop_console: false,
-    },
-  },
-};
+// Use turborepo to restore the cache when possible
+config.cacheStores = [
+    new FileStore({ root: path.join(__dirname, 'node_modules', '.cache', 'metro') }),
+  ];
 
 module.exports = config;

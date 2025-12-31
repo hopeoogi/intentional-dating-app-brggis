@@ -7,58 +7,65 @@ import { Platform } from 'react-native';
 const SUPABASE_URL = "https://plnfluykallohjimxnja.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsbmZsdXlrYWxsb2hqaW14bmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDkzNjcsImV4cCI6MjA4MjY4NTM2N30.Hsj2brvHemnDV9w-b0wbdLyaBclteRj3gNW8jDhzCk0";
 
-console.log('[Supabase] Initializing client for platform:', Platform.OS);
+console.log('Initializing Supabase client...');
+console.log('Supabase URL:', SUPABASE_URL);
+console.log('Platform:', Platform.OS);
 
-// Simple storage adapter that works across all platforms
-const storage = {
-  getItem: async (key: string) => {
-    try {
-      if (Platform.OS === 'web') {
-        return localStorage.getItem(key);
-      }
-      return await AsyncStorage.getItem(key);
-    } catch (error) {
-      console.error('[Supabase] Storage getItem error:', error);
-      return null;
-    }
-  },
-  setItem: async (key: string, value: string) => {
-    try {
-      if (Platform.OS === 'web') {
-        localStorage.setItem(key, value);
-        return;
-      }
-      await AsyncStorage.setItem(key, value);
-    } catch (error) {
-      console.error('[Supabase] Storage setItem error:', error);
-    }
-  },
-  removeItem: async (key: string) => {
-    try {
-      if (Platform.OS === 'web') {
-        localStorage.removeItem(key);
-        return;
-      }
-      await AsyncStorage.removeItem(key);
-    } catch (error) {
-      console.error('[Supabase] Storage removeItem error:', error);
-    }
-  },
+// Create a safe storage adapter that works on all platforms
+const createStorageAdapter = () => {
+  // On web, use localStorage if available
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+    console.log('Using localStorage for web');
+    return {
+      getItem: async (key: string) => {
+        try {
+          return window.localStorage.getItem(key);
+        } catch (error) {
+          console.error('Error getting item from localStorage:', error);
+          return null;
+        }
+      },
+      setItem: async (key: string, value: string) => {
+        try {
+          window.localStorage.setItem(key, value);
+        } catch (error) {
+          console.error('Error setting item in localStorage:', error);
+        }
+      },
+      removeItem: async (key: string) => {
+        try {
+          window.localStorage.removeItem(key);
+        } catch (error) {
+          console.error('Error removing item from localStorage:', error);
+        }
+      },
+    };
+  }
+  
+  // On native platforms, use AsyncStorage
+  console.log('Using AsyncStorage for native');
+  return AsyncStorage;
 };
 
-// Initialize Supabase client with minimal, stable configuration
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage,
+    storage: createStorageAdapter(),
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'intentional-dating-app',
-    },
+    detectSessionInUrl: Platform.OS === 'web',
   },
 });
 
-console.log('[Supabase] Client initialized successfully');
+console.log('Supabase client initialized successfully');
+
+// Test the connection
+supabase
+  .from('users')
+  .select('count')
+  .then(({ data, error }) => {
+    if (error) {
+      console.error('Supabase connection test failed:', error);
+    } else {
+      console.log('Supabase connection test successful. User count:', data);
+    }
+  });

@@ -4,8 +4,6 @@ import { User } from '@/types/User';
 import { MatchFilters, SubscriptionTier, SUBSCRIPTION_LIMITS } from '@/types/MatchFilters';
 import { currentUser as mockCurrentUser } from '@/data/mockData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { colors } from '@/styles/commonStyles';
 
 interface UserContextType {
   currentUser: User | null;
@@ -27,57 +25,33 @@ export function UserProvider({ children }: { children: ReactNode }) {
     ageRange: { min: 24, max: 35 },
     allowedTiers: ['basic'],
   });
-  const [isLoading, setIsLoading] = useState(true);
 
   const updateFiltersForTier = useCallback((tier: SubscriptionTier) => {
-    try {
-      const limits = SUBSCRIPTION_LIMITS[tier];
-      setMatchFilters((prev) => ({
-        ...prev,
-        maxDistance: Math.min(prev.maxDistance, limits.maxDistance),
-        maxStatuses: limits.maxStatuses,
-        allowedTiers: limits.allowedMatchTiers,
-      }));
-    } catch (error) {
-      console.error('[UserContext] Error updating filters for tier:', error);
-    }
+    const limits = SUBSCRIPTION_LIMITS[tier];
+    setMatchFilters((prev) => ({
+      ...prev,
+      maxDistance: Math.min(prev.maxDistance, limits.maxDistance),
+      maxStatuses: limits.maxStatuses,
+      allowedTiers: limits.allowedMatchTiers,
+    }));
   }, []);
 
   const loadUserPreferences = useCallback(async () => {
     try {
-      console.log('[UserContext] Loading user preferences...');
-      
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout loading preferences')), 5000)
-      );
-      
-      const loadPromise = Promise.all([
-        AsyncStorage.getItem('subscriptionTier').catch(() => null),
-        AsyncStorage.getItem('matchFilters').catch(() => null),
-      ]);
-      
-      const [savedTier, savedFilters] = await Promise.race([
-        loadPromise,
-        timeoutPromise,
-      ]) as [string | null, string | null];
+      const savedTier = await AsyncStorage.getItem('subscriptionTier');
+      const savedFilters = await AsyncStorage.getItem('matchFilters');
       
       if (savedTier) {
         const tier = savedTier as SubscriptionTier;
-        console.log('[UserContext] Loaded subscription tier:', tier);
         setSubscriptionTier(tier);
         updateFiltersForTier(tier);
       }
       
       if (savedFilters) {
-        console.log('[UserContext] Loaded match filters');
         setMatchFilters(JSON.parse(savedFilters));
       }
-      
-      console.log('[UserContext] User preferences loaded successfully');
     } catch (error) {
-      console.error('[UserContext] Error loading user preferences:', error);
-    } finally {
-      setIsLoading(false);
+      console.error('Error loading user preferences:', error);
     }
   }, [updateFiltersForTier]);
 
@@ -85,37 +59,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
     loadUserPreferences();
   }, [loadUserPreferences]);
 
-  const updateMatchFilters = useCallback(async (filters: Partial<MatchFilters>) => {
+  const updateMatchFilters = async (filters: Partial<MatchFilters>) => {
+    const newFilters = { ...matchFilters, ...filters };
+    setMatchFilters(newFilters);
+    
     try {
-      const newFilters = { ...matchFilters, ...filters };
-      setMatchFilters(newFilters);
-      
       await AsyncStorage.setItem('matchFilters', JSON.stringify(newFilters));
-      console.log('[UserContext] Match filters updated');
     } catch (error) {
-      console.error('[UserContext] Error saving match filters:', error);
+      console.error('Error saving match filters:', error);
     }
-  }, [matchFilters]);
+  };
 
-  const updateSubscriptionTier = useCallback(async (tier: SubscriptionTier) => {
+  const updateSubscriptionTier = async (tier: SubscriptionTier) => {
+    setSubscriptionTier(tier);
+    updateFiltersForTier(tier);
+    
     try {
-      setSubscriptionTier(tier);
-      updateFiltersForTier(tier);
-      
       await AsyncStorage.setItem('subscriptionTier', tier);
-      console.log('[UserContext] Subscription tier updated:', tier);
     } catch (error) {
-      console.error('[UserContext] Error saving subscription tier:', error);
+      console.error('Error saving subscription tier:', error);
     }
-  }, [updateFiltersForTier]);
-
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
+  };
 
   return (
     <UserContext.Provider
@@ -139,12 +103,3 @@ export function useUser() {
   }
   return context;
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-  },
-});

@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/app/integrations/supabase/client';
-import { Conversation } from '@/types/User';
+import { Conversation, Match, User, Message } from '@/types/User';
 
 export function useConversations(userId: string) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -13,6 +13,7 @@ export function useConversations(userId: string) {
       setLoading(true);
       setError(null);
 
+      // Fetch matches for the user
       const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
         .select(`
@@ -40,6 +41,7 @@ export function useConversations(userId: string) {
         return;
       }
 
+      // Fetch messages for each match
       const conversationsWithMessages = await Promise.all(
         matchesData.map(async (match) => {
           const { data: messagesData } = await supabase
@@ -59,6 +61,8 @@ export function useConversations(userId: string) {
           }));
 
           const lastMessage = messages.length > 0 ? messages[messages.length - 1] : undefined;
+
+          // Check if user must respond
           const mustRespond = match.pending_response_from === userId;
           const respondBy = match.response_deadline ? new Date(match.response_deadline) : undefined;
 
@@ -78,14 +82,14 @@ export function useConversations(userId: string) {
                   city: match.matched_user.city,
                   state: match.matched_user.state,
                 },
-                photos: match.matched_user.photos.map((p) => ({
+                photos: match.matched_user.photos.map((p: any) => ({
                   id: p.id,
                   url: p.url,
                   type: p.photo_type,
                   approved: p.approved,
                   uploadDate: new Date(),
                 })),
-                statusBadges: match.matched_user.badges.map((b) => ({
+                statusBadges: match.matched_user.badges.map((b: any) => ({
                   id: b.id,
                   type: b.badge_type,
                   tier: b.tier,
@@ -117,9 +121,9 @@ export function useConversations(userId: string) {
       );
 
       setConversations(conversationsWithMessages);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading conversations:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load conversations');
+      setError(err.message || 'Failed to load conversations');
     } finally {
       setLoading(false);
     }
