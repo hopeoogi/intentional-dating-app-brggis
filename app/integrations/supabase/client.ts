@@ -11,7 +11,8 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 console.log('Initializing Supabase client...');
 console.log('Platform:', Platform.OS);
 
-// Create Supabase client with minimal configuration
+// Create Supabase client with explicit storage configuration
+// This ensures the adapter is properly initialized
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: AsyncStorage,
