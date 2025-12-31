@@ -44,23 +44,8 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-font",
       "expo-router",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/natively-dark.png",
-          "color": "#000000",
-          "sounds": []
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "This app needs access to your photo library to upload profile pictures.",
-          "cameraPermission": "This app needs access to your camera to take profile pictures."
-        }
-      ]
+      "expo-font"
     ],
     "scheme": "intentional-dating",
     "experiments": {

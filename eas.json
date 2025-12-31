@@ -8,44 +8,17 @@
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
-        "simulator": true,
-        "autoIncrement": true
-      },
-      "android": {
-        "autoIncrement": true
+        "simulator": true
       }
     },
     "preview": {
-      "distribution": "internal",
-      "ios": {
-        "autoIncrement": true
-      },
-      "android": {
-        "autoIncrement": true
-      }
+      "distribution": "internal"
     },
     "production": {
-      "ios": {
-        "autoIncrement": true,
-        "buildConfiguration": "Release"
-      },
-      "android": {
-        "autoIncrement": true,
-        "buildType": "apk"
-      }
+      "autoIncrement": true
     }
   },
   "submit": {
-    "production": {
-      "ios": {
-        "appleId": "your-apple-id@example.com",
-        "ascAppId": "your-app-store-connect-app-id",
-        "appleTeamId": "your-team-id"
-      },
-      "android": {
-        "serviceAccountKeyPath": "./path-to-your-service-account-key.json",
-        "track": "internal"
-      }
-    }
+    "production": {}
   }
 }
