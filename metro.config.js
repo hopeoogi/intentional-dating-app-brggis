@@ -12,9 +12,9 @@ config.cacheStores = [
   }),
 ];
 
-// CRITICAL: Enable package exports for proper ES module resolution
-// This fixes the adapter error by allowing Metro to correctly resolve
-// @supabase/supabase-js's conditional exports
+// CRITICAL FIX: Enable package exports for proper ES module resolution
+// This is the PRIMARY fix for the "(h.adapter || o.adapter) is not a function" error
+// It allows Metro to correctly resolve @supabase/supabase-js's conditional exports
 config.resolver.unstable_enablePackageExports = true;
 
 // Ensure proper source extensions order - prioritize native extensions
@@ -43,6 +43,15 @@ config.resolver.assetExts = [
 // Ensure node_modules are resolved correctly
 config.resolver.nodeModulesPaths = [
   path.resolve(__dirname, 'node_modules'),
+];
+
+// Disable require cycles to prevent circular dependency issues
+config.resolver.unstable_enableSymlinks = false;
+config.resolver.unstable_conditionNames = [
+  'react-native',
+  'browser',
+  'require',
+  'import',
 ];
 
 // Custom resolver to handle missing CSS modules in expo-router

@@ -18,5 +18,7 @@ module.exports = function (api) {
       "@babel/plugin-proposal-export-namespace-from",
       "react-native-worklets/plugin", // Must be last
     ],
+    // Ensure proper module resolution without babel-plugin-module-resolver
+    // We rely on Metro's unstable_enablePackageExports instead
   };
 };

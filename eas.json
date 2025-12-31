@@ -19,7 +19,8 @@
       "env": {
         "NODE_ENV": "production",
         "EXPO_NO_METRO_LAZY": "1",
-        "EXPO_USE_METRO_WORKSPACE_ROOT": "1"
+        "EXPO_USE_METRO_WORKSPACE_ROOT": "1",
+        "EXPO_NO_DOTENV": "1"
       },
       "cache": {
         "disabled": false
@@ -30,7 +31,8 @@
       "env": {
         "NODE_ENV": "production",
         "EXPO_NO_METRO_LAZY": "1",
-        "EXPO_USE_METRO_WORKSPACE_ROOT": "1"
+        "EXPO_USE_METRO_WORKSPACE_ROOT": "1",
+        "EXPO_NO_DOTENV": "1"
       },
       "cache": {
         "disabled": false

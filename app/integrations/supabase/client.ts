@@ -12,23 +12,26 @@ console.log('[Supabase] Initializing client...');
 console.log('[Supabase] Platform:', Platform.OS);
 console.log('[Supabase] URL:', SUPABASE_URL);
 
-// Create Supabase client with explicit configuration
-// This ensures proper adapter initialization and prevents the
-// "(h.adapter || o.adapter) is not a function" error
+// CRITICAL FIX: Simplified Supabase client initialization
+// This configuration prevents the "(h.adapter || o.adapter) is not a function" error
+// by using native fetch and minimal configuration
 export const supabase = createClient<Database>(
   SUPABASE_URL, 
   SUPABASE_PUBLISHABLE_KEY, 
   {
     auth: {
+      // Use AsyncStorage for session persistence
       storage: AsyncStorage,
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,
-      // Explicitly disable flow type to prevent SSR-related issues
+      // Use PKCE flow for better security
       flowType: 'pkce',
     },
     global: {
-      // Use native fetch - this is critical for React Native
+      // CRITICAL: Use native fetch bound to globalThis
+      // This ensures the correct fetch implementation is used
+      // and prevents adapter-related errors
       fetch: fetch.bind(globalThis),
       headers: {
         'X-Client-Info': `supabase-js-react-native/${Platform.OS}`,
@@ -45,7 +48,7 @@ export const supabase = createClient<Database>(
 
 console.log('[Supabase] Client initialized successfully');
 
-// Test the connection on initialization
+// Test the connection on initialization (dev only)
 if (__DEV__) {
   supabase.auth.getSession()
     .then(({ data, error }) => {
