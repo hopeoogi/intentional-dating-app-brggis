@@ -40,7 +40,6 @@ module.exports = function (api) {
             "@hooks": "./hooks",
             "@types": "./types",
             "@contexts": "./contexts",
-            "@supabase/supabase-js": "./node_modules/@supabase/supabase-js/dist/main/index.js",
           },
         },
       ],

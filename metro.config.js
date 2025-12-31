@@ -8,12 +8,16 @@ const config = getDefaultConfig(__dirname);
 // Enable package exports resolution for modern ES modules
 config.resolver.unstable_enablePackageExports = true;
 
-// Add additional resolver settings to prevent adapter errors
+// Add additional resolver settings
 config.resolver.sourceExts = [...config.resolver.sourceExts, 'cjs', 'mjs'];
-config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
+
+// Proper resolver main fields order for React Native
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main', 'module'];
 
 // Ensure proper module resolution
 config.resolver.unstable_enableSymlinks = false;
+
+// Condition names for package exports
 config.resolver.unstable_conditionNames = [
   'react-native',
   'browser',
@@ -21,12 +25,12 @@ config.resolver.unstable_conditionNames = [
   'import',
 ];
 
-// Use turborepo to restore the cache when possible
+// Use file-based cache
 config.cacheStores = [
   new FileStore({ root: path.join(__dirname, 'node_modules', '.cache', 'metro') }),
 ];
 
-// Reset cache version to force clean build
-config.cacheVersion = 'v2-production-ready';
+// Update cache version to force clean build
+config.cacheVersion = 'v3-supabase-fix';
 
 module.exports = config;
