@@ -9,8 +9,26 @@ const config = getDefaultConfig(__dirname);
 // This is critical for resolving @supabase/supabase-js and other modern packages
 config.resolver.unstable_enablePackageExports = true;
 
-// Ensure proper source extensions order
-config.resolver.sourceExts = ['js', 'jsx', 'json', 'ts', 'tsx', 'cjs', 'mjs'];
+// Ensure proper source extensions order with platform-specific files
+config.resolver.sourceExts = [
+  'web.tsx',
+  'web.ts',
+  'web.jsx',
+  'web.js',
+  'native.tsx',
+  'native.ts',
+  'ios.tsx',
+  'ios.ts',
+  'android.tsx',
+  'android.ts',
+  'tsx',
+  'ts',
+  'jsx',
+  'js',
+  'json',
+  'cjs',
+  'mjs'
+];
 
 // Add node_modules to the watch folders
 config.watchFolders = [path.resolve(__dirname)];
