@@ -14,35 +14,6 @@ module.exports = function (api) {
   return {
     presets: ["babel-preset-expo"],
     plugins: [
-      [
-        "module-resolver",
-        {
-          root: ["./"],
-          extensions: [
-            ".ios.ts",
-            ".android.ts",
-            ".native.ts",
-            ".ts",
-            ".ios.tsx",
-            ".android.tsx",
-            ".native.tsx",
-            ".tsx",
-            ".jsx",
-            ".js",
-            ".json",
-            ".cjs",
-            ".mjs",
-          ],
-          alias: {
-            "@": "./",
-            "@components": "./components",
-            "@style": "./style",
-            "@hooks": "./hooks",
-            "@types": "./types",
-            "@contexts": "./contexts",
-          },
-        },
-      ],
       ...EDITABLE_COMPONENTS,
       "@babel/plugin-proposal-export-namespace-from",
       "react-native-worklets/plugin",
