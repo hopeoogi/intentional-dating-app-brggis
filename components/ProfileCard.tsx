@@ -2,7 +2,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity, ScrollView, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { User } from '@/types/User';
-import { colors } from '@/styles/commonStyles';
 import StatusBadge from './StatusBadge';
 import { IconSymbol } from './IconSymbol';
 import { LinearGradient } from 'expo-linear-gradient';

@@ -28,6 +28,8 @@ export default function PendingUsersScreen() {
   const [actionLoading, setActionLoading] = useState(false);
   const [expandedPhotoId, setExpandedPhotoId] = useState<string | null>(null);
 
+  console.log('Screen width:', width);
+
   const handleApprove = async (userId: string) => {
     Alert.alert(
       'Approve User',

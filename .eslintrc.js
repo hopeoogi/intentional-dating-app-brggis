@@ -10,6 +10,7 @@ module.exports = {
     'no-console': 'off',
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     'react/prop-types': 'off',
+    'react/display-name': 'warn',
     'no-unused-vars': 'off',
   },
   env: {
