@@ -32,7 +32,7 @@ export const supabase = createClient<Database>(
       // CRITICAL: Use native fetch bound to globalThis
       // This ensures the correct fetch implementation is used
       // and prevents adapter-related errors
-      fetch: fetch.bind(globalThis),
+      fetch: (...args) => fetch(...args),
       headers: {
         'X-Client-Info': `supabase-js-react-native/${Platform.OS}`,
       },
@@ -50,15 +50,18 @@ console.log('[Supabase] Client initialized successfully');
 
 // Test the connection on initialization (dev only)
 if (__DEV__) {
-  supabase.auth.getSession()
-    .then(({ data, error }) => {
-      if (error) {
-        console.log('[Supabase] Session check error:', error.message);
-      } else {
-        console.log('[Supabase] Session check successful:', data.session ? 'Logged in' : 'Not logged in');
-      }
-    })
-    .catch((err) => {
-      console.error('[Supabase] Session check failed:', err);
-    });
+  // Use setTimeout to avoid blocking app startup
+  setTimeout(() => {
+    supabase.auth.getSession()
+      .then(({ data, error }) => {
+        if (error) {
+          console.log('[Supabase] Session check error:', error.message);
+        } else {
+          console.log('[Supabase] Session check successful:', data.session ? 'Logged in' : 'Not logged in');
+        }
+      })
+      .catch((err) => {
+        console.error('[Supabase] Session check failed:', err);
+      });
+  }, 1000);
 }

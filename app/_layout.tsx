@@ -5,7 +5,7 @@ import 'react-native-url-polyfill/auto';
 import "react-native-reanimated";
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
-import { Stack, router } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -19,6 +19,7 @@ import {
 } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
+import { UserProvider } from "@/contexts/UserContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -87,41 +88,152 @@ export default function RootLayout() {
       <ThemeProvider
         value={colorScheme === "dark" ? CustomDarkTheme : CustomDefaultTheme}
       >
-        <WidgetProvider>
-          <GestureHandlerRootView>
-            <Stack>
-              {/* Main app with tabs */}
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <UserProvider>
+          <WidgetProvider>
+            <GestureHandlerRootView>
+              <Stack>
+                {/* Main app with tabs */}
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-              {/* Modal Demo Screens */}
-              <Stack.Screen
-                name="modal"
-                options={{
-                  presentation: "modal",
-                  title: "Standard Modal",
-                }}
-              />
-              <Stack.Screen
-                name="formsheet"
-                options={{
-                  presentation: "formSheet",
-                  title: "Form Sheet Modal",
-                  sheetGrabberVisible: true,
-                  sheetAllowedDetents: [0.5, 0.8, 1.0],
-                  sheetCornerRadius: 20,
-                }}
-              />
-              <Stack.Screen
-                name="transparent-modal"
-                options={{
-                  presentation: "transparentModal",
-                  headerShown: false,
-                }}
-              />
-            </Stack>
-            <SystemBars style={"auto"} />
-          </GestureHandlerRootView>
-        </WidgetProvider>
+                {/* Modal Demo Screens */}
+                <Stack.Screen
+                  name="modal"
+                  options={{
+                    presentation: "modal",
+                    title: "Standard Modal",
+                  }}
+                />
+                <Stack.Screen
+                  name="formsheet"
+                  options={{
+                    presentation: "formSheet",
+                    title: "Form Sheet Modal",
+                    sheetGrabberVisible: true,
+                    sheetAllowedDetents: [0.5, 0.8, 1.0],
+                    sheetCornerRadius: 20,
+                  }}
+                />
+                <Stack.Screen
+                  name="transparent-modal"
+                  options={{
+                    presentation: "transparentModal",
+                    headerShown: false,
+                  }}
+                />
+
+                {/* Admin Portal Routes */}
+                <Stack.Screen
+                  name="admin/index"
+                  options={{
+                    title: "Admin Portal",
+                    headerShown: true,
+                  }}
+                />
+                <Stack.Screen
+                  name="admin/pending-users"
+                  options={{
+                    title: "Pending Users",
+                    headerShown: true,
+                  }}
+                />
+                <Stack.Screen
+                  name="admin/user-management"
+                  options={{
+                    title: "User Management",
+                    headerShown: true,
+                  }}
+                />
+                <Stack.Screen
+                  name="admin/analytics"
+                  options={{
+                    title: "Analytics",
+                    headerShown: true,
+                  }}
+                />
+                <Stack.Screen
+                  name="admin/notifications"
+                  options={{
+                    title: "Notifications",
+                    headerShown: true,
+                  }}
+                />
+                <Stack.Screen
+                  name="admin/promo-codes"
+                  options={{
+                    title: "Promo Codes",
+                    headerShown: true,
+                  }}
+                />
+                <Stack.Screen
+                  name="admin/payments"
+                  options={{
+                    title: "Payments",
+                    headerShown: true,
+                  }}
+                />
+                <Stack.Screen
+                  name="admin/email-campaigns"
+                  options={{
+                    title: "Email Campaigns",
+                    headerShown: true,
+                  }}
+                />
+
+                {/* Other App Routes */}
+                <Stack.Screen
+                  name="chat"
+                  options={{
+                    title: "Chat",
+                    headerShown: true,
+                  }}
+                />
+                <Stack.Screen
+                  name="profile-detail"
+                  options={{
+                    title: "Profile",
+                    headerShown: true,
+                  }}
+                />
+                <Stack.Screen
+                  name="start-conversation"
+                  options={{
+                    title: "Start Conversation",
+                    headerShown: true,
+                  }}
+                />
+                <Stack.Screen
+                  name="settings"
+                  options={{
+                    title: "Settings",
+                    headerShown: true,
+                  }}
+                />
+                <Stack.Screen
+                  name="match-filters"
+                  options={{
+                    title: "Match Filters",
+                    headerShown: true,
+                  }}
+                />
+                <Stack.Screen
+                  name="subscription"
+                  options={{
+                    title: "Subscription",
+                    headerShown: true,
+                  }}
+                />
+                <Stack.Screen
+                  name="rejection-feedback"
+                  options={{
+                    title: "Rejection Feedback",
+                    headerShown: true,
+                  }}
+                />
+              </Stack>
+              <SystemBars style={"auto"} />
+            </GestureHandlerRootView>
+          </WidgetProvider>
+        </UserProvider>
       </ThemeProvider>
     </>
   );

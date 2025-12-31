@@ -5,17 +5,17 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
+// CRITICAL FIX: Enable package exports for proper ES module resolution
+// This is the PRIMARY fix for the "(h.adapter || o.adapter) is not a function" error
+// It allows Metro to correctly resolve @supabase/supabase-js's conditional exports
+config.resolver.unstable_enablePackageExports = true;
+
 // Use file-based cache for better performance
 config.cacheStores = [
   new FileStore({ 
     root: path.join(__dirname, 'node_modules', '.cache', 'metro') 
   }),
 ];
-
-// CRITICAL FIX: Enable package exports for proper ES module resolution
-// This is the PRIMARY fix for the "(h.adapter || o.adapter) is not a function" error
-// It allows Metro to correctly resolve @supabase/supabase-js's conditional exports
-config.resolver.unstable_enablePackageExports = true;
 
 // Ensure proper source extensions order - prioritize native extensions
 config.resolver.sourceExts = [
