@@ -21,10 +21,6 @@
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload profile pictures.",
         "NSCameraUsageDescription": "This app needs access to your camera to take profile pictures.",
         "NSLocationWhenInUseUsageDescription": "This app needs your location to show you matches nearby."
-      },
-      "entitlements": {
-        "com.apple.developer.usernotifications.filtering": true,
-        "aps-environment": "production"
       }
     },
     "android": {
