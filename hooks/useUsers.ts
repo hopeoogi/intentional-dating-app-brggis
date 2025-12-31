@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/app/integrations/supabase/client';
-import { User } from '@/types/User';
-import { mockUsers } from '@/data/mockData';
+import { User, StatusBadge } from '@/types/User';
 
 interface SupabaseUser {
   id: string;
@@ -16,25 +15,25 @@ interface SupabaseUser {
   subscription_tier: 'basic' | 'elite' | 'star';
   created_at: string;
   last_active: string;
-  user_photos: {
+  user_photos: Array<{
     id: string;
     url: string;
     photo_type: 'selfie' | 'fullbody' | 'activity';
     approved: boolean;
     upload_date: string;
-  }[];
-  status_badges: {
+  }>;
+  status_badges: Array<{
     id: string;
     badge_type: string;
     tier: 'basic' | 'elite' | 'star';
     verified: boolean;
     verification_date: string;
-  }[];
+  }>;
 }
 
 export function useUsers() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
-  const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -61,16 +60,14 @@ export function useUsers() {
 
       if (fetchError) {
         console.error('Error fetching users:', fetchError);
-        console.log('Using mock data as fallback');
-        setUsers(mockUsers);
-        return;
+        throw fetchError;
       }
 
       console.log('Fetched users:', data?.length || 0);
 
       if (!data || data.length === 0) {
-        console.log('No users found in database, using mock data');
-        setUsers(mockUsers);
+        console.log('No users found in database');
+        setUsers([]);
         return;
       }
 
@@ -115,8 +112,6 @@ export function useUsers() {
     } catch (err) {
       console.error('Error in fetchUsers:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch users');
-      console.log('Using mock data as fallback due to error');
-      setUsers(mockUsers);
     } finally {
       setLoading(false);
     }

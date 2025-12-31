@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-// Configure notification handler
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -12,22 +12,28 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export const useNotifications = () => {
-  const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
-  const [notification, setNotification] = useState<Notifications.Notification | null>(null);
+export function useNotifications() {
+  const [expoPushToken, setExpoPushToken] = useState<string>('');
+  const [notification, setNotification] = useState<Notifications.Notification | undefined>(undefined);
 
   useEffect(() => {
-    registerForPushNotificationsAsync().then(token => {
+    // Skip push notification setup on web
+    if (Platform.OS === 'web') {
+      console.log('Push notifications are not supported on web');
+      return;
+    }
+
+    registerForPushNotificationsAsync().then((token) => {
       if (token) {
         setExpoPushToken(token);
       }
     });
 
-    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+    const notificationListener = Notifications.addNotificationReceivedListener((notification) => {
       setNotification(notification);
     });
 
-    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+    const responseListener = Notifications.addNotificationResponseReceivedListener((response) => {
       console.log('Notification response:', response);
     });
 
@@ -37,41 +43,104 @@ export const useNotifications = () => {
     };
   }, []);
 
+  const scheduleEngagementNotification = async (hours: number = 24) => {
+    // Skip on web
+    if (Platform.OS === 'web') {
+      console.log('Notifications not supported on web');
+      return;
+    }
+
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'New matches waiting! 💜',
+          body: 'Check out your daily intentional connections',
+          data: { type: 'engagement' },
+        },
+        trigger: {
+          seconds: hours * 3600,
+          repeats: true,
+        },
+      });
+    } catch (error) {
+      console.error('Error scheduling notification:', error);
+    }
+  };
+
+  const scheduleMessageNotification = async (matchName: string) => {
+    // Skip on web
+    if (Platform.OS === 'web') {
+      console.log('Notifications not supported on web');
+      return;
+    }
+
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: `${matchName} is waiting for your response`,
+          body: 'Reply to keep the conversation going',
+          data: { type: 'message' },
+        },
+        trigger: {
+          seconds: 3600,
+        },
+      });
+    } catch (error) {
+      console.error('Error scheduling message notification:', error);
+    }
+  };
+
   return {
     expoPushToken,
     notification,
+    scheduleEngagementNotification,
+    scheduleMessageNotification,
   };
-};
+}
 
 async function registerForPushNotificationsAsync() {
-  try {
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FF231F7C',
-      });
-    }
-
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    
-    if (finalStatus !== 'granted') {
-      console.log('Failed to get push token for push notification!');
-      return null;
-    }
-    
-    const token = (await Notifications.getExpoPushTokenAsync()).data;
-    console.log('Push token:', token);
-    return token;
-  } catch (error) {
-    console.error('Error registering for push notifications:', error);
-    return null;
+  // Skip on web
+  if (Platform.OS === 'web') {
+    return undefined;
   }
+
+  let token;
+
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#6A5ACD',
+    });
+  }
+
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+  
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  
+  if (finalStatus !== 'granted') {
+    console.log('Failed to get push token for push notification!');
+    return;
+  }
+
+  try {
+    const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+    
+    if (!projectId) {
+      console.log('Project ID not found');
+      return;
+    }
+    
+    token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+    console.log('Push token:', token);
+  } catch (e) {
+    console.log('Error getting push token:', e);
+  }
+
+  return token;
 }

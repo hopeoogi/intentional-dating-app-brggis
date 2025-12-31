@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/natively-dark.png",
       "resizeMode": "contain",
@@ -21,6 +21,10 @@
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload profile pictures.",
         "NSCameraUsageDescription": "This app needs access to your camera to take profile pictures.",
         "NSLocationWhenInUseUsageDescription": "This app needs your location to show you matches nearby."
+      },
+      "entitlements": {
+        "com.apple.developer.usernotifications.filtering": true,
+        "aps-environment": "production"
       }
     },
     "android": {
@@ -44,8 +48,23 @@
       "bundler": "metro"
     },
     "plugins": [
+      "expo-font",
       "expo-router",
-      "expo-font"
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/natively-dark.png",
+          "color": "#000000",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "This app needs access to your photo library to upload profile pictures.",
+          "cameraPermission": "This app needs access to your camera to take profile pictures."
+        }
+      ]
     ],
     "scheme": "intentional-dating",
     "experiments": {

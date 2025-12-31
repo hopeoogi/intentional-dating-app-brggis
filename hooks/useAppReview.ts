@@ -1,8 +1,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
+import * as StoreReview from 'expo-store-review';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppUsageData, APP_REVIEW_THRESHOLD_DAYS } from '@/types/AppReview';
-import { Linking, Platform } from 'react-native';
 
 const APP_USAGE_KEY = 'app_usage_data';
 
@@ -19,35 +19,26 @@ export function useAppReview() {
 
   const requestReview = useCallback(async () => {
     try {
-      // Since expo-store-review was removed, we'll open the app store directly
-      // This is a fallback solution that works on both iOS and Android
+      const hasAction = await StoreReview.hasAction();
       
-      if (Platform.OS === 'ios') {
-        // Replace with your actual App Store ID
-        const appStoreId = 'YOUR_APP_STORE_ID';
-        const url = `https://apps.apple.com/app/id${appStoreId}?action=write-review`;
-        await Linking.openURL(url);
-      } else if (Platform.OS === 'android') {
-        // Replace with your actual package name
-        const packageName = 'com.anonymous.Natively';
-        const url = `market://details?id=${packageName}`;
-        await Linking.openURL(url);
+      if (hasAction) {
+        await StoreReview.requestReview();
+        
+        setUsageData((prevData) => {
+          if (prevData) {
+            const updatedData: AppUsageData = {
+              ...prevData,
+              hasRequestedReview: true,
+              lastReviewRequestDate: new Date(),
+            };
+            AsyncStorage.setItem(APP_USAGE_KEY, JSON.stringify(updatedData)).catch((error) => {
+              console.error('Error saving usage data:', error);
+            });
+            return updatedData;
+          }
+          return prevData;
+        });
       }
-      
-      setUsageData((prevData) => {
-        if (prevData) {
-          const updatedData: AppUsageData = {
-            ...prevData,
-            hasRequestedReview: true,
-            lastReviewRequestDate: new Date(),
-          };
-          AsyncStorage.setItem(APP_USAGE_KEY, JSON.stringify(updatedData)).catch((error) => {
-            console.error('Error saving usage data:', error);
-          });
-          return updatedData;
-        }
-        return prevData;
-      });
     } catch (error) {
       console.error('Error requesting review:', error);
     }

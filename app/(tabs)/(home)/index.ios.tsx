@@ -16,20 +16,17 @@ export default function HomeScreen() {
     } else {
       Alert.alert(
         'No More Matches',
-        "You've viewed all your matches for today. Check back tomorrow for new connections!",
+        'You&apos;ve viewed all your matches for today. Check back tomorrow for new connections!',
         [{ text: 'OK' }]
       );
     }
   };
 
   const handleMessage = () => {
-    const currentUser = users[selectedUserIndex];
-    if (currentUser) {
-      router.push({
-        pathname: '/start-conversation',
-        params: { userId: currentUser.id }
-      });
-    }
+    router.push({
+      pathname: '/start-conversation',
+      params: { userId: users[selectedUserIndex].id }
+    });
   };
 
   if (loading) {
