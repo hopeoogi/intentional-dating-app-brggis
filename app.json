@@ -65,7 +65,6 @@
           "cameraPermission": "This app needs access to your camera to take profile pictures."
         }
       ],
-      "expo-screen-capture",
       "expo-store-review"
     ],
     "scheme": "intentional-dating",
