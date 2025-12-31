@@ -3,7 +3,7 @@
   "expo": {
     "name": "Intentional Dating",
     "slug": "intentional-dating",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
     "userInterfaceStyle": "automatic",
@@ -16,19 +16,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.Natively",
-      "buildNumber": "3",
+      "buildNumber": "5",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload profile pictures.",
-        "NSCameraUsageDescription": "This app needs access to your camera to take profile pictures.",
-        "NSLocationWhenInUseUsageDescription": "This app needs your location to show you matches nearby.",
-        "UIBackgroundModes": [
-          "remote-notification"
-        ]
-      },
-      "entitlements": {
-        "com.apple.developer.usernotifications.filtering": true,
-        "aps-environment": "production"
+        "NSCameraUsageDescription": "This app needs access to your camera to take profile pictures."
       }
     },
     "android": {
@@ -38,14 +30,11 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.Natively",
-      "versionCode": 3,
+      "versionCode": 5,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "POST_NOTIFICATIONS"
+        "WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {
@@ -61,14 +50,6 @@
           "backgroundColor": "#000000",
           "image": "./assets/images/natively-dark.png",
           "imageWidth": 200
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/natively-dark.png",
-          "color": "#000000",
-          "sounds": []
         }
       ],
       [

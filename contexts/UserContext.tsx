@@ -28,7 +28,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     allowedTiers: ['basic'],
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
 
   const updateFiltersForTier = useCallback((tier: SubscriptionTier) => {
     try {
@@ -48,7 +47,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     try {
       console.log('[UserContext] Loading user preferences...');
       
-      // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Timeout loading preferences')), 5000)
       );
@@ -78,8 +76,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       console.log('[UserContext] User preferences loaded successfully');
     } catch (error) {
       console.error('[UserContext] Error loading user preferences:', error);
-      setHasError(true);
-      // Continue with defaults instead of crashing
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +94,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       console.log('[UserContext] Match filters updated');
     } catch (error) {
       console.error('[UserContext] Error saving match filters:', error);
-      // Don't crash, just log the error
     }
   }, [matchFilters]);
 
@@ -111,22 +106,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
       console.log('[UserContext] Subscription tier updated:', tier);
     } catch (error) {
       console.error('[UserContext] Error saving subscription tier:', error);
-      // Don't crash, just log the error
     }
   }, [updateFiltersForTier]);
 
-  // Show loading indicator while preferences are loading
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
-  }
-
-  // If there was an error, still render children with defaults
-  if (hasError) {
-    console.warn('[UserContext] Rendering with default values due to error');
   }
 
   return (
