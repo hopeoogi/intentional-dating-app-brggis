@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/app/integrations/supabase/client';
-import { User, StatusBadge } from '@/types/User';
+import { User } from '@/types/User';
+import { mockUsers } from '@/data/mockData';
 
 interface SupabaseUser {
   id: string;
@@ -32,8 +33,8 @@ interface SupabaseUser {
 }
 
 export function useUsers() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -60,14 +61,16 @@ export function useUsers() {
 
       if (fetchError) {
         console.error('Error fetching users:', fetchError);
-        throw fetchError;
+        console.log('Using mock data as fallback');
+        setUsers(mockUsers);
+        return;
       }
 
       console.log('Fetched users:', data?.length || 0);
 
       if (!data || data.length === 0) {
-        console.log('No users found in database');
-        setUsers([]);
+        console.log('No users found in database, using mock data');
+        setUsers(mockUsers);
         return;
       }
 
@@ -112,6 +115,8 @@ export function useUsers() {
     } catch (err) {
       console.error('Error in fetchUsers:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch users');
+      console.log('Using mock data as fallback due to error');
+      setUsers(mockUsers);
     } finally {
       setLoading(false);
     }

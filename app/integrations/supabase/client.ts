@@ -47,25 +47,43 @@ const createStorageAdapter = () => {
   return AsyncStorage;
 };
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: createStorageAdapter(),
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: Platform.OS === 'web',
-  },
-});
+let supabaseClient: ReturnType<typeof createClient<Database>> | null = null;
 
-console.log('Supabase client initialized successfully');
-
-// Test the connection
-supabase
-  .from('users')
-  .select('count')
-  .then(({ data, error }) => {
-    if (error) {
-      console.error('Supabase connection test failed:', error);
-    } else {
-      console.log('Supabase connection test successful. User count:', data);
+export const getSupabaseClient = () => {
+  if (!supabaseClient) {
+    try {
+      supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+        auth: {
+          storage: createStorageAdapter(),
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: Platform.OS === 'web',
+        },
+      });
+      console.log('Supabase client initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize Supabase client:', error);
+      throw error;
     }
-  });
+  }
+  return supabaseClient;
+};
+
+export const supabase = getSupabaseClient();
+
+// Test the connection asynchronously (don't block initialization)
+setTimeout(() => {
+  supabase
+    .from('users')
+    .select('count')
+    .then(({ data, error }) => {
+      if (error) {
+        console.error('Supabase connection test failed:', error);
+      } else {
+        console.log('Supabase connection test successful');
+      }
+    })
+    .catch((err) => {
+      console.error('Supabase connection test error:', err);
+    });
+}, 1000);
