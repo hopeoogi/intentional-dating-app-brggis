@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/app/integrations/supabase/client';
 import { User, StatusBadge } from '@/types/User';
+import { captureException, addBreadcrumb } from '@/app/integrations/sentry/client';
 
 interface SupabaseUser {
   id: string;
@@ -45,7 +46,13 @@ export function useUsers() {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching users from Supabase...');
+      addBreadcrumb({
+        message: 'Fetching users from Supabase',
+        category: 'data',
+        level: 'info',
+      });
+
+      console.log('[useUsers] Fetching users from Supabase...');
 
       const { data, error: fetchError } = await supabase
         .from('users')
@@ -59,14 +66,23 @@ export function useUsers() {
         .order('created_at', { ascending: false });
 
       if (fetchError) {
-        console.error('Error fetching users:', fetchError);
+        console.error('[useUsers] Error fetching users:', fetchError);
+        captureException(new Error(`Failed to fetch users: ${fetchError.message}`), {
+          supabaseError: fetchError,
+          context: 'useUsers.fetchUsers',
+        });
         throw fetchError;
       }
 
-      console.log('Fetched users:', data?.length || 0);
+      console.log('[useUsers] Fetched users:', data?.length || 0);
 
       if (!data || data.length === 0) {
-        console.log('No users found in database');
+        console.log('[useUsers] No users found in database');
+        addBreadcrumb({
+          message: 'No users found in database',
+          category: 'data',
+          level: 'warning',
+        });
         setUsers([]);
         return;
       }
@@ -107,11 +123,24 @@ export function useUsers() {
         },
       }));
 
-      console.log('Transformed users:', transformedUsers.length);
+      console.log('[useUsers] Transformed users:', transformedUsers.length);
+      addBreadcrumb({
+        message: `Successfully loaded ${transformedUsers.length} users`,
+        category: 'data',
+        level: 'info',
+      });
+      
       setUsers(transformedUsers);
     } catch (err) {
-      console.error('Error in fetchUsers:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch users');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch users';
+      console.error('[useUsers] Error in fetchUsers:', err);
+      
+      captureException(err instanceof Error ? err : new Error(errorMessage), {
+        context: 'useUsers.fetchUsers',
+        errorType: 'data_fetch_error',
+      });
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

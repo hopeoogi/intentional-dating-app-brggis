@@ -2,6 +2,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { colors } from '@/styles/commonStyles';
+import { captureException } from '@/app/integrations/sentry/client';
 
 interface Props {
   children: ReactNode;
@@ -33,6 +34,17 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    
+    // Send error to Sentry
+    try {
+      captureException(error, {
+        errorInfo: errorInfo.componentStack,
+        errorBoundary: 'RootErrorBoundary',
+      });
+    } catch (sentryError) {
+      console.error('Failed to send error to Sentry:', sentryError);
+    }
+    
     this.setState({
       error,
       errorInfo,
@@ -52,9 +64,12 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <View style={styles.container}>
           <View style={styles.content}>
+            <Text style={styles.emoji}>😔</Text>
             <Text style={styles.title}>Oops! Something went wrong</Text>
             <Text style={styles.message}>
               We&apos;re sorry for the inconvenience. The app encountered an unexpected error.
+              {'\n\n'}
+              Our team has been notified and we&apos;re working on a fix.
             </Text>
             
             <TouchableOpacity style={styles.button} onPress={this.handleReset}>
@@ -65,8 +80,14 @@ export class ErrorBoundary extends Component<Props, State> {
               <ScrollView style={styles.errorDetails}>
                 <Text style={styles.errorTitle}>Error Details (Dev Only):</Text>
                 <Text style={styles.errorText}>{this.state.error.toString()}</Text>
+                {this.state.error.stack && (
+                  <Text style={styles.errorText}>{this.state.error.stack}</Text>
+                )}
                 {this.state.errorInfo && (
-                  <Text style={styles.errorText}>{this.state.errorInfo.componentStack}</Text>
+                  <>
+                    <Text style={styles.errorTitle}>Component Stack:</Text>
+                    <Text style={styles.errorText}>{this.state.errorInfo.componentStack}</Text>
+                  </>
                 )}
               </ScrollView>
             )}
@@ -91,6 +112,10 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     width: '100%',
     alignItems: 'center',
+  },
+  emoji: {
+    fontSize: 64,
+    marginBottom: 16,
   },
   title: {
     fontSize: 24,
@@ -132,6 +157,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 8,
+    marginTop: 8,
   },
   errorText: {
     fontSize: 12,

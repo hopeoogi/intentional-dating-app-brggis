@@ -21,9 +21,15 @@ import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
 import { UserProvider } from "@/contexts/UserContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { initializeSentry } from "@/app/integrations/sentry/client";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+// Initialize crash reporting
+initializeSentry().catch((error) => {
+  console.error('[App] Failed to initialize Sentry:', error);
+});
 
 export const unstable_settings = {
   initialRouteName: "(tabs)", // Ensure any route can link back to `/`
