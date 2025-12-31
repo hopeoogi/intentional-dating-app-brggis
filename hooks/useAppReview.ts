@@ -5,8 +5,8 @@ import { AppUsageData, APP_REVIEW_THRESHOLD_DAYS } from '@/types/AppReview';
 
 const APP_USAGE_KEY = 'app_usage_data';
 
-// Note: expo-store-review has been temporarily disabled due to build issues
-// This hook will track usage but not request reviews until the package is fixed
+// Note: App review functionality has been removed to ensure stable builds
+// This hook will track usage for future implementation
 export function useAppReview() {
   const [usageData, setUsageData] = useState<AppUsageData | null>(null);
 
@@ -16,30 +16,6 @@ export function useAppReview() {
     }
     
     return data.daysUsed >= APP_REVIEW_THRESHOLD_DAYS;
-  }, []);
-
-  const requestReview = useCallback(async () => {
-    try {
-      // expo-store-review functionality disabled due to build issues
-      console.log('App review would be requested here (expo-store-review disabled)');
-      
-      setUsageData((prevData) => {
-        if (prevData) {
-          const updatedData: AppUsageData = {
-            ...prevData,
-            hasRequestedReview: true,
-            lastReviewRequestDate: new Date(),
-          };
-          AsyncStorage.setItem(APP_USAGE_KEY, JSON.stringify(updatedData)).catch((error) => {
-            console.error('Error saving usage data:', error);
-          });
-          return updatedData;
-        }
-        return prevData;
-      });
-    } catch (error) {
-      console.error('Error requesting review:', error);
-    }
   }, []);
 
   const initializeUsageTracking = useCallback(async () => {
@@ -72,21 +48,13 @@ export function useAppReview() {
         setUsageData(newData);
       }
     } catch (error) {
-      console.error('Error initializing usage tracking:', error);
+      console.error('[AppReview] Error initializing usage tracking:', error);
     }
   }, []);
 
   useEffect(() => {
     initializeUsageTracking();
   }, [initializeUsageTracking]);
-
-  useEffect(() => {
-    if (usageData && shouldRequestReview(usageData)) {
-      // Disabled until expo-store-review build issues are resolved
-      console.log('Review request criteria met but expo-store-review is disabled');
-      // requestReview();
-    }
-  }, [usageData, shouldRequestReview]);
 
   return { usageData };
 }
