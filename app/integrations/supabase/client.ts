@@ -29,7 +29,7 @@ export const supabase = createClient<Database>(
       flowType: 'pkce',
     },
     global: {
-      // CRITICAL: Use native fetch bound to globalThis
+      // CRITICAL: Use native fetch with arrow function
       // This ensures the correct fetch implementation is used
       // and prevents adapter-related errors
       fetch: (...args) => fetch(...args),
@@ -49,6 +49,7 @@ export const supabase = createClient<Database>(
 console.log('[Supabase] Client initialized successfully');
 
 // Test the connection on initialization (dev only)
+// Wrapped in try-catch to prevent crashes if Supabase is unreachable
 if (__DEV__) {
   // Use setTimeout to avoid blocking app startup
   setTimeout(() => {
