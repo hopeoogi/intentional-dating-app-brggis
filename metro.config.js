@@ -28,9 +28,10 @@ config.resolver.sourceExts = [
   'cjs',
 ];
 
-// Add asset extensions
+// Add asset extensions including CSS for web compatibility
 config.resolver.assetExts = [
   ...config.resolver.assetExts,
+  'css',
   'db',
   'mp3',
   'ttf',
@@ -44,7 +45,23 @@ config.resolver.nodeModulesPaths = [
   path.resolve(__dirname, 'node_modules'),
 ];
 
-// Enable symlinks resolution
-config.resolver.resolveRequest = null;
+// Custom resolver to handle missing CSS modules in expo-router
+const defaultResolver = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // If expo-router is trying to import native-tabs.module.css, redirect to our assets folder
+  if (moduleName.includes('native-tabs.module.css')) {
+    return {
+      filePath: path.resolve(__dirname, 'assets/native-tabs.module.css'),
+      type: 'sourceFile',
+    };
+  }
+  
+  // Use default resolver for everything else
+  if (defaultResolver) {
+    return defaultResolver(context, moduleName, platform);
+  }
+  
+  return context.resolveRequest(context, moduleName, platform);
+};
 
 module.exports = config;
