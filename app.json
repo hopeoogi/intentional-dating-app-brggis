@@ -64,8 +64,7 @@
           "photosPermission": "This app needs access to your photo library to upload profile pictures.",
           "cameraPermission": "This app needs access to your camera to take profile pictures."
         }
-      ],
-      "expo-store-review"
+      ]
     ],
     "scheme": "intentional-dating",
     "experiments": {
