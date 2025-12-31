@@ -15,20 +15,20 @@ interface SupabaseUser {
   subscription_tier: 'basic' | 'elite' | 'star';
   created_at: string;
   last_active: string;
-  user_photos: Array<{
+  user_photos: {
     id: string;
     url: string;
     photo_type: 'selfie' | 'fullbody' | 'activity';
     approved: boolean;
     upload_date: string;
-  }>;
-  status_badges: Array<{
+  }[];
+  status_badges: {
     id: string;
     badge_type: string;
     tier: 'basic' | 'elite' | 'star';
     verified: boolean;
     verification_date: string;
-  }>;
+  }[];
 }
 
 export function useUsers() {

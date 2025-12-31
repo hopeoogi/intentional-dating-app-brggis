@@ -1,8 +1,9 @@
 
 import { useEffect } from 'react';
-import * as ScreenCapture from 'expo-screen-capture';
 import { Platform } from 'react-native';
 
+// Note: expo-screen-capture has been temporarily disabled due to build issues
+// This hook will log when screen protection would be activated but won't actually protect
 export function useScreenCapture(enabled: boolean = true) {
   useEffect(() => {
     let isActive = true;
@@ -14,16 +15,11 @@ export function useScreenCapture(enabled: boolean = true) {
       }
 
       try {
-        const isAvailable = await ScreenCapture.isAvailableAsync();
+        // expo-screen-capture functionality disabled due to build issues
+        console.log('Screen capture protection would be activated here (expo-screen-capture disabled)');
         
-        if (isAvailable) {
-          await ScreenCapture.preventScreenCaptureAsync();
-          console.log('Screen capture protection activated');
-          
-          if (Platform.OS === 'ios') {
-            await ScreenCapture.enableAppSwitcherProtectionAsync(10);
-            console.log('App switcher protection enabled');
-          }
+        if (Platform.OS === 'ios') {
+          console.log('App switcher protection would be enabled here (expo-screen-capture disabled)');
         }
       } catch (error) {
         console.error('Error activating screen protection:', error);
@@ -36,14 +32,10 @@ export function useScreenCapture(enabled: boolean = true) {
       isActive = false;
       
       if (enabled) {
-        ScreenCapture.allowScreenCaptureAsync().catch((error) => {
-          console.error('Error deactivating screen protection:', error);
-        });
+        console.log('Screen capture protection would be deactivated here (expo-screen-capture disabled)');
         
         if (Platform.OS === 'ios') {
-          ScreenCapture.disableAppSwitcherProtectionAsync().catch((error) => {
-            console.error('Error disabling app switcher protection:', error);
-          });
+          console.log('App switcher protection would be disabled here (expo-screen-capture disabled)');
         }
       }
     };

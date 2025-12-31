@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -39,11 +39,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  useEffect(() => {
-    checkAdminStatus();
-  }, []);
-
-  const checkAdminStatus = async () => {
+  const checkAdminStatus = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -74,7 +70,11 @@ export default function AdminDashboard() {
       Alert.alert('Error', 'Failed to verify admin access.');
       router.back();
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    checkAdminStatus();
+  }, [checkAdminStatus]);
 
   const loadDashboardStats = async () => {
     try {
