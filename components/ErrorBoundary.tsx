@@ -15,13 +15,13 @@ interface State {
 }
 
 // ============================================================================
-// BUILD 162 - ENHANCED ERROR BOUNDARY
+// BUILD 163 - ENHANCED ERROR BOUNDARY WITH BETTER RECOVERY
 // ============================================================================
 // Improvements:
-// 1. Track error count to prevent infinite loops
-// 2. Better state management before navigation
-// 3. Multiple navigation fallbacks
-// 4. Enhanced logging for debugging
+// 1. Better error recovery with app restart option
+// 2. Simplified navigation logic
+// 3. Clear error messages for users
+// 4. Prevent infinite error loops
 // ============================================================================
 
 export class ErrorBoundary extends React.Component<Props, State> {
@@ -40,11 +40,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('='.repeat(80));
-    console.error('[ErrorBoundary] Caught error - BUILD 162');
+    console.error('[ErrorBoundary] Caught error - BUILD 163');
     console.error('[ErrorBoundary] Error:', error);
     console.error('[ErrorBoundary] Error message:', error.message);
     console.error('[ErrorBoundary] Error stack:', error.stack);
-    console.error('[ErrorBoundary] Error Info:', errorInfo);
     console.error('[ErrorBoundary] Component Stack:', errorInfo.componentStack);
     console.error('[ErrorBoundary] Error count:', this.state.errorCount + 1);
     console.error('='.repeat(80));
@@ -56,84 +55,65 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   handleReset = () => {
-    console.log('[ErrorBoundary] User clicked reset button');
-    console.log('[ErrorBoundary] Current error count:', this.state.errorCount);
+    console.log('[ErrorBoundary] User requested reset');
     
     // Prevent infinite loops
-    if (this.state.errorCount > 5) {
-      console.error('[ErrorBoundary] Too many errors, not attempting navigation');
+    if (this.state.errorCount > 3) {
+      console.error('[ErrorBoundary] Too many errors, showing restart message');
       return;
     }
 
-    console.log('[ErrorBoundary] Clearing error state...');
-    
-    // Clear the error state FIRST
+    // Clear error state
     this.setState({ 
       hasError: false, 
       error: null,
-    }, () => {
-      console.log('[ErrorBoundary] Error state cleared, navigating to signin...');
-      
-      // Use a small delay to ensure state is cleared before navigation
-      setTimeout(() => {
-        this.attemptNavigation();
-      }, 100);
     });
-  };
 
-  attemptNavigation = () => {
+    // Navigate to signin
     try {
-      console.log('[ErrorBoundary] Attempting replace navigation...');
+      console.log('[ErrorBoundary] Navigating to signin...');
       router.replace('/signin');
-      console.log('[ErrorBoundary] Replace navigation successful');
-    } catch (replaceError) {
-      console.error('[ErrorBoundary] Replace navigation error:', replaceError);
-      
-      // Try push navigation
-      setTimeout(() => {
-        try {
-          console.log('[ErrorBoundary] Attempting push navigation...');
-          router.push('/signin');
-          console.log('[ErrorBoundary] Push navigation successful');
-        } catch (pushError) {
-          console.error('[ErrorBoundary] Push navigation error:', pushError);
-          
-          // Try navigate as last resort
-          setTimeout(() => {
-            try {
-              console.log('[ErrorBoundary] Attempting navigate...');
-              router.navigate('/signin');
-              console.log('[ErrorBoundary] Navigate successful');
-            } catch (navError) {
-              console.error('[ErrorBoundary] All navigation methods failed:', navError);
-            }
-          }, 500);
-        }
-      }, 500);
+    } catch (navError) {
+      console.error('[ErrorBoundary] Navigation failed:', navError);
+      // If navigation fails, just clear the error and let the app try to recover
+      this.setState({ hasError: false, error: null });
     }
   };
 
   render() {
     if (this.state.hasError) {
+      const tooManyErrors = this.state.errorCount > 3;
+
       return (
         <View style={styles.container}>
-          <Text style={styles.title}>Oops!</Text>
-          <Text style={styles.message}>Something went wrong</Text>
-          <Text style={styles.errorText}>
-            {this.state.error?.message || 'Unknown error'}
+          <Text style={styles.emoji}>⚠️</Text>
+          <Text style={styles.title}>Something Went Wrong</Text>
+          <Text style={styles.message}>
+            {tooManyErrors 
+              ? 'The app encountered multiple errors. Please restart the app.'
+              : 'We encountered an unexpected error. Don&apos;t worry, your data is safe.'}
           </Text>
-          {this.state.errorCount > 5 ? (
-            <Text style={styles.warningText}>
-              Too many errors detected. Please restart the app.
+          
+          {this.state.error && (
+            <Text style={styles.errorText}>
+              {this.state.error.message}
             </Text>
-          ) : (
+          )}
+
+          {!tooManyErrors && (
             <TouchableOpacity 
               style={styles.button} 
               onPress={this.handleReset}
               activeOpacity={0.7}
             >
-              <Text style={styles.buttonText}>Proceed to Log In</Text>
+              <Text style={styles.buttonText}>Continue to Sign In</Text>
             </TouchableOpacity>
+          )}
+
+          {tooManyErrors && (
+            <Text style={styles.restartText}>
+              Please close and restart the app
+            </Text>
           )}
         </View>
       );
@@ -149,43 +129,50 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.background,
-    padding: 20,
+    padding: 32,
+  },
+  emoji: {
+    fontSize: 72,
+    marginBottom: 24,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '700',
     color: colors.text,
-    marginBottom: 10,
+    marginBottom: 16,
+    textAlign: 'center',
   },
   message: {
-    fontSize: 18,
-    color: colors.text,
-    marginBottom: 20,
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginBottom: 24,
     textAlign: 'center',
+    lineHeight: 24,
   },
   errorText: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 30,
+    marginBottom: 32,
     textAlign: 'center',
     paddingHorizontal: 20,
-  },
-  warningText: {
-    fontSize: 16,
-    color: '#FF6B6B',
-    marginTop: 20,
-    textAlign: 'center',
-    paddingHorizontal: 20,
+    opacity: 0.7,
   },
   button: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 10,
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  restartText: {
+    fontSize: 16,
+    color: '#FF6B6B',
+    marginTop: 24,
+    textAlign: 'center',
     fontWeight: '600',
   },
 });

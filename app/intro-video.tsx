@@ -2,97 +2,62 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ============================================================================
-// BUILD 162 - SIMPLIFIED INTRO SCREEN WITH ROBUST ERROR HANDLING
+// BUILD 163 - SIMPLIFIED INTRO SCREEN WITH ROBUST NAVIGATION
 // ============================================================================
-// This screen is intentionally simple and does NOT query the database.
-// It shows a brief intro animation and then navigates to the signin screen.
-// This prevents any potential database connection issues during app startup.
-// 
-// Key features:
-// - No database queries
-// - Local assets only
-// - Robust error handling
-// - Multiple navigation fallbacks
+// This screen shows a brief intro and then navigates to signin.
+// Key improvements:
+// 1. Mark intro as seen in AsyncStorage
+// 2. Simplified navigation logic
+// 3. Better error handling
+// 4. Immediate skip option
 // ============================================================================
 
 export default function IntroVideoScreen() {
-  const [showSkipButton, setShowSkipButton] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [navigationAttempted, setNavigationAttempted] = useState(false);
 
   useEffect(() => {
-    console.log('[IntroVideo] Component mounted - BUILD 162');
-    console.log('[IntroVideo] No database queries - using local assets only');
+    console.log('[IntroVideo] Component mounted - BUILD 163');
     
-    try {
-      // Show skip button after 2 seconds
-      const skipTimer = setTimeout(() => {
-        console.log('[IntroVideo] Showing skip button');
-        setShowSkipButton(true);
-      }, 2000);
-      
-      // Auto-navigate after 3 seconds
-      const navTimer = setTimeout(() => {
-        console.log('[IntroVideo] Auto-navigating to signin...');
-        handleNavigation();
-      }, 3000);
-      
-      return () => {
-        console.log('[IntroVideo] Cleaning up timers');
-        clearTimeout(skipTimer);
-        clearTimeout(navTimer);
-      };
-    } catch (err) {
-      console.error('[IntroVideo] Error in useEffect:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    }
+    // Mark intro as seen
+    markIntroAsSeen();
+    
+    // Auto-navigate after 3 seconds
+    const timer = setTimeout(() => {
+      console.log('[IntroVideo] Auto-navigating to signin...');
+      navigateToSignIn();
+    }, 3000);
+    
+    return () => {
+      console.log('[IntroVideo] Cleaning up timer');
+      clearTimeout(timer);
+    };
   }, []);
 
-  const handleNavigation = () => {
-    if (navigationAttempted) {
-      console.log('[IntroVideo] Navigation already attempted, skipping...');
-      return;
-    }
-
-    setNavigationAttempted(true);
-    console.log('[IntroVideo] Attempting navigation to signin...');
-    
+  const markIntroAsSeen = async () => {
     try {
+      await AsyncStorage.setItem('hasSeenIntro', 'true');
+      console.log('[IntroVideo] Marked intro as seen');
+    } catch (error) {
+      console.error('[IntroVideo] Error marking intro as seen:', error);
+    }
+  };
+
+  const navigateToSignIn = () => {
+    try {
+      console.log('[IntroVideo] Navigating to signin...');
       router.replace('/signin');
-      console.log('[IntroVideo] Navigation successful');
     } catch (err) {
-      console.error('[IntroVideo] Replace navigation error:', err);
-      setError(err instanceof Error ? err.message : 'Navigation failed');
-      
-      // Try alternative navigation methods
-      setTimeout(() => {
-        try {
-          console.log('[IntroVideo] Trying push navigation...');
-          router.push('/signin');
-          console.log('[IntroVideo] Push navigation successful');
-        } catch (pushErr) {
-          console.error('[IntroVideo] Push navigation also failed:', pushErr);
-          
-          // Last resort: try navigate
-          setTimeout(() => {
-            try {
-              console.log('[IntroVideo] Trying navigate...');
-              router.navigate('/signin');
-              console.log('[IntroVideo] Navigate successful');
-            } catch (navErr) {
-              console.error('[IntroVideo] All navigation methods failed:', navErr);
-            }
-          }, 500);
-        }
-      }, 500);
+      console.error('[IntroVideo] Navigation error:', err);
+      setError('Unable to continue. Please restart the app.');
     }
   };
 
   const handleSkip = () => {
     console.log('[IntroVideo] User skipped intro');
-    handleNavigation();
+    navigateToSignIn();
   };
 
   if (error) {
@@ -103,10 +68,10 @@ export default function IntroVideoScreen() {
           <Text style={styles.errorMessage}>{error}</Text>
           <TouchableOpacity 
             style={styles.retryButton}
-            onPress={handleNavigation}
+            onPress={handleSkip}
             activeOpacity={0.7}
           >
-            <Text style={styles.retryButtonText}>Try Again</Text>
+            <Text style={styles.retryButtonText}>Restart</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -124,15 +89,13 @@ export default function IntroVideoScreen() {
         <Text style={styles.brandName}>Intentional</Text>
         <Text style={styles.tagline}>Where connections matter</Text>
       </View>
-      {showSkipButton && (
-        <TouchableOpacity 
-          style={styles.skipButton}
-          onPress={handleSkip}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.skipButtonText}>Skip</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity 
+        style={styles.skipButton}
+        onPress={handleSkip}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.skipButtonText}>Skip</Text>
+      </TouchableOpacity>
     </View>
   );
 }

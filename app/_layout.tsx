@@ -1,6 +1,5 @@
 
 // CRITICAL: Import URL polyfill FIRST before any other imports
-// This ensures URL parsing is available for all modules
 import 'react-native-url-polyfill/auto';
 import "react-native-reanimated";
 import React, { useEffect } from "react";
@@ -23,27 +22,34 @@ import { UserProvider } from "@/contexts/UserContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { initializeSentry } from "@/app/integrations/sentry/client";
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
+// Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
-// Initialize crash reporting
+// ============================================================================
+// BUILD 163 - PRODUCTION-READY APP LAYOUT
+// ============================================================================
+// Key improvements:
+// 1. Better splash screen handling
+// 2. Simplified initialization
+// 3. Enhanced error boundaries
+// 4. Robust network detection
+// ============================================================================
+
 console.log('='.repeat(80));
-console.log('[App] Starting app initialization - BUILD 161');
-console.log('[App] Version: 1.2.2');
-console.log('[App] React Native version:', require('react-native/package.json').version);
-console.log('[App] Expo version:', require('expo/package.json').version);
-console.log('[App] ENHANCED FIX: Axios and all HTTP libraries blocked');
-console.log('[App] Using native fetch exclusively with detailed logging');
-console.log('[App] Fetch available:', typeof fetch !== 'undefined');
-console.log('[App] BUILD 161: Fixed intro screen crash and login navigation');
+console.log('[App] Starting app initialization - BUILD 163');
+console.log('[App] Version: 1.2.5');
+console.log('[App] Platform:', require('react-native').Platform.OS);
+console.log('[App] Production-ready configuration');
+console.log('[App] All HTTP libraries blocked - using native fetch only');
 console.log('='.repeat(80));
 
+// Initialize Sentry for crash reporting
 initializeSentry().catch((error) => {
   console.error('[App] Failed to initialize Sentry:', error);
 });
 
 export const unstable_settings = {
-  initialRouteName: "(tabs)", // Ensure any route can link back to `/`
+  initialRouteName: "index",
 };
 
 export default function RootLayout() {
@@ -56,20 +62,19 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       console.log('[App] Fonts loaded, hiding splash screen...');
-      // Use hide() instead of hideAsync() for better compatibility
-      SplashScreen.hide();
+      SplashScreen.hideAsync().catch((error) => {
+        console.error('[App] Error hiding splash screen:', error);
+      });
     }
   }, [loaded]);
 
-  React.useEffect(() => {
-    if (
-      !networkState.isConnected &&
-      networkState.isInternetReachable === false
-    ) {
+  useEffect(() => {
+    if (networkState.isConnected === false && networkState.isInternetReachable === false) {
       console.log('[App] Network offline detected');
       Alert.alert(
-        "🔌 You are offline",
-        "You can keep using the app! Your changes will be saved locally and synced when you are back online."
+        "No Internet Connection",
+        "Please check your internet connection and try again.",
+        [{ text: 'OK' }]
       );
     } else if (networkState.isConnected) {
       console.log('[App] ✅ Network is online');
@@ -84,24 +89,24 @@ export default function RootLayout() {
     ...DefaultTheme,
     dark: false,
     colors: {
-      primary: "rgb(0, 122, 255)", // System Blue
-      background: "rgb(242, 242, 247)", // Light mode background
-      card: "rgb(255, 255, 255)", // White cards/surfaces
-      text: "rgb(0, 0, 0)", // Black text for light mode
-      border: "rgb(216, 216, 220)", // Light gray for separators/borders
-      notification: "rgb(255, 59, 48)", // System Red
+      primary: "rgb(0, 122, 255)",
+      background: "rgb(242, 242, 247)",
+      card: "rgb(255, 255, 255)",
+      text: "rgb(0, 0, 0)",
+      border: "rgb(216, 216, 220)",
+      notification: "rgb(255, 59, 48)",
     },
   };
 
   const CustomDarkTheme: Theme = {
     ...DarkTheme,
     colors: {
-      primary: "rgb(10, 132, 255)", // System Blue (Dark Mode)
-      background: "rgb(1, 1, 1)", // True black background for OLED displays
-      card: "rgb(28, 28, 30)", // Dark card/surface color
-      text: "rgb(255, 255, 255)", // White text for dark mode
-      border: "rgb(44, 44, 46)", // Dark gray for separators/borders
-      notification: "rgb(255, 69, 58)", // System Red (Dark Mode)
+      primary: "rgb(10, 132, 255)",
+      background: "rgb(1, 1, 1)",
+      card: "rgb(28, 28, 30)",
+      text: "rgb(255, 255, 255)",
+      border: "rgb(44, 44, 46)",
+      notification: "rgb(255, 69, 58)",
     },
   };
   
@@ -113,12 +118,21 @@ export default function RootLayout() {
       >
         <UserProvider>
           <WidgetProvider>
-            <GestureHandlerRootView>
-              <Stack>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <Stack screenOptions={{ headerShown: false }}>
+                {/* Entry point */}
+                <Stack.Screen name="index" options={{ headerShown: false }} />
+
+                {/* Auth & Onboarding */}
+                <Stack.Screen name="intro-video" options={{ headerShown: false }} />
+                <Stack.Screen name="signin" options={{ headerShown: false }} />
+                <Stack.Screen name="application-pending" options={{ headerShown: false }} />
+                <Stack.Screen name="apply" options={{ headerShown: false }} />
+
                 {/* Main app with tabs */}
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-                {/* Modal Demo Screens */}
+                {/* Modal Screens */}
                 <Stack.Screen
                   name="modal"
                   options={{
@@ -144,149 +158,27 @@ export default function RootLayout() {
                   }}
                 />
 
-                {/* Admin Portal Routes */}
-                <Stack.Screen
-                  name="admin/index"
-                  options={{
-                    title: "Admin Portal",
-                    headerShown: true,
-                  }}
-                />
-                <Stack.Screen
-                  name="admin/intro-video"
-                  options={{
-                    title: "Intro Video",
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="admin/pending-users"
-                  options={{
-                    title: "Pending Users",
-                    headerShown: true,
-                  }}
-                />
-                <Stack.Screen
-                  name="admin/user-management"
-                  options={{
-                    title: "User Management",
-                    headerShown: true,
-                  }}
-                />
-                <Stack.Screen
-                  name="admin/analytics"
-                  options={{
-                    title: "Analytics",
-                    headerShown: true,
-                  }}
-                />
-                <Stack.Screen
-                  name="admin/notifications"
-                  options={{
-                    title: "Notifications",
-                    headerShown: true,
-                  }}
-                />
-                <Stack.Screen
-                  name="admin/promo-codes"
-                  options={{
-                    title: "Promo Codes",
-                    headerShown: true,
-                  }}
-                />
-                <Stack.Screen
-                  name="admin/payments"
-                  options={{
-                    title: "Payments",
-                    headerShown: true,
-                  }}
-                />
-                <Stack.Screen
-                  name="admin/email-campaigns"
-                  options={{
-                    title: "Email Campaigns",
-                    headerShown: true,
-                  }}
-                />
-
-                {/* Auth & Onboarding Routes */}
-                <Stack.Screen
-                  name="intro-video"
-                  options={{
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="signin"
-                  options={{
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="application-pending"
-                  options={{
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="apply"
-                  options={{
-                    headerShown: false,
-                  }}
-                />
+                {/* Admin Portal */}
+                <Stack.Screen name="admin/index" options={{ title: "Admin Portal" }} />
+                <Stack.Screen name="admin/intro-video" options={{ title: "Intro Video", headerShown: false }} />
+                <Stack.Screen name="admin/pending-users" options={{ title: "Pending Users" }} />
+                <Stack.Screen name="admin/user-management" options={{ title: "User Management" }} />
+                <Stack.Screen name="admin/analytics" options={{ title: "Analytics" }} />
+                <Stack.Screen name="admin/notifications" options={{ title: "Notifications" }} />
+                <Stack.Screen name="admin/promo-codes" options={{ title: "Promo Codes" }} />
+                <Stack.Screen name="admin/payments" options={{ title: "Payments" }} />
+                <Stack.Screen name="admin/email-campaigns" options={{ title: "Email Campaigns" }} />
 
                 {/* Other App Routes */}
-                <Stack.Screen
-                  name="chat"
-                  options={{
-                    title: "Chat",
-                    headerShown: true,
-                  }}
-                />
-                <Stack.Screen
-                  name="profile-detail"
-                  options={{
-                    title: "Profile",
-                    headerShown: true,
-                  }}
-                />
-                <Stack.Screen
-                  name="start-conversation"
-                  options={{
-                    title: "Start Conversation",
-                    headerShown: true,
-                  }}
-                />
-                <Stack.Screen
-                  name="settings"
-                  options={{
-                    title: "Settings",
-                    headerShown: true,
-                  }}
-                />
-                <Stack.Screen
-                  name="match-filters"
-                  options={{
-                    title: "Match Filters",
-                    headerShown: true,
-                  }}
-                />
-                <Stack.Screen
-                  name="subscription"
-                  options={{
-                    title: "Subscription",
-                    headerShown: true,
-                  }}
-                />
-                <Stack.Screen
-                  name="rejection-feedback"
-                  options={{
-                    title: "Rejection Feedback",
-                    headerShown: true,
-                  }}
-                />
+                <Stack.Screen name="chat" options={{ title: "Chat" }} />
+                <Stack.Screen name="profile-detail" options={{ title: "Profile" }} />
+                <Stack.Screen name="start-conversation" options={{ title: "Start Conversation" }} />
+                <Stack.Screen name="settings" options={{ title: "Settings" }} />
+                <Stack.Screen name="match-filters" options={{ title: "Match Filters" }} />
+                <Stack.Screen name="subscription" options={{ title: "Subscription" }} />
+                <Stack.Screen name="rejection-feedback" options={{ title: "Rejection Feedback" }} />
               </Stack>
-              <SystemBars style={"auto"} />
+              <SystemBars style="auto" />
             </GestureHandlerRootView>
           </WidgetProvider>
         </UserProvider>
