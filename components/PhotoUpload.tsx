@@ -36,7 +36,7 @@ export function PhotoUpload({ photoUrl, onPhotoSelected, photoType }: PhotoUploa
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: photoType === 'fullbody' ? [3, 4] : [1, 1],
         quality: 0.8,

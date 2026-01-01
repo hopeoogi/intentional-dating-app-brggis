@@ -1,6 +1,7 @@
+
 {
   "name": "Natively",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "main": "index.ts",
   "scripts": {
     "dev": "EXPO_NO_TELEMETRY=1 expo start --clear --tunnel",
@@ -12,7 +13,8 @@
     "build:production": "eas build --platform all --profile production",
     "build:preview": "eas build --platform all --profile preview",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "clear-cache": "rm -rf node_modules/.cache && rm -rf .expo && expo start --clear"
   },
   "dependencies": {
     "@babel/plugin-proposal-export-namespace-from": "^7.18.9",

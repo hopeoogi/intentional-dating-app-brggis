@@ -99,11 +99,11 @@ export default function IntroVideoScreen() {
     loadIntroSettings();
   }, [loadIntroSettings]);
 
-  const handleVideoStatusUpdate = (status: AVPlaybackStatus) => {
+  const handleVideoStatusUpdate = useCallback((status: AVPlaybackStatus) => {
     if (status.isLoaded && status.didJustFinish) {
       navigateToNext();
     }
-  };
+  }, [navigateToNext]);
 
   if (loading || !settings) {
     return (
