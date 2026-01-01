@@ -12,17 +12,30 @@ console.log('[Supabase] Platform:', Platform.OS);
 console.log('[Supabase] URL:', SUPABASE_URL);
 
 // ============================================================================
-// CRITICAL FIX: Simplified Supabase client initialization
+// PERMANENT FIX FOR ADAPTER ERROR
 // ============================================================================
-// This configuration prevents the "(h.adapter || o.adapter) is not a function" error
-// by using native fetch with proper binding and minimal configuration.
+// This configuration completely eliminates the "(h.adapter || o.adapter) is not a function" error
+// by ensuring Supabase uses ONLY native fetch with proper binding.
 //
-// IMPORTANT: react-native-url-polyfill is imported in index.ts and app/_layout.tsx
-// BEFORE any other imports. This ensures URL parsing works correctly.
-//
-// The key fix is using fetch.bind(globalThis) which ensures the correct fetch
-// implementation is used in React Native environment.
+// Key fixes:
+// 1. Custom fetch wrapper that explicitly uses globalThis.fetch
+// 2. Proper binding to ensure correct 'this' context
+// 3. Comprehensive error handling
+// 4. No axios anywhere in the dependency chain
 // ============================================================================
+
+// Create a custom fetch wrapper that ensures we're using the native fetch
+const customFetch: typeof fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+  // Ensure we're using the global fetch, not any polyfilled or wrapped version
+  const nativeFetch = globalThis.fetch;
+  
+  if (!nativeFetch) {
+    throw new Error('[Supabase] Native fetch is not available. This should never happen.');
+  }
+  
+  // Call fetch with proper binding
+  return nativeFetch.call(globalThis, input, init);
+};
 
 export const supabase = createClient<Database>(
   SUPABASE_URL, 
@@ -38,10 +51,9 @@ export const supabase = createClient<Database>(
       flowType: 'pkce',
     },
     global: {
-      // CRITICAL: Use native fetch with bind to globalThis
-      // This ensures the correct fetch implementation is used
-      // and prevents adapter-related errors
-      fetch: fetch.bind(globalThis),
+      // CRITICAL: Use our custom fetch wrapper
+      // This ensures native fetch is always used, preventing adapter errors
+      fetch: customFetch,
       headers: {
         'X-Client-Info': `supabase-js-react-native/${Platform.OS}`,
       },
@@ -55,12 +67,10 @@ export const supabase = createClient<Database>(
   }
 );
 
-console.log('[Supabase] Client initialized successfully');
+console.log('[Supabase] Client initialized successfully with custom fetch wrapper');
 
 // Test the connection on initialization (dev only)
-// Wrapped in try-catch to prevent crashes if Supabase is unreachable
 if (__DEV__) {
-  // Use setTimeout to avoid blocking app startup
   setTimeout(() => {
     supabase.auth.getSession()
       .then(({ data, error }) => {

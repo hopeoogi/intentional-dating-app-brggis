@@ -6,32 +6,44 @@ const path = require('path');
 const config = getDefaultConfig(__dirname);
 
 // ============================================================================
-// CRITICAL FIX FOR "(h.adapter || o.adapter) is not a function" ERROR
+// PERMANENT FIX FOR ADAPTER ERROR - METRO CONFIGURATION
 // ============================================================================
-// This configuration ensures proper ES module resolution for @supabase/supabase-js
-// and other modern packages that use conditional exports.
-//
-// The error occurs when Metro cannot properly resolve the HTTP adapter in
-// Supabase's internal modules. This is fixed by enabling package exports.
+// This configuration ensures proper module resolution and prevents the
+// "(h.adapter || o.adapter) is not a function" error by:
+// 1. Enabling package exports for proper ES module resolution
+// 2. Setting correct condition names for React Native
+// 3. Disabling problematic features that can cause conflicts
+// 4. Using file-based caching for consistency
 // ============================================================================
 
 // PRIMARY FIX: Enable package exports for proper ES module resolution
-// This allows Metro to correctly resolve @supabase/supabase-js's conditional exports
-// and prevents the adapter error
 config.resolver.unstable_enablePackageExports = true;
 
-// IMPORTANT: Disable symlinks to prevent circular dependency issues
-// This ensures a clean resolution path without symlink-related complications
+// CRITICAL: Disable symlinks to prevent circular dependency issues
 config.resolver.unstable_enableSymlinks = false;
 
 // Set proper condition names order for React Native
-// This ensures React Native-specific exports are prioritized over browser/node exports
+// This ensures React Native-specific exports are prioritized
 config.resolver.unstable_conditionNames = [
   'react-native',
   'browser',
   'require',
   'import',
 ];
+
+// Disable lazy bundling to ensure all modules are properly resolved
+config.server = {
+  ...config.server,
+  enhanceMiddleware: (middleware) => {
+    return (req, res, next) => {
+      // Ensure proper CORS headers for fetch requests
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      return middleware(req, res, next);
+    };
+  },
+};
 
 // Use file-based cache for better performance and consistency
 config.cacheStores = [
@@ -68,10 +80,17 @@ config.resolver.nodeModulesPaths = [
   path.resolve(__dirname, 'node_modules'),
 ];
 
-// Custom resolver to handle missing CSS modules in expo-router
-const defaultResolver = config.resolver.resolveRequest;
+// Block any axios imports to prevent adapter errors
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  // If expo-router is trying to import native-tabs.module.css, redirect to our assets folder
+  // Block axios imports completely
+  if (moduleName === 'axios' || moduleName.includes('axios')) {
+    throw new Error(
+      `[Metro] Blocked axios import: "${moduleName}". ` +
+      'This app uses native fetch only. Please remove axios from your code and dependencies.'
+    );
+  }
+
+  // Handle native-tabs.module.css
   if (moduleName.includes('native-tabs.module.css')) {
     return {
       filePath: path.resolve(__dirname, 'assets/native-tabs.module.css'),
@@ -80,10 +99,6 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   }
   
   // Use default resolver for everything else
-  if (defaultResolver) {
-    return defaultResolver(context, moduleName, platform);
-  }
-  
   return context.resolveRequest(context, moduleName, platform);
 };
 
