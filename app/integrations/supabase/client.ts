@@ -13,11 +13,10 @@ console.log('[Supabase] Platform:', Platform.OS);
 console.log('[Supabase] URL:', SUPABASE_URL);
 
 // ============================================================================
-// STABLE CONFIGURATION - REVERTED TO UPDATE 117 APPROACH
+// STABLE CONFIGURATION - UPDATE 130 FIX
 // ============================================================================
-// This uses the simpler, more stable fetch binding approach that worked in
-// Update 117. The custom fetch wrapper from Update 125 was causing issues
-// in certain scenarios.
+// This uses the proven stable fetch binding approach from Update 117.
+// The key is to use native fetch directly without any custom wrappers.
 //
 // Key approach:
 // 1. Import URL polyfill FIRST (critical for React Native)

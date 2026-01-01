@@ -6,17 +6,16 @@ const path = require('path');
 const config = getDefaultConfig(__dirname);
 
 // ============================================================================
-// STABLE METRO CONFIGURATION - UPDATE 117 APPROACH
+// STABLE METRO CONFIGURATION - UPDATE 130 FIX
 // ============================================================================
-// This configuration uses the proven stable settings from Update 117 that
-// worked reliably. We've removed the overly complex configurations from
-// Update 125 that were causing adapter issues.
+// This configuration addresses the EAS Launch adapter error by ensuring
+// proper module resolution and preventing any axios-related issues.
 //
 // Key principles:
 // 1. Enable package exports for ES module resolution
 // 2. Keep configuration simple and minimal
-// 3. Only essential customizations
-// 4. Proven stable settings
+// 3. Block axios completely
+// 4. Proven stable settings from Update 117
 // ============================================================================
 
 // PRIMARY FIX: Enable package exports for proper ES module resolution
@@ -30,7 +29,6 @@ config.resolver.unstable_conditionNames = [
   'react-native',
   'browser',
   'require',
-  'import',
 ];
 
 // Use file-based cache for better performance and consistency

@@ -23,10 +23,11 @@
         "EXPO_USE_METRO_WORKSPACE_ROOT": "1",
         "EXPO_NO_DOTENV": "1",
         "EXPO_NO_DEPLOY": "1",
-        "EXPO_NO_GIT_STATUS": "1"
+        "EXPO_NO_GIT_STATUS": "1",
+        "EXPO_NO_CAPABILITY_SYNC": "1"
       },
       "cache": {
-        "disabled": false
+        "disabled": true
       },
       "channel": "preview"
     },
@@ -38,10 +39,11 @@
         "EXPO_USE_METRO_WORKSPACE_ROOT": "1",
         "EXPO_NO_DOTENV": "1",
         "EXPO_NO_DEPLOY": "1",
-        "EXPO_NO_GIT_STATUS": "1"
+        "EXPO_NO_GIT_STATUS": "1",
+        "EXPO_NO_CAPABILITY_SYNC": "1"
       },
       "cache": {
-        "disabled": false
+        "disabled": true
       },
       "channel": "production",
       "ios": {
