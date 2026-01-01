@@ -6,16 +6,25 @@ const path = require('path');
 const config = getDefaultConfig(__dirname);
 
 // ============================================================================
-// ADAPTER ERROR ELIMINATION - BUILD 142
+// STABLE METRO CONFIGURATION - UPDATE 136 APPROACH
 // ============================================================================
-// This configuration completely eliminates the (h.adapter || o.adapter) error
-// by ensuring no axios or similar HTTP libraries can be bundled.
+// This configuration uses the proven stable approach from Update 136 that
+// successfully eliminated adapter errors and provided reliable builds.
 //
-// The error occurs when axios (or similar libraries) try to detect which
-// "adapter" to use for HTTP requests. In React Native, neither browser
-// XMLHttpRequest nor Node.js http module are available, causing the error.
+// Key principles:
+// 1. Enable package exports for proper ES module resolution
+// 2. Disable symlinks to prevent circular dependency issues
+// 3. Block adapter-based HTTP clients (axios, node-fetch, etc.)
+// 4. Use file-based cache for consistency
+// 5. Proper source extension ordering
 //
-// Solution: Block ALL potential sources of adapter-based HTTP clients
+// The error "(h.adapter || o.adapter) is not a function" occurs when axios
+// or similar libraries try to detect which adapter to use for HTTP requests.
+// In React Native, neither browser XMLHttpRequest nor Node.js http module
+// are available, causing the error.
+//
+// Solution: Block ALL potential sources of adapter-based HTTP clients and
+// use native fetch instead.
 // ============================================================================
 
 // PRIMARY FIX: Enable package exports for proper ES module resolution

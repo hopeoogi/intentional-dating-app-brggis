@@ -3,6 +3,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { colors } from '@/styles/commonStyles';
 import { captureException } from '@/app/integrations/sentry/client';
+import { router } from 'expo-router';
 
 interface Props {
   children: ReactNode;
@@ -34,7 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('='.repeat(80));
-    console.error('ERROR BOUNDARY CAUGHT AN ERROR');
+    console.error('ERROR BOUNDARY CAUGHT AN ERROR - BUILD 143');
     console.error('='.repeat(80));
     console.error('Error:', error);
     console.error('Error message:', error.message);
@@ -61,11 +62,19 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   handleReset = () => {
+    console.log('[ErrorBoundary] Resetting error state and navigating to signin...');
     this.setState({
       hasError: false,
       error: null,
       errorInfo: null,
     });
+    
+    // Navigate to signin screen to recover from error
+    try {
+      router.replace('/signin');
+    } catch (navError) {
+      console.error('[ErrorBoundary] Failed to navigate:', navError);
+    }
   };
 
   render() {
@@ -73,16 +82,16 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <View style={styles.container}>
           <View style={styles.content}>
-            <Text style={styles.emoji}>😔</Text>
-            <Text style={styles.title}>Oops! Something went wrong</Text>
+            <Text style={styles.emoji}>🔄</Text>
+            <Text style={styles.title}>Let&apos;s try that again</Text>
             <Text style={styles.message}>
-              We&apos;re sorry for the inconvenience. The app encountered an unexpected error.
+              Something unexpected happened, but don&apos;t worry - we&apos;ve got you covered.
               {'\n\n'}
-              Our team has been notified and we&apos;re working on a fix.
+              Tap below to continue.
             </Text>
             
             <TouchableOpacity style={styles.button} onPress={this.handleReset}>
-              <Text style={styles.buttonText}>Try Again</Text>
+              <Text style={styles.buttonText}>Continue</Text>
             </TouchableOpacity>
 
             {__DEV__ && this.state.error && (

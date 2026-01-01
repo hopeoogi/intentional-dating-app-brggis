@@ -1,12 +1,11 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet, Text, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { supabase } from '@/app/integrations/supabase/client';
 
 export default function IntroVideoScreen() {
-  const [loading, setLoading] = useState(true);
   const [showSkipButton, setShowSkipButton] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -14,107 +13,97 @@ export default function IntroVideoScreen() {
     try {
       console.log('[IntroVideo] Navigating to next screen...');
       
-      // Add timeout protection for session check
+      // Check session with timeout protection
       const sessionPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Session check timeout')), 5000)
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Session check timeout')), 3000)
       );
       
-      const { data: { session }, error: sessionError } = await Promise.race([
-        sessionPromise,
-        timeoutPromise
-      ]) as any;
+      const result = await Promise.race([sessionPromise, timeoutPromise]);
+      const { data: { session }, error: sessionError } = result as any;
       
       if (sessionError) {
-        console.error('[IntroVideo] Session error:', sessionError);
+        console.log('[IntroVideo] Session error, redirecting to signin:', sessionError.message);
         router.replace('/signin');
         return;
       }
       
       if (session) {
-        console.log('[IntroVideo] User is authenticated, checking onboarding status...');
+        console.log('[IntroVideo] User authenticated, checking profile...');
         
-        // Add timeout protection for user data fetch
+        // Check user profile with timeout
         const userPromise = supabase
           .from('users')
           .select('onboarding_complete')
           .eq('auth_user_id', session.user.id)
           .maybeSingle();
         
-        const userTimeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('User data fetch timeout')), 5000)
+        const userTimeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('User data timeout')), 3000)
         );
         
-        const { data: userData, error: userError } = await Promise.race([
-          userPromise,
-          userTimeoutPromise
-        ]) as any;
+        const userResult = await Promise.race([userPromise, userTimeoutPromise]);
+        const { data: userData, error: userError } = userResult as any;
 
         if (userError) {
-          console.error('[IntroVideo] Error fetching user data:', userError);
+          console.log('[IntroVideo] User data error, redirecting to signin:', userError.message);
           router.replace('/signin');
           return;
         }
 
         if (userData?.onboarding_complete) {
-          console.log('[IntroVideo] User onboarding complete, going to home...');
+          console.log('[IntroVideo] Onboarding complete, going to home...');
           router.replace('/(tabs)/(home)/');
+          return;
+        }
+
+        // Check pending application status with timeout
+        const pendingPromise = supabase
+          .from('pending_users')
+          .select('status')
+          .eq('auth_user_id', session.user.id)
+          .maybeSingle();
+        
+        const pendingTimeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Pending check timeout')), 3000)
+        );
+        
+        const pendingResult = await Promise.race([pendingPromise, pendingTimeoutPromise]);
+        const { data: pendingData, error: pendingError } = pendingResult as any;
+
+        if (pendingError) {
+          console.log('[IntroVideo] Pending check error, going to application:', pendingError.message);
+          router.replace('/apply/step-1');
+          return;
+        }
+
+        if (pendingData?.status === 'pending') {
+          console.log('[IntroVideo] Application pending...');
+          router.replace('/application-pending');
         } else {
-          console.log('[IntroVideo] User onboarding incomplete, checking pending status...');
-          
-          // Add timeout protection for pending user check
-          const pendingPromise = supabase
-            .from('pending_users')
-            .select('status')
-            .eq('auth_user_id', session.user.id)
-            .maybeSingle();
-          
-          const pendingTimeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Pending user check timeout')), 5000)
-          );
-          
-          const { data: pendingData, error: pendingError } = await Promise.race([
-            pendingPromise,
-            pendingTimeoutPromise
-          ]) as any;
-
-          if (pendingError) {
-            console.error('[IntroVideo] Error fetching pending user data:', pendingError);
-            router.replace('/apply/step-1');
-            return;
-          }
-
-          if (pendingData?.status === 'pending') {
-            console.log('[IntroVideo] Application pending, going to pending screen...');
-            router.replace('/application-pending');
-          } else {
-            console.log('[IntroVideo] No pending application, going to application...');
-            router.replace('/apply/step-1');
-          }
+          console.log('[IntroVideo] No pending application, starting application...');
+          router.replace('/apply/step-1');
         }
       } else {
-        console.log('[IntroVideo] No session, going to sign in...');
+        console.log('[IntroVideo] No session, going to signin...');
         router.replace('/signin');
       }
     } catch (error) {
-      console.error('[IntroVideo] Unexpected error in navigateToNext:', error);
-      // Default to sign in screen on any error
+      console.error('[IntroVideo] Navigation error:', error);
+      // Always fallback to signin on any error
       router.replace('/signin');
     }
   }, []);
 
   useEffect(() => {
-    console.log('[IntroVideo] Component mounted, starting intro sequence...');
+    console.log('[IntroVideo] Component mounted - BUILD 143');
     
-    // Show skip button after 2 seconds
+    // Show skip button after 1.5 seconds
     const skipTimer = setTimeout(() => {
       setShowSkipButton(true);
-    }, 2000);
+    }, 1500);
     
-    // Hide loading indicator immediately
-    setLoading(false);
-    
-    // Navigate after 3 seconds
+    // Auto-navigate after 3 seconds
     const navTimer = setTimeout(() => {
       navigateToNext();
     }, 3000);
@@ -134,15 +123,6 @@ export default function IntroVideoScreen() {
     console.error('[IntroVideo] Failed to load intro image');
     setImageError(true);
   }, []);
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -213,11 +193,6 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.9)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 10,
-  },
-  loadingText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    marginTop: 16,
   },
   skipButton: {
     position: 'absolute',

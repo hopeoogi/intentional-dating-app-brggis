@@ -9,7 +9,7 @@ const SUPABASE_URL = "https://plnfluykallohjimxnja.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsbmZsdXlrYWxsb2hqaW14bmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDkzNjcsImV4cCI6MjA4MjY4NTM2N30.Hsj2brvHemnDV9w-b0wbdLyaBclteRj3gNW8jDhzCk0";
 
 console.log('='.repeat(80));
-console.log('[Supabase] Initializing client - BUILD 142');
+console.log('[Supabase] Initializing client - BUILD 143');
 console.log('[Supabase] Platform:', Platform.OS);
 console.log('[Supabase] URL:', SUPABASE_URL);
 console.log('[Supabase] Has API Key:', !!SUPABASE_PUBLISHABLE_KEY);
@@ -18,12 +18,9 @@ console.log('[Supabase] Global URL available:', typeof URL !== 'undefined');
 console.log('='.repeat(80));
 
 // ============================================================================
-// ADAPTER ERROR ELIMINATION - BUILD 142
+// STABLE SUPABASE CLIENT CONFIGURATION - UPDATE 136 APPROACH
 // ============================================================================
-// This configuration ensures Supabase uses ONLY native fetch, eliminating
-// any possibility of the (h.adapter || o.adapter) error.
-//
-// Key principles:
+// This configuration uses the proven stable approach from Update 136:
 // 1. Import URL polyfill FIRST (critical for React Native)
 // 2. Use fetch.bind(globalThis) - direct binding to native fetch
 // 3. NO custom fetch wrappers or interceptors

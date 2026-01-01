@@ -27,9 +27,12 @@ import { initializeSentry } from "@/app/integrations/sentry/client";
 SplashScreen.preventAutoHideAsync();
 
 // Initialize crash reporting
-console.log('[App] Starting app initialization...');
+console.log('='.repeat(80));
+console.log('[App] Starting app initialization - BUILD 143');
+console.log('[App] Version: 1.2.0');
 console.log('[App] React Native version:', require('react-native/package.json').version);
 console.log('[App] Expo version:', require('expo/package.json').version);
+console.log('='.repeat(80));
 
 initializeSentry().catch((error) => {
   console.error('[App] Failed to initialize Sentry:', error);
@@ -48,6 +51,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
+      console.log('[App] Fonts loaded, hiding splash screen...');
       // Use hide() instead of hideAsync() for better compatibility
       SplashScreen.hide();
     }
@@ -58,6 +62,7 @@ export default function RootLayout() {
       !networkState.isConnected &&
       networkState.isInternetReachable === false
     ) {
+      console.log('[App] Network offline detected');
       Alert.alert(
         "🔌 You are offline",
         "You can keep using the app! Your changes will be saved locally and synced when you are back online."
