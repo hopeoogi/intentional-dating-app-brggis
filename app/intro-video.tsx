@@ -2,13 +2,12 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { colors } from '@/styles/commonStyles';
 
 export default function IntroVideoScreen() {
   const [showSkipButton, setShowSkipButton] = useState(false);
 
   useEffect(() => {
-    console.log('[IntroVideo] Component mounted - UPDATE 136 STABLE VERSION');
+    console.log('[IntroVideo] Component mounted - BUILD 144 REBUILD');
     
     // Show skip button after 2 seconds
     const skipTimer = setTimeout(() => {

@@ -6,15 +6,14 @@ const path = require('path');
 const config = getDefaultConfig(__dirname);
 
 // ============================================================================
-// STABLE METRO CONFIGURATION - UPDATE 136
+// REBUILD 144 - CLEAN METRO CONFIGURATION
 // ============================================================================
-// This is the proven stable configuration that eliminates adapter errors.
-// Key principles:
-// 1. Enable package exports for proper ES module resolution
-// 2. Disable symlinks to prevent circular dependency issues
-// 3. Block adapter-based HTTP clients (axios, node-fetch, etc.)
-// 4. Use file-based cache for consistency
-// 5. Proper source extension ordering
+// This is a completely fresh Metro configuration based on Expo best practices
+// and the knowledge base documentation. Key principles:
+// 1. Enable package exports for modern ES module resolution
+// 2. Use stable, proven settings
+// 3. No complex blocking - let Metro handle resolution naturally
+// 4. Proper cache configuration
 // ============================================================================
 
 // Enable package exports for proper ES module resolution
@@ -30,7 +29,7 @@ config.resolver.unstable_conditionNames = [
   'require',
 ];
 
-// Use file-based cache for better performance
+// Use file-based cache for better performance and consistency
 config.cacheStores = [
   new FileStore({ 
     root: path.join(__dirname, 'node_modules', '.cache', 'metro') 
@@ -60,41 +59,8 @@ config.resolver.assetExts = [
   'jpg',
 ];
 
-// List of modules that use adapters and should be blocked
-const BLOCKED_MODULES = [
-  'axios',
-  'node-fetch',
-  'cross-fetch',
-  'isomorphic-fetch',
-  'whatwg-fetch',
-  'unfetch',
-  'got',
-  'request',
-  'superagent',
-  'needle',
-];
-
-// Block adapter-based HTTP clients
+// Handle native-tabs.module.css
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  const normalizedModuleName = moduleName.toLowerCase();
-  
-  for (const blockedModule of BLOCKED_MODULES) {
-    if (normalizedModuleName === blockedModule || 
-        normalizedModuleName.startsWith(`${blockedModule}/`) ||
-        normalizedModuleName.includes(`/node_modules/${blockedModule}/`)) {
-      throw new Error(
-        `\n\n` +
-        `╔════════════════════════════════════════════════════════════════╗\n` +
-        `║  BLOCKED: "${moduleName}"                                      \n` +
-        `║                                                                \n` +
-        `║  This module uses adapters that cause errors in React Native. \n` +
-        `║  Use native fetch instead.                                    \n` +
-        `╚════════════════════════════════════════════════════════════════╝\n`
-      );
-    }
-  }
-
-  // Handle native-tabs.module.css
   if (moduleName.includes('native-tabs.module.css')) {
     return {
       filePath: path.resolve(__dirname, 'assets/native-tabs.module.css'),
