@@ -8,18 +8,21 @@ import { Platform } from 'react-native';
 const SUPABASE_URL = "https://plnfluykallohjimxnja.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsbmZsdXlrYWxsb2hqaW14bmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDkzNjcsImV4cCI6MjA4MjY4NTM2N30.Hsj2brvHemnDV9w-b0wbdLyaBclteRj3gNW8jDhzCk0";
 
-console.log('[Supabase] Initializing client - BUILD 144 REBUILD');
+console.log('[Supabase] Initializing client - BUILD 145');
 console.log('[Supabase] Platform:', Platform.OS);
-console.log('[Supabase] Using native fetch API');
+console.log('[Supabase] Using native fetch API (no axios)');
 
 // ============================================================================
-// REBUILD 144 - SIMPLIFIED SUPABASE CLIENT
+// BUILD 145 - FINAL SUPABASE CLIENT CONFIGURATION
 // ============================================================================
 // This is the absolute simplest, most stable Supabase configuration:
 // 1. Import URL polyfill FIRST (already done at top of file)
-// 2. Use native fetch directly - no custom wrappers
+// 2. Use native fetch directly - NO custom wrappers
 // 3. Minimal configuration - only what's necessary
 // 4. Let Supabase handle everything else
+// 
+// CRITICAL: We use the global fetch directly. This ensures we never
+// accidentally bundle axios or any other HTTP library.
 // ============================================================================
 
 export const supabase = createClient<Database>(
@@ -35,7 +38,8 @@ export const supabase = createClient<Database>(
     },
     global: {
       // Use native fetch - this is the key to avoiding adapter errors
-      fetch: fetch,
+      // We bind it to globalThis to ensure proper context
+      fetch: fetch.bind(globalThis),
       headers: {
         'X-Client-Info': `supabase-js-react-native/${Platform.OS}`,
       },
@@ -49,3 +53,4 @@ export const supabase = createClient<Database>(
 );
 
 console.log('[Supabase] Client initialized successfully');
+console.log('[Supabase] Ready to handle requests with native fetch');

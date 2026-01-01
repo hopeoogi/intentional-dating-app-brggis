@@ -28,11 +28,12 @@ SplashScreen.preventAutoHideAsync();
 
 // Initialize crash reporting
 console.log('='.repeat(80));
-console.log('[App] Starting app initialization - BUILD 144 REBUILD');
-console.log('[App] Version: 1.2.0');
+console.log('[App] Starting app initialization - BUILD 145');
+console.log('[App] Version: 1.2.1');
 console.log('[App] React Native version:', require('react-native/package.json').version);
 console.log('[App] Expo version:', require('expo/package.json').version);
-console.log('[App] This is a complete rebuild with simplified architecture');
+console.log('[App] FINAL FIX: Axios completely blocked at Metro level');
+console.log('[App] Using native fetch exclusively for all HTTP requests');
 console.log('='.repeat(80));
 
 initializeSentry().catch((error) => {

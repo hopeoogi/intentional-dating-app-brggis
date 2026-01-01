@@ -6,14 +6,10 @@ const path = require('path');
 const config = getDefaultConfig(__dirname);
 
 // ============================================================================
-// REBUILD 144 - CLEAN METRO CONFIGURATION
+// BUILD 145 - FINAL ADAPTER ERROR FIX
 // ============================================================================
-// This is a completely fresh Metro configuration based on Expo best practices
-// and the knowledge base documentation. Key principles:
-// 1. Enable package exports for modern ES module resolution
-// 2. Use stable, proven settings
-// 3. No complex blocking - let Metro handle resolution naturally
-// 4. Proper cache configuration
+// This configuration completely blocks axios and any libraries that might
+// bundle it, ensuring we only use native fetch throughout the app.
 // ============================================================================
 
 // Enable package exports for proper ES module resolution
@@ -59,8 +55,30 @@ config.resolver.assetExts = [
   'jpg',
 ];
 
-// Handle native-tabs.module.css
+// ============================================================================
+// CRITICAL: Block axios and related HTTP libraries
+// ============================================================================
+// This is the key to eliminating the adapter error. We block axios at the
+// Metro bundler level so it can never be included in the bundle.
+// ============================================================================
+const blockedModules = [
+  'axios',
+  'node-fetch',
+  'cross-fetch',
+  'isomorphic-fetch',
+  'whatwg-fetch',
+];
+
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // Block axios and related libraries
+  if (blockedModules.some(blocked => moduleName === blocked || moduleName.startsWith(`${blocked}/`))) {
+    console.warn(`[Metro] Blocked module: ${moduleName} - Use native fetch instead`);
+    return {
+      type: 'empty',
+    };
+  }
+
+  // Handle native-tabs.module.css
   if (moduleName.includes('native-tabs.module.css')) {
     return {
       filePath: path.resolve(__dirname, 'assets/native-tabs.module.css'),
@@ -68,6 +86,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     };
   }
   
+  // Use default resolution for everything else
   return context.resolveRequest(context, moduleName, platform);
 };
 
