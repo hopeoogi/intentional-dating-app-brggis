@@ -171,6 +171,14 @@ export default function AdminDashboard() {
       color: '#FF9500',
     },
     {
+      title: 'Intro Video',
+      description: 'Manage intro/loading screen',
+      icon: 'play.rectangle.fill',
+      androidIcon: 'video_library',
+      route: '/admin/intro-video',
+      color: '#FF2D55',
+    },
+    {
       title: 'User Management',
       description: 'View and manage all users',
       icon: 'person.3.fill',

@@ -138,6 +138,13 @@ export default function RootLayout() {
                   }}
                 />
                 <Stack.Screen
+                  name="admin/intro-video"
+                  options={{
+                    title: "Intro Video",
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
                   name="admin/pending-users"
                   options={{
                     title: "Pending Users",
@@ -184,6 +191,32 @@ export default function RootLayout() {
                   options={{
                     title: "Email Campaigns",
                     headerShown: true,
+                  }}
+                />
+
+                {/* Auth & Onboarding Routes */}
+                <Stack.Screen
+                  name="intro-video"
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="signin"
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="application-pending"
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="apply"
+                  options={{
+                    headerShown: false,
                   }}
                 />
 
