@@ -6,14 +6,17 @@ const path = require('path');
 const config = getDefaultConfig(__dirname);
 
 // ============================================================================
-// PERMANENT FIX FOR ADAPTER ERROR - METRO CONFIGURATION
+// STABLE METRO CONFIGURATION - UPDATE 117 APPROACH
 // ============================================================================
-// This configuration ensures proper module resolution and prevents the
-// "(h.adapter || o.adapter) is not a function" error by:
-// 1. Enabling package exports for proper ES module resolution
-// 2. Setting correct condition names for React Native
-// 3. Disabling problematic features that can cause conflicts
-// 4. Using file-based caching for consistency
+// This configuration uses the proven stable settings from Update 117 that
+// worked reliably. We've removed the overly complex configurations from
+// Update 125 that were causing adapter issues.
+//
+// Key principles:
+// 1. Enable package exports for ES module resolution
+// 2. Keep configuration simple and minimal
+// 3. Only essential customizations
+// 4. Proven stable settings
 // ============================================================================
 
 // PRIMARY FIX: Enable package exports for proper ES module resolution
@@ -23,27 +26,11 @@ config.resolver.unstable_enablePackageExports = true;
 config.resolver.unstable_enableSymlinks = false;
 
 // Set proper condition names order for React Native
-// This ensures React Native-specific exports are prioritized
 config.resolver.unstable_conditionNames = [
   'react-native',
   'browser',
   'require',
-  'import',
 ];
-
-// Disable lazy bundling to ensure all modules are properly resolved
-config.server = {
-  ...config.server,
-  enhanceMiddleware: (middleware) => {
-    return (req, res, next) => {
-      // Ensure proper CORS headers for fetch requests
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      return middleware(req, res, next);
-    };
-  },
-};
 
 // Use file-based cache for better performance and consistency
 config.cacheStores = [
@@ -52,18 +39,16 @@ config.cacheStores = [
   }),
 ];
 
-// Ensure proper source extensions order - prioritize native extensions
+// Ensure proper source extensions order
 config.resolver.sourceExts = [
   'tsx',
   'ts',
   'jsx',
   'js',
   'json',
-  'mjs',
-  'cjs',
 ];
 
-// Add asset extensions including CSS for web compatibility
+// Add asset extensions
 config.resolver.assetExts = [
   ...config.resolver.assetExts,
   'css',
@@ -75,14 +60,9 @@ config.resolver.assetExts = [
   'jpg',
 ];
 
-// Ensure node_modules are resolved correctly
-config.resolver.nodeModulesPaths = [
-  path.resolve(__dirname, 'node_modules'),
-];
-
-// Block any axios imports to prevent adapter errors
+// Simple custom resolver for special cases
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  // Block axios imports completely
+  // Block axios imports to prevent adapter errors
   if (moduleName === 'axios' || moduleName.includes('axios')) {
     throw new Error(
       `[Metro] Blocked axios import: "${moduleName}". ` +

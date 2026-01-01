@@ -19,22 +19,14 @@ module.exports = function (api) {
       "react-native-worklets/plugin", // Must be last
     ],
     // ============================================================================
-    // PERMANENT FIX FOR ADAPTER ERROR - BABEL CONFIGURATION
+    // STABLE BABEL CONFIGURATION - UPDATE 117 APPROACH
     // ============================================================================
-    // We rely EXCLUSIVELY on Metro's unstable_enablePackageExports for module resolution.
-    // 
-    // CRITICAL: DO NOT ADD ANY MODULE RESOLUTION PLUGINS HERE!
-    // 
-    // Adding babel-plugin-module-resolver or any other module resolution plugin
-    // will cause conflicts with Supabase's conditional exports and lead to the
-    // "(h.adapter || o.adapter) is not a function" error.
+    // Clean, minimal Babel configuration that relies on Metro for module
+    // resolution. This is the proven stable approach from Update 117.
     //
-    // The error occurs because:
-    // 1. Babel tries to resolve modules before Metro
-    // 2. This causes incorrect resolution of Supabase's internal HTTP adapter
-    // 3. The adapter ends up being undefined, causing the error
-    //
-    // Solution: Let Metro handle ALL module resolution via unstable_enablePackageExports
+    // CRITICAL: NO MODULE RESOLUTION PLUGINS
+    // Adding babel-plugin-module-resolver or similar plugins will cause
+    // conflicts with Metro's package exports feature.
     // ============================================================================
   };
 };

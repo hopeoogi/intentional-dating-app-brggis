@@ -26,7 +26,7 @@
         "EXPO_NO_GIT_STATUS": "1"
       },
       "cache": {
-        "disabled": true
+        "disabled": false
       },
       "channel": "preview"
     },
@@ -41,7 +41,7 @@
         "EXPO_NO_GIT_STATUS": "1"
       },
       "cache": {
-        "disabled": true
+        "disabled": false
       },
       "channel": "production",
       "ios": {
