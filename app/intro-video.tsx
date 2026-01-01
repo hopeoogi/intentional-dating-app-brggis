@@ -1,139 +1,44 @@
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
-import { supabase } from '@/app/integrations/supabase/client';
 
 export default function IntroVideoScreen() {
   const [showSkipButton, setShowSkipButton] = useState(false);
-  const [imageError, setImageError] = useState(false);
-
-  const navigateToNext = useCallback(async () => {
-    try {
-      console.log('[IntroVideo] Navigating to next screen...');
-      
-      // Check session with timeout protection
-      const sessionPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Session check timeout')), 3000)
-      );
-      
-      const result = await Promise.race([sessionPromise, timeoutPromise]);
-      const { data: { session }, error: sessionError } = result as any;
-      
-      if (sessionError) {
-        console.log('[IntroVideo] Session error, redirecting to signin:', sessionError.message);
-        router.replace('/signin');
-        return;
-      }
-      
-      if (session) {
-        console.log('[IntroVideo] User authenticated, checking profile...');
-        
-        // Check user profile with timeout
-        const userPromise = supabase
-          .from('users')
-          .select('onboarding_complete')
-          .eq('auth_user_id', session.user.id)
-          .maybeSingle();
-        
-        const userTimeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('User data timeout')), 3000)
-        );
-        
-        const userResult = await Promise.race([userPromise, userTimeoutPromise]);
-        const { data: userData, error: userError } = userResult as any;
-
-        if (userError) {
-          console.log('[IntroVideo] User data error, redirecting to signin:', userError.message);
-          router.replace('/signin');
-          return;
-        }
-
-        if (userData?.onboarding_complete) {
-          console.log('[IntroVideo] Onboarding complete, going to home...');
-          router.replace('/(tabs)/(home)/');
-          return;
-        }
-
-        // Check pending application status with timeout
-        const pendingPromise = supabase
-          .from('pending_users')
-          .select('status')
-          .eq('auth_user_id', session.user.id)
-          .maybeSingle();
-        
-        const pendingTimeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Pending check timeout')), 3000)
-        );
-        
-        const pendingResult = await Promise.race([pendingPromise, pendingTimeoutPromise]);
-        const { data: pendingData, error: pendingError } = pendingResult as any;
-
-        if (pendingError) {
-          console.log('[IntroVideo] Pending check error, going to application:', pendingError.message);
-          router.replace('/apply/step-1');
-          return;
-        }
-
-        if (pendingData?.status === 'pending') {
-          console.log('[IntroVideo] Application pending...');
-          router.replace('/application-pending');
-        } else {
-          console.log('[IntroVideo] No pending application, starting application...');
-          router.replace('/apply/step-1');
-        }
-      } else {
-        console.log('[IntroVideo] No session, going to signin...');
-        router.replace('/signin');
-      }
-    } catch (error) {
-      console.error('[IntroVideo] Navigation error:', error);
-      // Always fallback to signin on any error
-      router.replace('/signin');
-    }
-  }, []);
 
   useEffect(() => {
-    console.log('[IntroVideo] Component mounted - BUILD 143');
+    console.log('[IntroVideo] Component mounted - UPDATE 136 STABLE VERSION');
     
-    // Show skip button after 1.5 seconds
+    // Show skip button after 2 seconds
     const skipTimer = setTimeout(() => {
       setShowSkipButton(true);
-    }, 1500);
+    }, 2000);
     
     // Auto-navigate after 3 seconds
     const navTimer = setTimeout(() => {
-      navigateToNext();
+      console.log('[IntroVideo] Auto-navigating to signin...');
+      router.replace('/signin');
     }, 3000);
     
     return () => {
       clearTimeout(skipTimer);
       clearTimeout(navTimer);
     };
-  }, [navigateToNext]);
-
-  const handleSkip = useCallback(() => {
-    console.log('[IntroVideo] User skipped intro');
-    navigateToNext();
-  }, [navigateToNext]);
-
-  const handleImageError = useCallback(() => {
-    console.error('[IntroVideo] Failed to load intro image');
-    setImageError(true);
   }, []);
+
+  const handleSkip = () => {
+    console.log('[IntroVideo] User skipped intro');
+    router.replace('/signin');
+  };
 
   return (
     <View style={styles.container}>
-      {!imageError && (
-        <Image
-          source={require('../assets/images/natively-dark.png')}
-          style={styles.image}
-          resizeMode="cover"
-          onError={handleImageError}
-        />
-      )}
+      <Image
+        source={require('../assets/images/natively-dark.png')}
+        style={styles.image}
+        resizeMode="contain"
+      />
       <View style={styles.overlay}>
         <Text style={styles.brandName}>Intentional</Text>
         <Text style={styles.tagline}>Where connections matter</Text>

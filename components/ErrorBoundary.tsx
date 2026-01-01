@@ -1,115 +1,53 @@
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { colors } from '@/styles/commonStyles';
-import { captureException } from '@/app/integrations/sentry/client';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import { colors } from '@/styles/commonStyles';
 
 interface Props {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
+export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return {
-      hasError: true,
-      error,
-      errorInfo: null,
-    };
+    return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('='.repeat(80));
-    console.error('ERROR BOUNDARY CAUGHT AN ERROR - BUILD 143');
+    console.error('[ErrorBoundary] Caught error - UPDATE 136 VERSION');
+    console.error('[ErrorBoundary] Error:', error);
+    console.error('[ErrorBoundary] Error Info:', errorInfo);
     console.error('='.repeat(80));
-    console.error('Error:', error);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('Component stack:', errorInfo.componentStack);
-    console.error('='.repeat(80));
-    
-    // Send error to Sentry
-    try {
-      captureException(error, {
-        errorInfo: errorInfo.componentStack,
-        errorBoundary: 'RootErrorBoundary',
-        errorMessage: error.message,
-        errorStack: error.stack,
-      });
-    } catch (sentryError) {
-      console.error('Failed to send error to Sentry:', sentryError);
-    }
-    
-    this.setState({
-      error,
-      errorInfo,
-    });
   }
 
   handleReset = () => {
-    console.log('[ErrorBoundary] Resetting error state and navigating to signin...');
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    });
-    
-    // Navigate to signin screen to recover from error
-    try {
-      router.replace('/signin');
-    } catch (navError) {
-      console.error('[ErrorBoundary] Failed to navigate:', navError);
-    }
+    this.setState({ hasError: false, error: null });
+    router.replace('/signin');
   };
 
   render() {
     if (this.state.hasError) {
       return (
         <View style={styles.container}>
-          <View style={styles.content}>
-            <Text style={styles.emoji}>🔄</Text>
-            <Text style={styles.title}>Let&apos;s try that again</Text>
-            <Text style={styles.message}>
-              Something unexpected happened, but don&apos;t worry - we&apos;ve got you covered.
-              {'\n\n'}
-              Tap below to continue.
-            </Text>
-            
-            <TouchableOpacity style={styles.button} onPress={this.handleReset}>
-              <Text style={styles.buttonText}>Continue</Text>
-            </TouchableOpacity>
-
-            {__DEV__ && this.state.error && (
-              <ScrollView style={styles.errorDetails}>
-                <Text style={styles.errorTitle}>Error Details (Dev Only):</Text>
-                <Text style={styles.errorText}>{this.state.error.toString()}</Text>
-                {this.state.error.stack && (
-                  <Text style={styles.errorText}>{this.state.error.stack}</Text>
-                )}
-                {this.state.errorInfo && (
-                  <>
-                    <Text style={styles.errorTitle}>Component Stack:</Text>
-                    <Text style={styles.errorText}>{this.state.errorInfo.componentStack}</Text>
-                  </>
-                )}
-              </ScrollView>
-            )}
-          </View>
+          <Text style={styles.title}>Oops!</Text>
+          <Text style={styles.message}>Something went wrong</Text>
+          <Text style={styles.errorText}>
+            {this.state.error?.message || 'Unknown error'}
+          </Text>
+          <TouchableOpacity style={styles.button} onPress={this.handleReset}>
+            <Text style={styles.buttonText}>Go to Sign In</Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -121,65 +59,38 @@ export class ErrorBoundary extends Component<Props, State> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
     padding: 20,
   },
-  content: {
-    maxWidth: 400,
-    width: '100%',
-    alignItems: 'center',
-  },
-  emoji: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 16,
-    textAlign: 'center',
+    marginBottom: 10,
   },
   message: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginBottom: 32,
+    fontSize: 18,
+    color: colors.text,
+    marginBottom: 20,
     textAlign: 'center',
-    lineHeight: 24,
+  },
+  errorText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 30,
+    textAlign: 'center',
   },
   button: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-    minWidth: 200,
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 10,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-    textAlign: 'center',
-  },
-  errorDetails: {
-    marginTop: 32,
-    padding: 16,
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    maxHeight: 300,
-    width: '100%',
-  },
-  errorTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 8,
-    marginTop: 8,
-  },
-  errorText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontFamily: 'monospace',
   },
 });
