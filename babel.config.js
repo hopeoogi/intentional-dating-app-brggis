@@ -18,8 +18,14 @@ module.exports = function (api) {
       "@babel/plugin-proposal-export-namespace-from",
       "react-native-worklets/plugin", // Must be last
     ],
+    // ============================================================================
     // CRITICAL: No babel-plugin-module-resolver
-    // We rely on Metro's unstable_enablePackageExports for proper module resolution
-    // Adding module-resolver here causes conflicts with Supabase's conditional exports
+    // ============================================================================
+    // We rely on Metro's unstable_enablePackageExports for proper module resolution.
+    // Adding babel-plugin-module-resolver here causes conflicts with Supabase's
+    // conditional exports and leads to the "(h.adapter || o.adapter) is not a function" error.
+    //
+    // DO NOT ADD MODULE RESOLUTION PLUGINS HERE!
+    // ============================================================================
   };
 };

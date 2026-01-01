@@ -5,12 +5,35 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
-// CRITICAL FIX: Enable package exports for proper ES module resolution
-// This is the PRIMARY fix for the "(h.adapter || o.adapter) is not a function" error
-// It allows Metro to correctly resolve @supabase/supabase-js's conditional exports
+// ============================================================================
+// CRITICAL FIX FOR "(h.adapter || o.adapter) is not a function" ERROR
+// ============================================================================
+// This configuration ensures proper ES module resolution for @supabase/supabase-js
+// and other modern packages that use conditional exports.
+//
+// The error occurs when Metro cannot properly resolve the HTTP adapter in
+// Supabase's internal modules. This is fixed by enabling package exports.
+// ============================================================================
+
+// PRIMARY FIX: Enable package exports for proper ES module resolution
+// This allows Metro to correctly resolve @supabase/supabase-js's conditional exports
+// and prevents the adapter error
 config.resolver.unstable_enablePackageExports = true;
 
-// Use file-based cache for better performance
+// IMPORTANT: Disable symlinks to prevent circular dependency issues
+// This ensures a clean resolution path without symlink-related complications
+config.resolver.unstable_enableSymlinks = false;
+
+// Set proper condition names order for React Native
+// This ensures React Native-specific exports are prioritized over browser/node exports
+config.resolver.unstable_conditionNames = [
+  'react-native',
+  'browser',
+  'require',
+  'import',
+];
+
+// Use file-based cache for better performance and consistency
 config.cacheStores = [
   new FileStore({ 
     root: path.join(__dirname, 'node_modules', '.cache', 'metro') 
@@ -43,18 +66,6 @@ config.resolver.assetExts = [
 // Ensure node_modules are resolved correctly
 config.resolver.nodeModulesPaths = [
   path.resolve(__dirname, 'node_modules'),
-];
-
-// Disable require cycles to prevent circular dependency issues
-config.resolver.unstable_enableSymlinks = false;
-
-// CRITICAL: Proper condition names order for React Native
-// This ensures React Native-specific exports are prioritized
-config.resolver.unstable_conditionNames = [
-  'react-native',
-  'browser',
-  'require',
-  'import',
 ];
 
 // Custom resolver to handle missing CSS modules in expo-router

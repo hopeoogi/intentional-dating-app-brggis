@@ -11,10 +11,19 @@ console.log('[Supabase] Initializing client...');
 console.log('[Supabase] Platform:', Platform.OS);
 console.log('[Supabase] URL:', SUPABASE_URL);
 
+// ============================================================================
 // CRITICAL FIX: Simplified Supabase client initialization
+// ============================================================================
 // This configuration prevents the "(h.adapter || o.adapter) is not a function" error
-// by using native fetch and minimal configuration
-// NOTE: react-native-url-polyfill is imported in index.ts and app/_layout.tsx
+// by using native fetch with proper binding and minimal configuration.
+//
+// IMPORTANT: react-native-url-polyfill is imported in index.ts and app/_layout.tsx
+// BEFORE any other imports. This ensures URL parsing works correctly.
+//
+// The key fix is using fetch.bind(globalThis) which ensures the correct fetch
+// implementation is used in React Native environment.
+// ============================================================================
+
 export const supabase = createClient<Database>(
   SUPABASE_URL, 
   SUPABASE_PUBLISHABLE_KEY, 
