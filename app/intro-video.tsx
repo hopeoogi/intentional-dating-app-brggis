@@ -20,57 +20,98 @@ export default function IntroVideoScreen() {
 
   const navigateToNext = useCallback(async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[IntroVideo] Navigating to next screen...');
+      
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('[IntroVideo] Session error:', sessionError);
+        router.replace('/signin');
+        return;
+      }
       
       if (session) {
-        const { data: userData } = await supabase
+        console.log('[IntroVideo] User is authenticated, checking onboarding status...');
+        
+        const { data: userData, error: userError } = await supabase
           .from('users')
           .select('onboarding_complete')
           .eq('auth_user_id', session.user.id)
-          .single();
+          .maybeSingle();
+
+        if (userError) {
+          console.error('[IntroVideo] Error fetching user data:', userError);
+          router.replace('/signin');
+          return;
+        }
 
         if (userData?.onboarding_complete) {
+          console.log('[IntroVideo] User onboarding complete, going to home...');
           router.replace('/(tabs)/(home)/');
         } else {
-          const { data: pendingData } = await supabase
+          console.log('[IntroVideo] User onboarding incomplete, checking pending status...');
+          
+          const { data: pendingData, error: pendingError } = await supabase
             .from('pending_users')
             .select('status')
             .eq('auth_user_id', session.user.id)
-            .single();
+            .maybeSingle();
+
+          if (pendingError) {
+            console.error('[IntroVideo] Error fetching pending user data:', pendingError);
+            router.replace('/apply/step-1');
+            return;
+          }
 
           if (pendingData?.status === 'pending') {
+            console.log('[IntroVideo] Application pending, going to pending screen...');
             router.replace('/application-pending');
           } else {
+            console.log('[IntroVideo] No pending application, going to application...');
             router.replace('/apply/step-1');
           }
         }
       } else {
+        console.log('[IntroVideo] No session, going to sign in...');
         router.replace('/signin');
       }
     } catch (error) {
-      console.error('Error in navigateToNext:', error);
+      console.error('[IntroVideo] Unexpected error in navigateToNext:', error);
+      // Default to sign in screen on any error
       router.replace('/signin');
     }
   }, []);
 
   const loadIntroSettings = useCallback(async () => {
     try {
+      console.log('[IntroVideo] Loading intro settings...');
+      
       const { data, error } = await supabase
         .from('app_settings')
         .select('setting_value')
         .eq('setting_key', 'intro_video')
-        .single();
+        .maybeSingle();
 
       if (error) {
-        console.error('Error loading intro settings:', error);
+        console.error('[IntroVideo] Error loading intro settings:', error);
+        // Skip intro video and go to next screen
+        navigateToNext();
+        return;
+      }
+
+      if (!data || !data.setting_value) {
+        console.log('[IntroVideo] No intro video settings found, skipping...');
         navigateToNext();
         return;
       }
 
       const introSettings = data.setting_value as IntroVideoSettings;
+      console.log('[IntroVideo] Settings loaded:', introSettings);
+      
       setSettings(introSettings);
 
       if (!introSettings.enabled) {
+        console.log('[IntroVideo] Intro video disabled, skipping...');
         navigateToNext();
         return;
       }
@@ -81,16 +122,21 @@ export default function IntroVideoScreen() {
       const isVideoFile = videoExtensions.some(ext => url.includes(ext));
       setIsVideo(isVideoFile);
 
+      console.log('[IntroVideo] Media type:', isVideoFile ? 'video' : 'image');
+
       // If it's an image, show for specified duration
       if (!isVideoFile) {
+        const duration = introSettings.duration || 3000;
+        console.log('[IntroVideo] Showing image for', duration, 'ms');
         setTimeout(() => {
           navigateToNext();
-        }, introSettings.duration || 3000);
+        }, duration);
       }
 
       setLoading(false);
     } catch (error) {
-      console.error('Error in loadIntroSettings:', error);
+      console.error('[IntroVideo] Unexpected error in loadIntroSettings:', error);
+      // Always navigate to next screen on error to prevent app from being stuck
       navigateToNext();
     }
   }, [navigateToNext]);
