@@ -8,16 +8,19 @@ import { Platform } from 'react-native';
 const SUPABASE_URL = "https://plnfluykallohjimxnja.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsbmZsdXlrYWxsb2hqaW14bmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDkzNjcsImV4cCI6MjA4MjY4NTM2N30.Hsj2brvHemnDV9w-b0wbdLyaBclteRj3gNW8jDhzCk0";
 
-console.log('[Supabase] Initializing client - BUILD 161');
+console.log('[Supabase] Initializing client - BUILD 162');
 console.log('[Supabase] Platform:', Platform.OS);
 console.log('[Supabase] URL:', SUPABASE_URL);
 console.log('[Supabase] Using native fetch API (no axios)');
 
 // ============================================================================
-// BUILD 161 - FIXED SUPABASE CLIENT CONFIGURATION
+// BUILD 162 - OPTIMIZED SUPABASE CLIENT CONFIGURATION
 // ============================================================================
-// This configuration ensures we ONLY use native fetch and never axios
-// We also add better error handling and remove the blocking connection test
+// Key improvements:
+// 1. Use fetch.bind(globalThis) for proper context binding
+// 2. Remove wrapped fetch to reduce overhead
+// 3. Async connection test that doesn't block startup
+// 4. Enhanced error handling and logging
 // ============================================================================
 
 // Verify fetch is available
@@ -29,22 +32,9 @@ if (typeof fetch === 'undefined') {
 console.log('[Supabase] ✅ Native fetch is available');
 console.log('[Supabase] fetch type:', typeof fetch);
 
-// Create a wrapped fetch that logs all requests for debugging
-const wrappedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-  const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-  const method = init?.method || 'GET';
-  
-  console.log(`[Supabase] 🌐 Fetch request: ${method} ${url}`);
-  
-  try {
-    const response = await fetch(input, init);
-    console.log(`[Supabase] ✅ Fetch response: ${response.status} ${url}`);
-    return response;
-  } catch (error) {
-    console.error(`[Supabase] ❌ Fetch error: ${url}`, error);
-    throw error;
-  }
-};
+// Bind fetch to globalThis to ensure proper context
+const boundFetch = fetch.bind(globalThis);
+console.log('[Supabase] ✅ fetch bound to globalThis');
 
 export const supabase = createClient<Database>(
   SUPABASE_URL, 
@@ -58,11 +48,11 @@ export const supabase = createClient<Database>(
       flowType: 'pkce',
     },
     global: {
-      // Use our wrapped fetch for better debugging
-      fetch: wrappedFetch,
+      // Use bound fetch for proper context
+      fetch: boundFetch,
       headers: {
         'X-Client-Info': `supabase-js-react-native/${Platform.OS}`,
-        'X-Build-Version': '161',
+        'X-Build-Version': '162',
       },
     },
     realtime: {
@@ -77,24 +67,33 @@ console.log('[Supabase] ✅ Client initialized successfully');
 console.log('[Supabase] Ready to handle requests with native fetch');
 
 // ============================================================================
-// BUILD 161 FIX: Remove blocking connection test
+// BUILD 162: Async connection test (non-blocking)
 // ============================================================================
-// The connection test was causing the intro screen to fail in TestFlight
-// We now test the connection asynchronously without blocking app startup
+// Test the connection asynchronously without blocking app startup
+// This helps identify connection issues early without causing crashes
 // ============================================================================
 
-// Test the connection asynchronously (non-blocking)
+let connectionTestComplete = false;
+
 setTimeout(() => {
   console.log('[Supabase] Running async connection test...');
+  
   supabase.from('users').select('count', { count: 'exact', head: true })
     .then(({ error, count }) => {
+      connectionTestComplete = true;
       if (error) {
         console.error('[Supabase] ❌ Connection test failed:', error.message);
+        console.error('[Supabase] Error details:', error);
       } else {
-        console.log('[Supabase] ✅ Connection test successful, users count:', count);
+        console.log('[Supabase] ✅ Connection test successful');
+        console.log('[Supabase] Users count:', count);
       }
     })
     .catch((error) => {
+      connectionTestComplete = true;
       console.error('[Supabase] ❌ Connection test error:', error);
     });
 }, 1000); // Run after 1 second to avoid blocking startup
+
+// Export connection test status for debugging
+export const isConnectionTestComplete = () => connectionTestComplete;

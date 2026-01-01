@@ -6,11 +6,17 @@ const path = require('path');
 const config = getDefaultConfig(__dirname);
 
 // ============================================================================
-// BUILD 146 - ENHANCED ADAPTER ERROR FIX
+// BUILD 162 - COMPREHENSIVE ADAPTER ERROR PREVENTION
 // ============================================================================
-// This configuration aggressively blocks ALL HTTP libraries except native fetch
-// We also add better error reporting to identify what's trying to import axios
+// This configuration implements all learnings from previous builds:
+// 1. Aggressively blocks ALL HTTP libraries except native fetch
+// 2. Proper package exports and symlink handling
+// 3. Enhanced error reporting and debugging
+// 4. Consistent cache management
 // ============================================================================
+
+console.log('[Metro] Starting Metro bundler - BUILD 162');
+console.log('[Metro] Implementing comprehensive adapter error prevention');
 
 // Enable package exports for proper ES module resolution
 config.resolver.unstable_enablePackageExports = true;
@@ -56,7 +62,7 @@ config.resolver.assetExts = [
 ];
 
 // ============================================================================
-// CRITICAL: Enhanced blocking of axios and related HTTP libraries
+// CRITICAL: Comprehensive blocking of axios and related HTTP libraries
 // ============================================================================
 const blockedModules = [
   'axios',
@@ -71,6 +77,9 @@ const blockedModules = [
   'bent',
   'ky',
   'wretch',
+  'undici',
+  'node-http',
+  'http-client',
 ];
 
 // Track what's trying to import blocked modules for debugging
@@ -124,5 +133,8 @@ process.on('SIGINT', () => {
   }
   process.exit();
 });
+
+console.log('[Metro] Configuration complete - BUILD 162');
+console.log('[Metro] Blocked modules:', blockedModules.join(', '));
 
 module.exports = config;

@@ -4,19 +4,26 @@ import { View, StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 
 // ============================================================================
-// BUILD 161 - SIMPLIFIED INTRO SCREEN WITH ENHANCED ERROR HANDLING
+// BUILD 162 - SIMPLIFIED INTRO SCREEN WITH ROBUST ERROR HANDLING
 // ============================================================================
 // This screen is intentionally simple and does NOT query the database.
 // It shows a brief intro animation and then navigates to the signin screen.
 // This prevents any potential database connection issues during app startup.
+// 
+// Key features:
+// - No database queries
+// - Local assets only
+// - Robust error handling
+// - Multiple navigation fallbacks
 // ============================================================================
 
 export default function IntroVideoScreen() {
   const [showSkipButton, setShowSkipButton] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [navigationAttempted, setNavigationAttempted] = useState(false);
 
   useEffect(() => {
-    console.log('[IntroVideo] Component mounted - BUILD 161');
+    console.log('[IntroVideo] Component mounted - BUILD 162');
     console.log('[IntroVideo] No database queries - using local assets only');
     
     try {
@@ -44,21 +51,40 @@ export default function IntroVideoScreen() {
   }, []);
 
   const handleNavigation = () => {
+    if (navigationAttempted) {
+      console.log('[IntroVideo] Navigation already attempted, skipping...');
+      return;
+    }
+
+    setNavigationAttempted(true);
+    console.log('[IntroVideo] Attempting navigation to signin...');
+    
     try {
-      console.log('[IntroVideo] Attempting navigation to signin...');
       router.replace('/signin');
       console.log('[IntroVideo] Navigation successful');
     } catch (err) {
-      console.error('[IntroVideo] Navigation error:', err);
+      console.error('[IntroVideo] Replace navigation error:', err);
       setError(err instanceof Error ? err.message : 'Navigation failed');
       
-      // Try alternative navigation method
+      // Try alternative navigation methods
       setTimeout(() => {
         try {
           console.log('[IntroVideo] Trying push navigation...');
           router.push('/signin');
+          console.log('[IntroVideo] Push navigation successful');
         } catch (pushErr) {
           console.error('[IntroVideo] Push navigation also failed:', pushErr);
+          
+          // Last resort: try navigate
+          setTimeout(() => {
+            try {
+              console.log('[IntroVideo] Trying navigate...');
+              router.navigate('/signin');
+              console.log('[IntroVideo] Navigate successful');
+            } catch (navErr) {
+              console.error('[IntroVideo] All navigation methods failed:', navErr);
+            }
+          }, 500);
         }
       }, 500);
     }
