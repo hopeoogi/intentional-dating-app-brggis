@@ -8,22 +8,41 @@ import { Platform } from 'react-native';
 const SUPABASE_URL = "https://plnfluykallohjimxnja.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsbmZsdXlrYWxsb2hqaW14bmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDkzNjcsImV4cCI6MjA4MjY4NTM2N30.Hsj2brvHemnDV9w-b0wbdLyaBclteRj3gNW8jDhzCk0";
 
-console.log('[Supabase] Initializing client - BUILD 145');
+console.log('[Supabase] Initializing client - BUILD 146');
 console.log('[Supabase] Platform:', Platform.OS);
+console.log('[Supabase] URL:', SUPABASE_URL);
 console.log('[Supabase] Using native fetch API (no axios)');
 
 // ============================================================================
-// BUILD 145 - FINAL SUPABASE CLIENT CONFIGURATION
+// BUILD 146 - ENHANCED SUPABASE CLIENT CONFIGURATION
 // ============================================================================
-// This is the absolute simplest, most stable Supabase configuration:
-// 1. Import URL polyfill FIRST (already done at top of file)
-// 2. Use native fetch directly - NO custom wrappers
-// 3. Minimal configuration - only what's necessary
-// 4. Let Supabase handle everything else
-// 
-// CRITICAL: We use the global fetch directly. This ensures we never
-// accidentally bundle axios or any other HTTP library.
+// This configuration ensures we ONLY use native fetch and never axios
+// We also add better error handling and logging
 // ============================================================================
+
+// Verify fetch is available
+if (typeof fetch === 'undefined') {
+  console.error('[Supabase] ❌ CRITICAL: fetch is not available!');
+  throw new Error('fetch is not available - this should never happen in React Native');
+}
+
+console.log('[Supabase] ✅ Native fetch is available');
+console.log('[Supabase] fetch type:', typeof fetch);
+
+// Create a wrapped fetch that logs all requests for debugging
+const wrappedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+  console.log(`[Supabase] 🌐 Fetch request: ${init?.method || 'GET'} ${url}`);
+  
+  try {
+    const response = await fetch(input, init);
+    console.log(`[Supabase] ✅ Fetch response: ${response.status} ${url}`);
+    return response;
+  } catch (error) {
+    console.error(`[Supabase] ❌ Fetch error: ${url}`, error);
+    throw error;
+  }
+};
 
 export const supabase = createClient<Database>(
   SUPABASE_URL, 
@@ -37,11 +56,11 @@ export const supabase = createClient<Database>(
       flowType: 'pkce',
     },
     global: {
-      // Use native fetch - this is the key to avoiding adapter errors
-      // We bind it to globalThis to ensure proper context
-      fetch: fetch.bind(globalThis),
+      // Use our wrapped fetch for better debugging
+      fetch: wrappedFetch,
       headers: {
         'X-Client-Info': `supabase-js-react-native/${Platform.OS}`,
+        'X-Build-Version': '146',
       },
     },
     realtime: {
@@ -52,5 +71,18 @@ export const supabase = createClient<Database>(
   }
 );
 
-console.log('[Supabase] Client initialized successfully');
+console.log('[Supabase] ✅ Client initialized successfully');
 console.log('[Supabase] Ready to handle requests with native fetch');
+
+// Test the connection
+supabase.from('users').select('count', { count: 'exact', head: true })
+  .then(({ error, count }) => {
+    if (error) {
+      console.error('[Supabase] ❌ Connection test failed:', error.message);
+    } else {
+      console.log('[Supabase] ✅ Connection test successful, users count:', count);
+    }
+  })
+  .catch((error) => {
+    console.error('[Supabase] ❌ Connection test error:', error);
+  });

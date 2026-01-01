@@ -28,12 +28,13 @@ SplashScreen.preventAutoHideAsync();
 
 // Initialize crash reporting
 console.log('='.repeat(80));
-console.log('[App] Starting app initialization - BUILD 145');
+console.log('[App] Starting app initialization - BUILD 146');
 console.log('[App] Version: 1.2.1');
 console.log('[App] React Native version:', require('react-native/package.json').version);
 console.log('[App] Expo version:', require('expo/package.json').version);
-console.log('[App] FINAL FIX: Axios completely blocked at Metro level');
-console.log('[App] Using native fetch exclusively for all HTTP requests');
+console.log('[App] ENHANCED FIX: Axios and all HTTP libraries blocked');
+console.log('[App] Using native fetch exclusively with detailed logging');
+console.log('[App] Fetch available:', typeof fetch !== 'undefined');
 console.log('='.repeat(80));
 
 initializeSentry().catch((error) => {
@@ -69,6 +70,8 @@ export default function RootLayout() {
         "🔌 You are offline",
         "You can keep using the app! Your changes will be saved locally and synced when you are back online."
       );
+    } else if (networkState.isConnected) {
+      console.log('[App] ✅ Network is online');
     }
   }, [networkState.isConnected, networkState.isInternetReachable]);
 
