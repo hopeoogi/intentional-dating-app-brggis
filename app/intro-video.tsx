@@ -1,23 +1,14 @@
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { colors } from '@/styles/commonStyles';
 import { supabase } from '@/app/integrations/supabase/client';
 
-interface IntroVideoSettings {
-  url: string;
-  enabled: boolean;
-  duration: number;
-}
-
 export default function IntroVideoScreen() {
   const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState<IntroVideoSettings | null>(null);
-  const [isVideo, setIsVideo] = useState(false);
   const [showSkipButton, setShowSkipButton] = useState(false);
-  const videoRef = useRef<Video>(null);
+  const [imageError, setImageError] = useState(false);
 
   const navigateToNext = useCallback(async () => {
     try {
@@ -112,56 +103,26 @@ export default function IntroVideoScreen() {
     }
   }, []);
 
-  const loadIntroSettings = useCallback(async () => {
-    try {
-      console.log('[IntroVideo] Loading intro settings...');
-      console.log('[IntroVideo] Supabase client initialized:', !!supabase);
-      
-      // Show skip button after 2 seconds
-      setTimeout(() => {
-        setShowSkipButton(true);
-      }, 2000);
-      
-      // Use local branded splash screen with 3 second display
-      console.log('[IntroVideo] Using local branded splash screen');
-      setSettings({
-        url: '',
-        enabled: true,
-        duration: 3000
-      });
-      setLoading(false);
-      
-      // Navigate after 3 seconds
-      setTimeout(() => {
-        navigateToNext();
-      }, 3000);
-    } catch (error) {
-      console.error('[IntroVideo] Unexpected error in loadIntroSettings:', error);
-      console.error('[IntroVideo] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-      
-      // Show branded splash screen for 3 seconds then navigate
-      console.log('[IntroVideo] Showing branded splash screen due to unexpected error');
-      setSettings({
-        url: '',
-        enabled: true,
-        duration: 3000
-      });
-      setLoading(false);
-      setTimeout(() => {
-        navigateToNext();
-      }, 3000);
-    }
-  }, [navigateToNext]);
-
   useEffect(() => {
-    loadIntroSettings();
-  }, [loadIntroSettings]);
-
-  const handleVideoStatusUpdate = useCallback((status: AVPlaybackStatus) => {
-    if (status.isLoaded && status.didJustFinish) {
-      console.log('[IntroVideo] Video finished playing, navigating to next screen...');
+    console.log('[IntroVideo] Component mounted, starting intro sequence...');
+    
+    // Show skip button after 2 seconds
+    const skipTimer = setTimeout(() => {
+      setShowSkipButton(true);
+    }, 2000);
+    
+    // Hide loading indicator immediately
+    setLoading(false);
+    
+    // Navigate after 3 seconds
+    const navTimer = setTimeout(() => {
       navigateToNext();
-    }
+    }, 3000);
+    
+    return () => {
+      clearTimeout(skipTimer);
+      clearTimeout(navTimer);
+    };
   }, [navigateToNext]);
 
   const handleSkip = useCallback(() => {
@@ -169,7 +130,12 @@ export default function IntroVideoScreen() {
     navigateToNext();
   }, [navigateToNext]);
 
-  if (loading || !settings) {
+  const handleImageError = useCallback(() => {
+    console.error('[IntroVideo] Failed to load intro image');
+    setImageError(true);
+  }, []);
+
+  if (loading) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -180,33 +146,14 @@ export default function IntroVideoScreen() {
 
   return (
     <View style={styles.container}>
-      {isVideo && settings.url ? (
-        <Video
-          ref={videoRef}
-          source={{ uri: settings.url }}
-          style={styles.media}
-          resizeMode={ResizeMode.COVER}
-          shouldPlay
-          isLooping={false}
-          isMuted={false}
-          onPlaybackStatusUpdate={handleVideoStatusUpdate}
-          onError={(error) => {
-            console.error('[IntroVideo] Video playback error:', error);
-            // If video fails, show splash screen and navigate
-            navigateToNext();
-          }}
-        />
-      ) : settings.url ? (
+      {!imageError && (
         <Image
-          source={{ uri: settings.url }}
-          style={styles.media}
+          source={require('../assets/images/intro-image.png')}
+          style={styles.image}
           resizeMode="cover"
-          onError={(error) => {
-            console.error('[IntroVideo] Image load error:', error);
-            navigateToNext();
-          }}
+          onError={handleImageError}
         />
-      ) : null}
+      )}
       <View style={styles.overlay}>
         <Text style={styles.brandName}>Intentional</Text>
         <Text style={styles.tagline}>Where connections matter</Text>
@@ -231,7 +178,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  media: {
+  image: {
     width: '100%',
     height: '100%',
     position: 'absolute',
@@ -244,26 +191,28 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   brandName: {
-    fontSize: 48,
+    fontSize: 56,
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
+    marginBottom: 12,
+    letterSpacing: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 15,
   },
   tagline: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '400',
     color: '#FFFFFF',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 5,
+    letterSpacing: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 10,
   },
   loadingText: {
     color: '#FFFFFF',
