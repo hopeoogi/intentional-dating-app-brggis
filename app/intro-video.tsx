@@ -85,16 +85,25 @@ export default function IntroVideoScreen() {
   const loadIntroSettings = useCallback(async () => {
     try {
       console.log('[IntroVideo] Loading intro settings...');
+      console.log('[IntroVideo] Supabase client initialized:', !!supabase);
       
-      const { data, error } = await supabase
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      );
+      
+      const fetchPromise = supabase
         .from('app_settings')
         .select('setting_value')
         .eq('setting_key', 'intro_video')
         .maybeSingle();
+      
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error('[IntroVideo] Error loading intro settings:', error);
-        // Skip intro video and go to next screen
+        console.error('[IntroVideo] Error details:', JSON.stringify(error, null, 2));
+        // Skip intro video and go to next screen on error
         navigateToNext();
         return;
       }
@@ -106,7 +115,11 @@ export default function IntroVideoScreen() {
       }
 
       const introSettings = data.setting_value as IntroVideoSettings;
-      console.log('[IntroVideo] Settings loaded:', introSettings);
+      console.log('[IntroVideo] Settings loaded successfully:', {
+        enabled: introSettings.enabled,
+        hasUrl: !!introSettings.url,
+        duration: introSettings.duration
+      });
       
       setSettings(introSettings);
 
@@ -136,6 +149,7 @@ export default function IntroVideoScreen() {
       setLoading(false);
     } catch (error) {
       console.error('[IntroVideo] Unexpected error in loadIntroSettings:', error);
+      console.error('[IntroVideo] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       // Always navigate to next screen on error to prevent app from being stuck
       navigateToNext();
     }

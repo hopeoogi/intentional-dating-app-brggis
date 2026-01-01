@@ -33,13 +33,22 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error('='.repeat(80));
+    console.error('ERROR BOUNDARY CAUGHT AN ERROR');
+    console.error('='.repeat(80));
+    console.error('Error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Component stack:', errorInfo.componentStack);
+    console.error('='.repeat(80));
     
     // Send error to Sentry
     try {
       captureException(error, {
         errorInfo: errorInfo.componentStack,
         errorBoundary: 'RootErrorBoundary',
+        errorMessage: error.message,
+        errorStack: error.stack,
       });
     } catch (sentryError) {
       console.error('Failed to send error to Sentry:', sentryError);

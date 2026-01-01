@@ -27,6 +27,10 @@ import { initializeSentry } from "@/app/integrations/sentry/client";
 SplashScreen.preventAutoHideAsync();
 
 // Initialize crash reporting
+console.log('[App] Starting app initialization...');
+console.log('[App] React Native version:', require('react-native/package.json').version);
+console.log('[App] Expo version:', require('expo/package.json').version);
+
 initializeSentry().catch((error) => {
   console.error('[App] Failed to initialize Sentry:', error);
 });

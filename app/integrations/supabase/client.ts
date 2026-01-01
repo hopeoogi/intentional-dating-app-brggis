@@ -8,9 +8,14 @@ import { Platform } from 'react-native';
 const SUPABASE_URL = "https://plnfluykallohjimxnja.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsbmZsdXlrYWxsb2hqaW14bmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDkzNjcsImV4cCI6MjA4MjY4NTM2N30.Hsj2brvHemnDV9w-b0wbdLyaBclteRj3gNW8jDhzCk0";
 
+console.log('='.repeat(80));
 console.log('[Supabase] Initializing client...');
 console.log('[Supabase] Platform:', Platform.OS);
 console.log('[Supabase] URL:', SUPABASE_URL);
+console.log('[Supabase] Has API Key:', !!SUPABASE_PUBLISHABLE_KEY);
+console.log('[Supabase] Global fetch available:', typeof fetch !== 'undefined');
+console.log('[Supabase] Global URL available:', typeof URL !== 'undefined');
+console.log('='.repeat(80));
 
 // ============================================================================
 // STABLE CONFIGURATION - UPDATE 130 FIX
@@ -56,7 +61,12 @@ export const supabase = createClient<Database>(
   }
 );
 
+console.log('='.repeat(80));
 console.log('[Supabase] Client initialized successfully');
+console.log('[Supabase] Client object:', !!supabase);
+console.log('[Supabase] Auth available:', !!supabase.auth);
+console.log('[Supabase] From available:', !!supabase.from);
+console.log('='.repeat(80));
 
 // Test the connection on initialization (dev only)
 if (__DEV__) {
