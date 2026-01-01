@@ -30,6 +30,7 @@ config.resolver.unstable_conditionNames = [
   'react-native',
   'browser',
   'require',
+  'import',
 ];
 
 // Use file-based cache for better performance and consistency
@@ -46,11 +47,13 @@ config.resolver.sourceExts = [
   'jsx',
   'js',
   'json',
+  'mjs',
+  'cjs',
 ];
 
 // Add asset extensions
 config.resolver.assetExts = [
-  ...config.resolver.assetExts,
+  ...config.resolver.assetExts.filter(ext => !['mjs', 'cjs'].includes(ext)),
   'css',
   'db',
   'mp3',

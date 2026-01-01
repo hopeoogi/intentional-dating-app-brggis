@@ -1,4 +1,5 @@
 
+import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Database } from './types';
 import { createClient } from '@supabase/supabase-js';
@@ -19,10 +20,11 @@ console.log('[Supabase] URL:', SUPABASE_URL);
 // in certain scenarios.
 //
 // Key approach:
-// 1. Simple fetch.bind(globalThis) - proven stable
-// 2. No custom wrapper complexity
-// 3. Direct binding to native fetch
-// 4. Minimal abstraction = fewer failure points
+// 1. Import URL polyfill FIRST (critical for React Native)
+// 2. Simple fetch.bind(globalThis) - proven stable
+// 3. No custom wrapper complexity
+// 4. Direct binding to native fetch
+// 5. Minimal abstraction = fewer failure points
 // ============================================================================
 
 export const supabase = createClient<Database>(
