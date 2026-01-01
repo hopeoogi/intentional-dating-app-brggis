@@ -24,12 +24,21 @@
         "EXPO_NO_DOTENV": "1",
         "EXPO_NO_DEPLOY": "1",
         "EXPO_NO_GIT_STATUS": "1",
-        "EXPO_NO_CAPABILITY_SYNC": "1"
+        "EXPO_NO_CAPABILITY_SYNC": "1",
+        "EXPO_NO_LAUNCH": "1",
+        "EAS_NO_LAUNCH": "1",
+        "EXPO_NO_TELEMETRY": "1"
       },
       "cache": {
         "disabled": true
       },
-      "channel": "preview"
+      "channel": "preview",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "resourceClass": "medium"
+      }
     },
     "production": {
       "autoIncrement": true,
@@ -40,17 +49,22 @@
         "EXPO_NO_DOTENV": "1",
         "EXPO_NO_DEPLOY": "1",
         "EXPO_NO_GIT_STATUS": "1",
-        "EXPO_NO_CAPABILITY_SYNC": "1"
+        "EXPO_NO_CAPABILITY_SYNC": "1",
+        "EXPO_NO_LAUNCH": "1",
+        "EAS_NO_LAUNCH": "1",
+        "EXPO_NO_TELEMETRY": "1"
       },
       "cache": {
         "disabled": true
       },
       "channel": "production",
       "ios": {
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "resourceClass": "m-medium"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "resourceClass": "medium"
       }
     }
   },
