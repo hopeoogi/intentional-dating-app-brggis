@@ -1,0 +1,24 @@
+
+INTRO VIDEO PLACEHOLDER
+
+This file is a placeholder for the intro video that should be placed at:
+assets/intro-video.mp4
+
+To create a simple intro video, you can:
+
+1. Use any video editing software to create a 5-10 second video
+2. Export it as MP4 format (H.264 codec recommended)
+3. Name it "intro-video.mp4"
+4. Place it in the assets/ folder
+
+Recommended specifications:
+- Duration: 5-10 seconds
+- Resolution: 1080x1920 (portrait) or 1920x1080 (landscape)
+- Format: MP4
+- Codec: H.264
+- File size: 5-20 MB (to increase app bundle size)
+
+For now, the app will use a fallback mechanism if this video is not found.
+
+Alternative: You can use FFmpeg to generate a simple video:
+ffmpeg -f lavfi -i color=c=black:s=1080x1920:d=5 -vf "drawtext=text='Intentional':fontsize=60:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2" -c:v libx264 -t 5 -pix_fmt yuv420p assets/intro-video.mp4

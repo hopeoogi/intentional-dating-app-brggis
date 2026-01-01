@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { View, StyleSheet, Text, ActivityIndicator, Image } from 'react-native';
+import { View, StyleSheet, Text, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { colors } from '@/styles/commonStyles';
@@ -16,6 +16,7 @@ export default function IntroVideoScreen() {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<IntroVideoSettings | null>(null);
   const [isVideo, setIsVideo] = useState(false);
+  const [showSkipButton, setShowSkipButton] = useState(false);
   const videoRef = useRef<Video>(null);
 
   const navigateToNext = useCallback(async () => {
@@ -87,6 +88,11 @@ export default function IntroVideoScreen() {
       console.log('[IntroVideo] Loading intro settings...');
       console.log('[IntroVideo] Supabase client initialized:', !!supabase);
       
+      // Show skip button after 2 seconds
+      setTimeout(() => {
+        setShowSkipButton(true);
+      }, 2000);
+      
       // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Request timeout')), 10000)
@@ -102,15 +108,35 @@ export default function IntroVideoScreen() {
 
       if (error) {
         console.error('[IntroVideo] Error loading intro settings:', error);
+        console.error('[IntroVideo] Error code:', error.code);
+        console.error('[IntroVideo] Error message:', error.message);
         console.error('[IntroVideo] Error details:', JSON.stringify(error, null, 2));
-        // Skip intro video and go to next screen on error
-        navigateToNext();
+        
+        // Show branded splash screen for 3 seconds then navigate
+        console.log('[IntroVideo] Showing branded splash screen due to database error');
+        setSettings({
+          url: '',
+          enabled: true,
+          duration: 3000
+        });
+        setLoading(false);
+        setTimeout(() => {
+          navigateToNext();
+        }, 3000);
         return;
       }
 
       if (!data || !data.setting_value) {
-        console.log('[IntroVideo] No intro video settings found, skipping...');
-        navigateToNext();
+        console.log('[IntroVideo] No intro video settings found in database, showing splash...');
+        setSettings({
+          url: '',
+          enabled: true,
+          duration: 3000
+        });
+        setLoading(false);
+        setTimeout(() => {
+          navigateToNext();
+        }, 3000);
         return;
       }
 
@@ -150,8 +176,18 @@ export default function IntroVideoScreen() {
     } catch (error) {
       console.error('[IntroVideo] Unexpected error in loadIntroSettings:', error);
       console.error('[IntroVideo] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-      // Always navigate to next screen on error to prevent app from being stuck
-      navigateToNext();
+      
+      // Show branded splash screen for 3 seconds then navigate
+      console.log('[IntroVideo] Showing branded splash screen due to unexpected error');
+      setSettings({
+        url: '',
+        enabled: true,
+        duration: 3000
+      });
+      setLoading(false);
+      setTimeout(() => {
+        navigateToNext();
+      }, 3000);
     }
   }, [navigateToNext]);
 
@@ -161,21 +197,28 @@ export default function IntroVideoScreen() {
 
   const handleVideoStatusUpdate = useCallback((status: AVPlaybackStatus) => {
     if (status.isLoaded && status.didJustFinish) {
+      console.log('[IntroVideo] Video finished playing, navigating to next screen...');
       navigateToNext();
     }
+  }, [navigateToNext]);
+
+  const handleSkip = useCallback(() => {
+    console.log('[IntroVideo] User skipped intro');
+    navigateToNext();
   }, [navigateToNext]);
 
   if (loading || !settings) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {isVideo ? (
+      {isVideo && settings.url ? (
         <Video
           ref={videoRef}
           source={{ uri: settings.url }}
@@ -185,18 +228,36 @@ export default function IntroVideoScreen() {
           isLooping={false}
           isMuted={false}
           onPlaybackStatusUpdate={handleVideoStatusUpdate}
+          onError={(error) => {
+            console.error('[IntroVideo] Video playback error:', error);
+            // If video fails, show splash screen and navigate
+            navigateToNext();
+          }}
         />
-      ) : (
+      ) : settings.url ? (
         <Image
           source={{ uri: settings.url }}
           style={styles.media}
           resizeMode="cover"
+          onError={(error) => {
+            console.error('[IntroVideo] Image load error:', error);
+            navigateToNext();
+          }}
         />
-      )}
+      ) : null}
       <View style={styles.overlay}>
         <Text style={styles.brandName}>Intentional</Text>
         <Text style={styles.tagline}>Where connections matter</Text>
       </View>
+      {showSkipButton && (
+        <TouchableOpacity 
+          style={styles.skipButton}
+          onPress={handleSkip}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.skipButtonText}>Skip</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -241,5 +302,26 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 5,
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginTop: 16,
+  },
+  skipButton: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  skipButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
