@@ -8,16 +8,16 @@ import { Platform } from 'react-native';
 const SUPABASE_URL = "https://plnfluykallohjimxnja.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsbmZsdXlrYWxsb2hqaW14bmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDkzNjcsImV4cCI6MjA4MjY4NTM2N30.Hsj2brvHemnDV9w-b0wbdLyaBclteRj3gNW8jDhzCk0";
 
-console.log('[Supabase] Initializing client - BUILD 146');
+console.log('[Supabase] Initializing client - BUILD 161');
 console.log('[Supabase] Platform:', Platform.OS);
 console.log('[Supabase] URL:', SUPABASE_URL);
 console.log('[Supabase] Using native fetch API (no axios)');
 
 // ============================================================================
-// BUILD 146 - ENHANCED SUPABASE CLIENT CONFIGURATION
+// BUILD 161 - FIXED SUPABASE CLIENT CONFIGURATION
 // ============================================================================
 // This configuration ensures we ONLY use native fetch and never axios
-// We also add better error handling and logging
+// We also add better error handling and remove the blocking connection test
 // ============================================================================
 
 // Verify fetch is available
@@ -32,7 +32,9 @@ console.log('[Supabase] fetch type:', typeof fetch);
 // Create a wrapped fetch that logs all requests for debugging
 const wrappedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-  console.log(`[Supabase] 🌐 Fetch request: ${init?.method || 'GET'} ${url}`);
+  const method = init?.method || 'GET';
+  
+  console.log(`[Supabase] 🌐 Fetch request: ${method} ${url}`);
   
   try {
     const response = await fetch(input, init);
@@ -60,7 +62,7 @@ export const supabase = createClient<Database>(
       fetch: wrappedFetch,
       headers: {
         'X-Client-Info': `supabase-js-react-native/${Platform.OS}`,
-        'X-Build-Version': '146',
+        'X-Build-Version': '161',
       },
     },
     realtime: {
@@ -74,15 +76,25 @@ export const supabase = createClient<Database>(
 console.log('[Supabase] ✅ Client initialized successfully');
 console.log('[Supabase] Ready to handle requests with native fetch');
 
-// Test the connection
-supabase.from('users').select('count', { count: 'exact', head: true })
-  .then(({ error, count }) => {
-    if (error) {
-      console.error('[Supabase] ❌ Connection test failed:', error.message);
-    } else {
-      console.log('[Supabase] ✅ Connection test successful, users count:', count);
-    }
-  })
-  .catch((error) => {
-    console.error('[Supabase] ❌ Connection test error:', error);
-  });
+// ============================================================================
+// BUILD 161 FIX: Remove blocking connection test
+// ============================================================================
+// The connection test was causing the intro screen to fail in TestFlight
+// We now test the connection asynchronously without blocking app startup
+// ============================================================================
+
+// Test the connection asynchronously (non-blocking)
+setTimeout(() => {
+  console.log('[Supabase] Running async connection test...');
+  supabase.from('users').select('count', { count: 'exact', head: true })
+    .then(({ error, count }) => {
+      if (error) {
+        console.error('[Supabase] ❌ Connection test failed:', error.message);
+      } else {
+        console.log('[Supabase] ✅ Connection test successful, users count:', count);
+      }
+    })
+    .catch((error) => {
+      console.error('[Supabase] ❌ Connection test error:', error);
+    });
+}, 1000); // Run after 1 second to avoid blocking startup

@@ -28,13 +28,14 @@ SplashScreen.preventAutoHideAsync();
 
 // Initialize crash reporting
 console.log('='.repeat(80));
-console.log('[App] Starting app initialization - BUILD 146');
-console.log('[App] Version: 1.2.1');
+console.log('[App] Starting app initialization - BUILD 161');
+console.log('[App] Version: 1.2.2');
 console.log('[App] React Native version:', require('react-native/package.json').version);
 console.log('[App] Expo version:', require('expo/package.json').version);
 console.log('[App] ENHANCED FIX: Axios and all HTTP libraries blocked');
 console.log('[App] Using native fetch exclusively with detailed logging');
 console.log('[App] Fetch available:', typeof fetch !== 'undefined');
+console.log('[App] BUILD 161: Fixed intro screen crash and login navigation');
 console.log('='.repeat(80));
 
 initializeSentry().catch((error) => {
