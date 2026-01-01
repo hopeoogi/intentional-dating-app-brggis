@@ -23,7 +23,16 @@ export default function IntroVideoScreen() {
     try {
       console.log('[IntroVideo] Navigating to next screen...');
       
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // Add timeout protection for session check
+      const sessionPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Session check timeout')), 5000)
+      );
+      
+      const { data: { session }, error: sessionError } = await Promise.race([
+        sessionPromise,
+        timeoutPromise
+      ]) as any;
       
       if (sessionError) {
         console.error('[IntroVideo] Session error:', sessionError);
@@ -34,11 +43,21 @@ export default function IntroVideoScreen() {
       if (session) {
         console.log('[IntroVideo] User is authenticated, checking onboarding status...');
         
-        const { data: userData, error: userError } = await supabase
+        // Add timeout protection for user data fetch
+        const userPromise = supabase
           .from('users')
           .select('onboarding_complete')
           .eq('auth_user_id', session.user.id)
           .maybeSingle();
+        
+        const userTimeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('User data fetch timeout')), 5000)
+        );
+        
+        const { data: userData, error: userError } = await Promise.race([
+          userPromise,
+          userTimeoutPromise
+        ]) as any;
 
         if (userError) {
           console.error('[IntroVideo] Error fetching user data:', userError);
@@ -52,11 +71,21 @@ export default function IntroVideoScreen() {
         } else {
           console.log('[IntroVideo] User onboarding incomplete, checking pending status...');
           
-          const { data: pendingData, error: pendingError } = await supabase
+          // Add timeout protection for pending user check
+          const pendingPromise = supabase
             .from('pending_users')
             .select('status')
             .eq('auth_user_id', session.user.id)
             .maybeSingle();
+          
+          const pendingTimeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Pending user check timeout')), 5000)
+          );
+          
+          const { data: pendingData, error: pendingError } = await Promise.race([
+            pendingPromise,
+            pendingTimeoutPromise
+          ]) as any;
 
           if (pendingError) {
             console.error('[IntroVideo] Error fetching pending user data:', pendingError);
@@ -93,86 +122,19 @@ export default function IntroVideoScreen() {
         setShowSkipButton(true);
       }, 2000);
       
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout')), 10000)
-      );
-      
-      const fetchPromise = supabase
-        .from('app_settings')
-        .select('setting_value')
-        .eq('setting_key', 'intro_video')
-        .maybeSingle();
-      
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
-
-      if (error) {
-        console.error('[IntroVideo] Error loading intro settings:', error);
-        console.error('[IntroVideo] Error code:', error.code);
-        console.error('[IntroVideo] Error message:', error.message);
-        console.error('[IntroVideo] Error details:', JSON.stringify(error, null, 2));
-        
-        // Show branded splash screen for 3 seconds then navigate
-        console.log('[IntroVideo] Showing branded splash screen due to database error');
-        setSettings({
-          url: '',
-          enabled: true,
-          duration: 3000
-        });
-        setLoading(false);
-        setTimeout(() => {
-          navigateToNext();
-        }, 3000);
-        return;
-      }
-
-      if (!data || !data.setting_value) {
-        console.log('[IntroVideo] No intro video settings found in database, showing splash...');
-        setSettings({
-          url: '',
-          enabled: true,
-          duration: 3000
-        });
-        setLoading(false);
-        setTimeout(() => {
-          navigateToNext();
-        }, 3000);
-        return;
-      }
-
-      const introSettings = data.setting_value as IntroVideoSettings;
-      console.log('[IntroVideo] Settings loaded successfully:', {
-        enabled: introSettings.enabled,
-        hasUrl: !!introSettings.url,
-        duration: introSettings.duration
+      // Use local branded splash screen with 3 second display
+      console.log('[IntroVideo] Using local branded splash screen');
+      setSettings({
+        url: '',
+        enabled: true,
+        duration: 3000
       });
-      
-      setSettings(introSettings);
-
-      if (!introSettings.enabled) {
-        console.log('[IntroVideo] Intro video disabled, skipping...');
-        navigateToNext();
-        return;
-      }
-
-      // Check if URL is a video or image
-      const url = introSettings.url.toLowerCase();
-      const videoExtensions = ['.mp4', '.mov', '.m4v', '.avi'];
-      const isVideoFile = videoExtensions.some(ext => url.includes(ext));
-      setIsVideo(isVideoFile);
-
-      console.log('[IntroVideo] Media type:', isVideoFile ? 'video' : 'image');
-
-      // If it's an image, show for specified duration
-      if (!isVideoFile) {
-        const duration = introSettings.duration || 3000;
-        console.log('[IntroVideo] Showing image for', duration, 'ms');
-        setTimeout(() => {
-          navigateToNext();
-        }, duration);
-      }
-
       setLoading(false);
+      
+      // Navigate after 3 seconds
+      setTimeout(() => {
+        navigateToNext();
+      }, 3000);
     } catch (error) {
       console.error('[IntroVideo] Unexpected error in loadIntroSettings:', error);
       console.error('[IntroVideo] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
