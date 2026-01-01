@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator, Image } from 'react-native';
 import { router } from 'expo-router';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
@@ -18,11 +18,42 @@ export default function IntroVideoScreen() {
   const [isVideo, setIsVideo] = useState(false);
   const videoRef = useRef<Video>(null);
 
-  useEffect(() => {
-    loadIntroSettings();
+  const navigateToNext = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('onboarding_complete')
+          .eq('auth_user_id', session.user.id)
+          .single();
+
+        if (userData?.onboarding_complete) {
+          router.replace('/(tabs)/(home)/');
+        } else {
+          const { data: pendingData } = await supabase
+            .from('pending_users')
+            .select('status')
+            .eq('auth_user_id', session.user.id)
+            .single();
+
+          if (pendingData?.status === 'pending') {
+            router.replace('/application-pending');
+          } else {
+            router.replace('/apply/step-1');
+          }
+        }
+      } else {
+        router.replace('/signin');
+      }
+    } catch (error) {
+      console.error('Error in navigateToNext:', error);
+      router.replace('/signin');
+    }
   }, []);
 
-  const loadIntroSettings = async () => {
+  const loadIntroSettings = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('app_settings')
@@ -62,42 +93,11 @@ export default function IntroVideoScreen() {
       console.error('Error in loadIntroSettings:', error);
       navigateToNext();
     }
-  };
+  }, [navigateToNext]);
 
-  const navigateToNext = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('onboarding_complete')
-          .eq('auth_user_id', session.user.id)
-          .single();
-
-        if (userData?.onboarding_complete) {
-          router.replace('/(tabs)/(home)/');
-        } else {
-          const { data: pendingData } = await supabase
-            .from('pending_users')
-            .select('status')
-            .eq('auth_user_id', session.user.id)
-            .single();
-
-          if (pendingData?.status === 'pending') {
-            router.replace('/application-pending');
-          } else {
-            router.replace('/apply/step-1');
-          }
-        }
-      } else {
-        router.replace('/signin');
-      }
-    } catch (error) {
-      console.error('Error in navigateToNext:', error);
-      router.replace('/signin');
-    }
-  };
+  useEffect(() => {
+    loadIntroSettings();
+  }, [loadIntroSettings]);
 
   const handleVideoStatusUpdate = (status: AVPlaybackStatus) => {
     if (status.isLoaded && status.didJustFinish) {

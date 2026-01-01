@@ -35,7 +35,7 @@ export function PhotoUpload({ photoUrl, onPhotoSelected, photoType }: PhotoUploa
         return;
       }
 
-      const result = await ImagePicker.launchImagePickerAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
         aspect: photoType === 'fullbody' ? [3, 4] : [1, 1],
