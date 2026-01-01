@@ -9,7 +9,7 @@ const SUPABASE_URL = "https://plnfluykallohjimxnja.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsbmZsdXlrYWxsb2hqaW14bmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDkzNjcsImV4cCI6MjA4MjY4NTM2N30.Hsj2brvHemnDV9w-b0wbdLyaBclteRj3gNW8jDhzCk0";
 
 console.log('='.repeat(80));
-console.log('[Supabase] Initializing client...');
+console.log('[Supabase] Initializing client - BUILD 142');
 console.log('[Supabase] Platform:', Platform.OS);
 console.log('[Supabase] URL:', SUPABASE_URL);
 console.log('[Supabase] Has API Key:', !!SUPABASE_PUBLISHABLE_KEY);
@@ -18,17 +18,22 @@ console.log('[Supabase] Global URL available:', typeof URL !== 'undefined');
 console.log('='.repeat(80));
 
 // ============================================================================
-// STABLE CONFIGURATION - UPDATE 130 FIX
+// ADAPTER ERROR ELIMINATION - BUILD 142
 // ============================================================================
-// This uses the proven stable fetch binding approach from Update 117.
-// The key is to use native fetch directly without any custom wrappers.
+// This configuration ensures Supabase uses ONLY native fetch, eliminating
+// any possibility of the (h.adapter || o.adapter) error.
 //
-// Key approach:
+// Key principles:
 // 1. Import URL polyfill FIRST (critical for React Native)
-// 2. Simple fetch.bind(globalThis) - proven stable
-// 3. No custom wrapper complexity
-// 4. Direct binding to native fetch
-// 5. Minimal abstraction = fewer failure points
+// 2. Use fetch.bind(globalThis) - direct binding to native fetch
+// 3. NO custom fetch wrappers or interceptors
+// 4. NO axios or adapter-based HTTP clients
+// 5. Minimal configuration = fewer failure points
+//
+// The fetch.bind(globalThis) approach ensures that:
+// - We're using the native fetch implementation
+// - The 'this' context is properly bound
+// - No adapter detection logic is triggered
 // ============================================================================
 
 export const supabase = createClient<Database>(
@@ -45,8 +50,8 @@ export const supabase = createClient<Database>(
       flowType: 'pkce',
     },
     global: {
-      // STABLE: Use simple fetch binding (Update 117 approach)
-      // This is more reliable than custom wrappers
+      // CRITICAL: Use native fetch directly with proper binding
+      // This is the key to eliminating adapter errors
       fetch: fetch.bind(globalThis),
       headers: {
         'X-Client-Info': `supabase-js-react-native/${Platform.OS}`,

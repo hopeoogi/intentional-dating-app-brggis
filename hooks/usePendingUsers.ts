@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/app/integrations/supabase/client';
+import { fetchJSON, postJSON } from '@/utils/fetchHelper';
 
 export interface PendingUserPhoto {
   id: string;
@@ -52,7 +53,7 @@ export function usePendingUsers() {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching pending users from Supabase...');
+      console.log('[usePendingUsers] Fetching pending users from Supabase...');
 
       const { data, error: fetchError } = await supabase
         .from('pending_users')
@@ -65,15 +66,15 @@ export function usePendingUsers() {
         .order('submitted_at', { ascending: false });
 
       if (fetchError) {
-        console.error('Error fetching pending users:', fetchError);
+        console.error('[usePendingUsers] Error fetching pending users:', fetchError);
         throw fetchError;
       }
 
-      console.log('Fetched pending users:', data?.length || 0);
+      console.log('[usePendingUsers] Fetched pending users:', data?.length || 0);
 
       setPendingUsers(data || []);
     } catch (err) {
-      console.error('Error in fetchPendingUsers:', err);
+      console.error('[usePendingUsers] Error in fetchPendingUsers:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch pending users');
     } finally {
       setLoading(false);
@@ -82,42 +83,36 @@ export function usePendingUsers() {
 
   const approveUser = async (pendingUserId: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('Approving user:', pendingUserId);
+      console.log('[usePendingUsers] Approving user:', pendingUserId);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(
+      // Use native fetch with proper error handling
+      const result = await postJSON(
         `${supabase.supabaseUrl}/functions/v1/approve-user`,
         {
-          method: 'POST',
+          pendingUserId,
+          action: 'approve',
+        },
+        {
           headers: {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({
-            pendingUserId,
-            action: 'approve',
-          }),
+          timeout: 10000, // 10 second timeout
         }
       );
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to approve user');
-      }
-
-      console.log('User approved successfully:', result);
+      console.log('[usePendingUsers] User approved successfully:', result);
 
       // Refresh the list
       await fetchPendingUsers();
 
       return { success: true };
     } catch (err) {
-      console.error('Error approving user:', err);
+      console.error('[usePendingUsers] Error approving user:', err);
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Failed to approve user',
@@ -130,43 +125,37 @@ export function usePendingUsers() {
     rejectionReason: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('Rejecting user:', pendingUserId);
+      console.log('[usePendingUsers] Rejecting user:', pendingUserId);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(
+      // Use native fetch with proper error handling
+      const result = await postJSON(
         `${supabase.supabaseUrl}/functions/v1/approve-user`,
         {
-          method: 'POST',
+          pendingUserId,
+          action: 'reject',
+          rejectionReason,
+        },
+        {
           headers: {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({
-            pendingUserId,
-            action: 'reject',
-            rejectionReason,
-          }),
+          timeout: 10000, // 10 second timeout
         }
       );
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to reject user');
-      }
-
-      console.log('User rejected successfully:', result);
+      console.log('[usePendingUsers] User rejected successfully:', result);
 
       // Refresh the list
       await fetchPendingUsers();
 
       return { success: true };
     } catch (err) {
-      console.error('Error rejecting user:', err);
+      console.error('[usePendingUsers] Error rejecting user:', err);
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Failed to reject user',
@@ -180,7 +169,7 @@ export function usePendingUsers() {
     rejectionReason?: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('Updating photo approval:', photoId, approved);
+      console.log('[usePendingUsers] Updating photo approval:', photoId, approved);
 
       const { error: updateError } = await supabase
         .from('pending_user_photos')
@@ -199,7 +188,7 @@ export function usePendingUsers() {
 
       return { success: true };
     } catch (err) {
-      console.error('Error updating photo approval:', err);
+      console.error('[usePendingUsers] Error updating photo approval:', err);
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Failed to update photo',
@@ -213,7 +202,7 @@ export function usePendingUsers() {
     rejectionReason?: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('Updating badge status:', badgeId, status);
+      console.log('[usePendingUsers] Updating badge status:', badgeId, status);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -239,7 +228,7 @@ export function usePendingUsers() {
 
       return { success: true };
     } catch (err) {
-      console.error('Error updating badge status:', err);
+      console.error('[usePendingUsers] Error updating badge status:', err);
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Failed to update badge',

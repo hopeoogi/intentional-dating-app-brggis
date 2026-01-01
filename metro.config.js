@@ -6,16 +6,16 @@ const path = require('path');
 const config = getDefaultConfig(__dirname);
 
 // ============================================================================
-// STABLE METRO CONFIGURATION - UPDATE 130 FIX
+// ADAPTER ERROR ELIMINATION - BUILD 142
 // ============================================================================
-// This configuration addresses the EAS Launch adapter error by ensuring
-// proper module resolution and preventing any axios-related issues.
+// This configuration completely eliminates the (h.adapter || o.adapter) error
+// by ensuring no axios or similar HTTP libraries can be bundled.
 //
-// Key principles:
-// 1. Enable package exports for ES module resolution
-// 2. Keep configuration simple and minimal
-// 3. Block axios completely
-// 4. Proven stable settings from Update 117
+// The error occurs when axios (or similar libraries) try to detect which
+// "adapter" to use for HTTP requests. In React Native, neither browser
+// XMLHttpRequest nor Node.js http module are available, causing the error.
+//
+// Solution: Block ALL potential sources of adapter-based HTTP clients
 // ============================================================================
 
 // PRIMARY FIX: Enable package exports for proper ES module resolution
@@ -61,14 +61,50 @@ config.resolver.assetExts = [
   'jpg',
 ];
 
-// Simple custom resolver for special cases
+// List of modules that use adapters and should be blocked
+const BLOCKED_MODULES = [
+  'axios',
+  'node-fetch',
+  'cross-fetch',
+  'isomorphic-fetch',
+  'whatwg-fetch',
+  'unfetch',
+  'got',
+  'request',
+  'superagent',
+  'needle',
+];
+
+// Enhanced custom resolver to block adapter-based HTTP clients
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  // Block axios imports to prevent adapter errors
-  if (moduleName === 'axios' || moduleName.includes('axios')) {
-    throw new Error(
-      `[Metro] Blocked axios import: "${moduleName}". ` +
-      'This app uses native fetch only. Please remove axios from your code and dependencies.'
-    );
+  // Block axios and other adapter-based HTTP clients
+  const normalizedModuleName = moduleName.toLowerCase();
+  
+  for (const blockedModule of BLOCKED_MODULES) {
+    if (normalizedModuleName === blockedModule || 
+        normalizedModuleName.startsWith(`${blockedModule}/`) ||
+        normalizedModuleName.includes(`/node_modules/${blockedModule}/`)) {
+      throw new Error(
+        `\n\n` +
+        `╔════════════════════════════════════════════════════════════════╗\n` +
+        `║  BLOCKED: "${moduleName}"                                      \n` +
+        `║                                                                \n` +
+        `║  This module uses adapters that cause the                     \n` +
+        `║  "(h.adapter || o.adapter) is not a function" error           \n` +
+        `║  in React Native builds.                                      \n` +
+        `║                                                                \n` +
+        `║  ✅ Solution: Use native fetch instead                        \n` +
+        `║                                                                \n` +
+        `║  Example:                                                     \n` +
+        `║    const response = await fetch(url, {                        \n` +
+        `║      method: 'POST',                                          \n` +
+        `║      headers: { 'Content-Type': 'application/json' },         \n` +
+        `║      body: JSON.stringify(data)                               \n` +
+        `║    });                                                         \n` +
+        `║    const result = await response.json();                      \n` +
+        `╚════════════════════════════════════════════════════════════════╝\n`
+      );
+    }
   }
 
   // Handle native-tabs.module.css
