@@ -148,7 +148,7 @@ export default function IntroVideoScreen() {
     <View style={styles.container}>
       {!imageError && (
         <Image
-          source={require('../assets/images/intro-image.png')}
+          source={require('../assets/images/natively-dark.png')}
           style={styles.image}
           resizeMode="cover"
           onError={handleImageError}
