@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import { colors, commonStyles } from '@/styles/commonStyles';
+import { IconSymbol } from '@/components/IconSymbol';
 import {
   View,
   Text,
@@ -13,14 +14,14 @@ import {
   TextInput,
   Dimensions,
 } from 'react-native';
-import { colors, commonStyles } from '@/styles/commonStyles';
-import { IconSymbol } from '@/components/IconSymbol';
-import { router } from 'expo-router';
 import { usePendingUsers, PendingUser } from '@/hooks/usePendingUsers';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
 
 const { width } = Dimensions.get('window');
 
 export default function PendingUsersScreen() {
+  // TODO: Backend Integration - usePendingUsers hook will call backend API endpoints
   const { pendingUsers, loading, error, approveUser, rejectUser, updatePhotoApproval, updateBadgeStatus } = usePendingUsers();
   const [selectedUser, setSelectedUser] = useState<PendingUser | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -39,6 +40,7 @@ export default function PendingUsersScreen() {
           style: 'default',
           onPress: async () => {
             setActionLoading(true);
+            // TODO: Backend Integration - Call POST /api/admin/users/{userId}/approve
             const result = await approveUser(userId);
             setActionLoading(false);
 
@@ -61,6 +63,7 @@ export default function PendingUsersScreen() {
     }
 
     setActionLoading(true);
+    // TODO: Backend Integration - Call POST /api/admin/users/{userId}/reject with reason
     const result = await rejectUser(selectedUser.id, rejectionReason);
     setActionLoading(false);
 
@@ -76,6 +79,7 @@ export default function PendingUsersScreen() {
 
   const handlePhotoApproval = async (photoId: string, approved: boolean) => {
     setActionLoading(true);
+    // TODO: Backend Integration - Call PUT /api/admin/photos/{photoId} with approval status
     const result = await updatePhotoApproval(
       photoId,
       approved,
@@ -90,6 +94,7 @@ export default function PendingUsersScreen() {
 
   const handleBadgeApproval = async (badgeId: string, status: 'approved' | 'rejected') => {
     setActionLoading(true);
+    // TODO: Backend Integration - Call PUT /api/admin/badges/{badgeId} with status
     const result = await updateBadgeStatus(
       badgeId,
       status,

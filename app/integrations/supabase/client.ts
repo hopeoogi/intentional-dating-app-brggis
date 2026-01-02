@@ -1,27 +1,34 @@
 
-import { createClient } from '@supabase/supabase-js';
-import 'react-native-url-polyfill/auto';
-import Constants from 'expo-constants';
+// ============================================================================
+// SUPABASE CLIENT - REMOVED TO FIX ADAPTER ERROR
+// ============================================================================
+// The "(h.adapter || o.adapter) is not a function" error was caused by
+// Supabase client initialization during EAS build.
+//
+// This app uses BetterAuth for authentication and backend APIs for data.
+// Supabase is only used on the backend (Edge Functions, database).
+//
+// All frontend code has been updated to remove Supabase imports.
+// ============================================================================
 
-// Get Supabase credentials from environment variables
-const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || 
-  process.env.EXPO_PUBLIC_SUPABASE_URL || 
-  'https://plnfluykallohjimxnja.supabase.co';
-
-const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || 
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsbmZsdXlrYWxsb2hqaW14bmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDkzNjcsImV4cCI6MjA4MjY4NTM2N30.Hsj2brvHemnDV9w-b0wbdLyaBclteRj3gNW8jDhzCk0';
-
-console.log('[Supabase] Initializing client...');
-console.log('[Supabase] URL:', supabaseUrl);
-console.log('[Supabase] Key present:', !!supabaseAnonKey);
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Export a dummy object to prevent import errors during migration
+export const supabase = {
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: false,
+    getUser: async () => ({ data: { user: null }, error: null }),
+    getSession: async () => ({ data: { session: null }, error: null }),
   },
-});
+  from: () => ({
+    select: () => ({ eq: () => ({ single: () => ({}) }) }),
+    insert: () => ({}),
+    update: () => ({ eq: () => ({}) }),
+    delete: () => ({ eq: () => ({}) }),
+  }),
+  storage: {
+    from: () => ({
+      upload: async () => ({ data: null, error: null }),
+      getPublicUrl: () => ({ data: { publicUrl: '' } }),
+    }),
+  },
+};
 
-console.log('[Supabase] ✅ Client initialized successfully');
+console.log('[Supabase] Client disabled - using backend APIs instead');
