@@ -1,97 +1,93 @@
 
-export type StatusTier = 'basic' | 'elite' | 'star';
-
-export interface StatusBadge {
-  id: string;
-  type: string;
-  tier: StatusTier;
-  verified: boolean;
-  verificationDate?: Date;
-  proofImageUrl?: string;
-}
-
-export interface UserPhoto {
-  id: string;
-  url: string;
-  type: 'selfie' | 'fullbody' | 'activity';
-  approved: boolean;
-  uploadDate: Date;
-}
-
 export interface User {
   id: string;
+  email: string;
   name: string;
   age: number;
   bio: string;
+  photos: Photo[];
+  statusBadges: StatusBadge[];
   location: {
     city: string;
     state: string;
-    latitude?: number;
-    longitude?: number;
   };
-  photos: UserPhoto[];
-  statusBadges: StatusBadge[];
-  verified: boolean;
-  onboardingComplete: boolean;
-  createdAt: Date;
-  lastActive: Date;
   preferences: {
-    minAge: number;
-    maxAge: number;
-    maxDistance: number;
-    interestedIn: string[];
+    ageRange: [number, number];
+    distance: number;
+    genders: string[];
   };
+  subscriptionTier: 'free' | 'premium' | 'elite';
+  applicationStatus: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Photo {
+  id: string;
+  url: string;
+  type: 'selfie' | 'full_body' | 'activity';
+  approved: boolean;
+  order: number;
+}
+
+export interface StatusBadge {
+  id: string;
+  status: string;
+  tier: 'basic' | 'elite' | 'star';
+  verified: boolean;
+  proofUrl?: string;
+  approvedAt?: string;
 }
 
 export interface Match {
   id: string;
-  userId: string;
-  matchedUserId: string;
-  matchedUser: User;
-  matchDate: Date;
+  user: User;
+  matchedAt: string;
   conversationStarted: boolean;
   conversationEnded: boolean;
-  lastMessageDate?: Date;
-  pendingResponseFrom?: string;
-  responseDeadline?: Date;
-  notNowCount?: number;
-  endedBy?: string;
-  endedAt?: Date;
-  endedReason?: string;
-}
-
-export interface Message {
-  id: string;
-  matchId: string;
-  senderId: string;
-  receiverId: string;
-  content: string;
-  timestamp: Date;
-  read: boolean;
+  lastMessage?: Message;
 }
 
 export interface Conversation {
   id: string;
   matchId: string;
-  match: Match;
+  user: User;
   messages: Message[];
-  lastMessage?: Message;
-  mustRespond: boolean;
-  respondBy?: Date;
-  ended: boolean;
+  status: 'active' | 'ended';
+  lastMessageAt: string;
+  unreadCount: number;
 }
 
-export interface PromoCode {
+export interface Message {
   id: string;
-  code: string;
-  description: string;
-  discountType: 'percentage' | 'fixed_amount' | 'free_months';
-  discountValue: number;
-  applicableTiers: string[];
-  maxUses: number | null;
-  currentUses: number;
-  validFrom: Date;
-  validUntil: Date | null;
-  active: boolean;
-  createdAt: Date;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  sentAt: string;
+  read: boolean;
+}
+
+export interface Application {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  age: number;
+  bio: string;
+  photos: {
+    selfie?: string;
+    fullBody?: string;
+    activity1?: string;
+    activity2?: string;
+    activity3?: string;
+  };
+  statusBadges: {
+    status: string;
+    tier: 'basic' | 'elite' | 'star';
+    proofUrl: string;
+  }[];
+  status: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
+  submittedAt: string;
+  reviewedAt?: string;
 }

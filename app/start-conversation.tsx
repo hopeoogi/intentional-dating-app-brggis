@@ -8,281 +8,171 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { supabase } from '@/app/integrations/supabase/client';
 
 const MIN_MESSAGE_LENGTH = 36;
 
 export default function StartConversationScreen() {
-  const { userId } = useLocalSearchParams();
+  const { matchId } = useLocalSearchParams();
   const [message, setMessage] = useState('');
-  const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(false);
 
+  const characterCount = message.length;
+  const isValid = characterCount >= MIN_MESSAGE_LENGTH;
+
+  // TODO: Backend Integration - Start conversation via API
   const handleSend = async () => {
-    if (message.trim().length < MIN_MESSAGE_LENGTH) {
-      Alert.alert(
-        'Message Too Short',
-        `Please write at least ${MIN_MESSAGE_LENGTH} characters to start a meaningful conversation.`
-      );
+    if (!isValid) {
+      Alert.alert('Message Too Short', `Your message must be at least ${MIN_MESSAGE_LENGTH} characters to start a conversation.`);
       return;
     }
 
-    setSending(true);
-
+    setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Get current user's profile
-      const { data: currentUserData } = await supabase
-        .from('users')
-        .select('id')
-        .eq('auth_user_id', user.id)
-        .single();
-
-      if (!currentUserData) throw new Error('User profile not found');
-
-      // Create match
-      const { data: matchData, error: matchError } = await supabase
-        .from('matches')
-        .insert({
-          user_id: currentUserData.id,
-          matched_user_id: userId,
-          conversation_started: true,
-          pending_response_from: userId,
-        })
-        .select()
-        .single();
-
-      if (matchError) throw matchError;
-
-      // Send first message
-      const { error: messageError } = await supabase
-        .from('messages')
-        .insert({
-          match_id: matchData.id,
-          sender_id: currentUserData.id,
-          receiver_id: userId,
-          content: message.trim(),
-        });
-
-      if (messageError) throw messageError;
-
-      Alert.alert(
-        'Message Sent!',
-        'Your message has been sent. You&apos;ll be notified when they respond.',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]
-      );
-    } catch (error: any) {
+      // API call would go here
+      console.log('[StartConversation] Sending message:', message);
+      
+      // Navigate to chat
+      router.replace({ pathname: '/chat', params: { matchId } });
+    } catch (error) {
       console.error('[StartConversation] Error:', error);
-      Alert.alert('Error', 'Failed to send message. Please try again.');
+      Alert.alert('Error', 'Failed to start conversation');
     } finally {
-      setSending(false);
+      setLoading(false);
     }
   };
 
-  const remainingChars = MIN_MESSAGE_LENGTH - message.length;
-
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={commonStyles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <StatusBar style="light" />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <IconSymbol
-            ios_icon_name="chevron.left"
-            android_material_icon_name="arrow_back"
-            size={24}
-            color="#FFFFFF"
-          />
-        </TouchableOpacity>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerStyle: { backgroundColor: colors.backgroundLight },
+          headerTintColor: colors.text,
+          headerTitle: 'Start Conversation',
+        }}
+      />
 
+      <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Start a conversation</Text>
+          <IconSymbol
+            ios_icon_name="message.fill"
+            android_material_icon_name="chat"
+            size={48}
+            color={colors.accent}
+          />
+          <Text style={styles.title}>Start a Conversation</Text>
           <Text style={styles.subtitle}>
-            Write a thoughtful message to introduce yourself
+            Write a thoughtful message to introduce yourself. Minimum {MIN_MESSAGE_LENGTH} characters.
           </Text>
         </View>
 
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Write your message here..."
-              placeholderTextColor="#666666"
-              value={message}
-              onChangeText={setMessage}
-              multiline
-              numberOfLines={8}
-              textAlignVertical="top"
-              autoFocus
-            />
-            <View style={styles.charCountContainer}>
-              <Text
-                style={[
-                  styles.charCount,
-                  remainingChars <= 0 && styles.charCountValid,
-                ]}
-              >
-                {remainingChars > 0
-                  ? `${remainingChars} more characters needed`
-                  : `${message.length} characters`}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.tipContainer}>
-            <IconSymbol
-              ios_icon_name="lightbulb.fill"
-              android_material_icon_name="lightbulb"
-              size={20}
-              color="#FFD700"
-            />
-            <Text style={styles.tipText}>
-              Tip: Mention something from their profile to show you&apos;re genuinely interested
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Hey! I noticed you love hiking too..."
+            placeholderTextColor={colors.textTertiary}
+            value={message}
+            onChangeText={setMessage}
+            multiline
+            maxLength={500}
+            autoFocus
+          />
+          <View style={styles.characterCount}>
+            <Text style={[
+              styles.characterCountText,
+              isValid && styles.characterCountTextValid,
+            ]}>
+              {characterCount}/{MIN_MESSAGE_LENGTH}
             </Text>
           </View>
         </View>
 
         <TouchableOpacity
-          style={[
-            styles.sendButton,
-            (message.trim().length < MIN_MESSAGE_LENGTH || sending) &&
-              styles.sendButtonDisabled,
-          ]}
+          style={[styles.sendButton, !isValid && styles.sendButtonDisabled]}
           onPress={handleSend}
-          disabled={message.trim().length < MIN_MESSAGE_LENGTH || sending}
+          disabled={!isValid || loading}
         >
-          {sending ? (
-            <ActivityIndicator color="#000000" />
+          {loading ? (
+            <ActivityIndicator color={colors.background} />
           ) : (
-            <>
-              <Text style={styles.sendButtonText}>Send Message</Text>
-              <IconSymbol
-                ios_icon_name="paperplane.fill"
-                android_material_icon_name="send"
-                size={20}
-                color="#000000"
-              />
-            </>
+            <Text style={styles.sendButtonText}>Send Message</Text>
           )}
         </TouchableOpacity>
-      </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  content: {
     flex: 1,
-    backgroundColor: '#000000',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingTop: 60,
-    paddingHorizontal: 32,
-    paddingBottom: 40,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    marginBottom: 20,
+    padding: 24,
   },
   header: {
+    alignItems: 'center',
     marginBottom: 32,
   },
   title: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: colors.text,
+    marginTop: 16,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    opacity: 0.7,
-  },
-  form: {
-    flex: 1,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  input: {
-    backgroundColor: '#1C1C1E',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#2C2C2E',
-    height: 200,
-    paddingTop: 16,
-  },
-  charCountContainer: {
-    marginTop: 8,
-    alignItems: 'flex-end',
-  },
-  charCount: {
     fontSize: 14,
-    color: '#FF6B6B',
-    fontWeight: '500',
-  },
-  charCountValid: {
-    color: '#4CAF50',
-  },
-  tipContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#1C1C1E',
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#FFFFFF',
-    opacity: 0.8,
+    color: colors.textSecondary,
+    textAlign: 'center',
     lineHeight: 20,
   },
+  inputContainer: {
+    flex: 1,
+    marginBottom: 24,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: colors.backgroundLight,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: colors.text,
+    textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  characterCount: {
+    alignItems: 'flex-end',
+    marginTop: 8,
+  },
+  characterCountText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  characterCountTextValid: {
+    color: colors.success,
+  },
   sendButton: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 18,
-    borderRadius: 30,
-    flexDirection: 'row',
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    padding: 18,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 24,
   },
   sendButtonDisabled: {
+    backgroundColor: colors.surface,
     opacity: 0.5,
   },
   sendButtonText: {
-    color: '#000000',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
+    color: colors.background,
   },
 });

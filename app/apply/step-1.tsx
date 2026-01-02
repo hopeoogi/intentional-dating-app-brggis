@@ -6,106 +6,124 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  ScrollView,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   Alert,
 } from 'react-native';
-import { router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { IconSymbol } from '@/components/IconSymbol';
+import { router, Stack } from 'expo-router';
+import { colors, commonStyles } from '@/styles/commonStyles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Step1Screen() {
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [age, setAge] = useState('');
+  const [bio, setBio] = useState('');
 
   const handleNext = async () => {
-    if (!name.trim()) {
-      Alert.alert('Required', 'Please enter your name');
+    if (!name || !email || !age || !bio) {
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
-    const ageNum = parseInt(age);
-    if (!age || isNaN(ageNum) || ageNum < 18 || ageNum > 100) {
-      Alert.alert('Invalid Age', 'Please enter a valid age (18-100)');
+    if (parseInt(age) < 18) {
+      Alert.alert('Error', 'You must be at least 18 years old');
       return;
     }
 
-    // Save to AsyncStorage
-    await AsyncStorage.setItem('onboarding_name', name);
-    await AsyncStorage.setItem('onboarding_age', age);
+    if (bio.length < 50) {
+      Alert.alert('Error', 'Bio must be at least 50 characters');
+      return;
+    }
 
-    router.push('/apply/step-2');
+    try {
+      await AsyncStorage.setItem('application_step1', JSON.stringify({
+        name,
+        email,
+        age: parseInt(age),
+        bio,
+      }));
+      router.push('/apply/step-2');
+    } catch (error) {
+      console.error('[Apply Step 1] Error:', error);
+      Alert.alert('Error', 'Failed to save data');
+    }
   };
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={commonStyles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <StatusBar style="light" />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <IconSymbol
-            ios_icon_name="chevron.left"
-            android_material_icon_name="arrow_back"
-            size={24}
-            color="#FFFFFF"
-          />
-        </TouchableOpacity>
-
-        <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: '10%' }]} />
-        </View>
-
+      <Stack.Screen options={{ headerTitle: 'Basic Information' }} />
+      
+      <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.stepNumber}>Step 1 of 10</Text>
-          <Text style={styles.title}>Let&apos;s start with the basics</Text>
-          <Text style={styles.subtitle}>Tell us your name and age</Text>
+          <Text style={styles.progress}>Step 1 of 5</Text>
+          <Text style={styles.title}>Tell us about yourself</Text>
+          <Text style={styles.subtitle}>
+            We want to get to know you better
+          </Text>
         </View>
 
         <View style={styles.form}>
-          <View style={styles.inputContainer}>
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>Full Name</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your full name"
-              placeholderTextColor="#666666"
+              placeholder="John Doe"
+              placeholderTextColor={colors.textTertiary}
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
             />
           </View>
 
-          <View style={styles.inputContainer}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="john@example.com"
+              placeholderTextColor={colors.textTertiary}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>Age</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your age"
-              placeholderTextColor="#666666"
+              placeholder="25"
+              placeholderTextColor={colors.textTertiary}
               value={age}
               onChangeText={setAge}
               keyboardType="number-pad"
-              maxLength={3}
+              maxLength={2}
             />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Bio (minimum 50 characters)</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Tell us about yourself, your interests, what you're looking for..."
+              placeholderTextColor={colors.textTertiary}
+              value={bio}
+              onChangeText={setBio}
+              multiline
+              maxLength={500}
+              textAlignVertical="top"
+            />
+            <Text style={styles.characterCount}>{bio.length}/500</Text>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Text style={styles.nextButtonText}>Continue</Text>
-          <IconSymbol
-            ios_icon_name="arrow.right"
-            android_material_icon_name="arrow_forward"
-            size={20}
-            color="#000000"
-          />
+        <TouchableOpacity style={styles.button} onPress={handleNext}>
+          <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -113,87 +131,67 @@ export default function Step1Screen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingTop: 60,
-    paddingHorizontal: 32,
-    paddingBottom: 40,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#1C1C1E',
-    borderRadius: 2,
-    marginBottom: 32,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 2,
+  content: {
+    padding: 24,
   },
   header: {
-    marginBottom: 48,
+    marginBottom: 32,
   },
-  stepNumber: {
+  progress: {
     fontSize: 14,
-    color: '#FFFFFF',
-    opacity: 0.6,
+    color: colors.accent,
+    fontWeight: '600',
     marginBottom: 8,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#FFFFFF',
-    opacity: 0.7,
+    color: colors.textSecondary,
   },
   form: {
-    flex: 1,
+    gap: 24,
+    marginBottom: 32,
   },
-  inputContainer: {
-    marginBottom: 24,
+  inputGroup: {
+    gap: 8,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 8,
+    color: colors.text,
   },
   input: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: colors.backgroundLight,
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    padding: 16,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.text,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
+    borderColor: colors.border,
   },
-  nextButton: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 18,
-    borderRadius: 30,
-    flexDirection: 'row',
+  textArea: {
+    height: 120,
+    textAlignVertical: 'top',
+  },
+  characterCount: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'right',
+  },
+  button: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    padding: 18,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
   },
-  nextButtonText: {
-    color: '#000000',
-    fontSize: 18,
+  buttonText: {
+    fontSize: 16,
     fontWeight: '600',
+    color: colors.background,
   },
 });

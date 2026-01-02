@@ -1,110 +1,233 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  ScrollView,
+  FlatList,
   KeyboardAvoidingView,
   Platform,
   Alert,
 } from 'react-native';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { colors, commonStyles } from '@/styles/commonStyles';
-import { mockMessages, mockMatches } from '@/data/mockData';
-import { Message } from '@/types/User';
 import { IconSymbol } from '@/components/IconSymbol';
-import { router, useLocalSearchParams } from 'expo-router';
-import { api } from '@/lib/api-client';
 
-const CURRENT_USER_ID = 'current-user-id';
+export default function ChatScreen() {
+  const { matchId } = useLocalSearchParams();
+  const [messages, setMessages] = useState<any[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [loading, setLoading] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    loadMessages();
+  }, [matchId]);
+
+  // TODO: Backend Integration - Fetch messages from API
+  const loadMessages = async () => {
+    try {
+      // Mock messages
+      const mockMessages = [
+        {
+          id: '1',
+          senderId: 'other',
+          content: 'Hey! I saw you love hiking too. Have you been to Yosemite?',
+          sentAt: new Date(Date.now() - 3600000).toISOString(),
+        },
+        {
+          id: '2',
+          senderId: 'me',
+          content: 'Yes! I was there last month. The views are absolutely incredible. Do you have a favorite trail?',
+          sentAt: new Date(Date.now() - 1800000).toISOString(),
+        },
+      ];
+      setMessages(mockMessages);
+    } catch (error) {
+      console.error('[Chat] Error loading messages:', error);
+    }
+  };
+
+  // TODO: Backend Integration - Send message to API
+  const handleSend = async () => {
+    if (!inputText.trim() || inputText.length < 2) {
+      Alert.alert('Error', 'Message must be at least 2 characters');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const newMessage = {
+        id: Date.now().toString(),
+        senderId: 'me',
+        content: inputText,
+        sentAt: new Date().toISOString(),
+      };
+      setMessages([...messages, newMessage]);
+      setInputText('');
+      
+      // Scroll to bottom
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    } catch (error) {
+      console.error('[Chat] Error sending message:', error);
+      Alert.alert('Error', 'Failed to send message');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEndConversation = () => {
+    Alert.alert(
+      'End Conversation',
+      'Are you sure you want to end this conversation? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'End Conversation',
+          style: 'destructive',
+          onPress: () => {
+            // TODO: Backend Integration - End conversation via API
+            router.back();
+          },
+        },
+      ]
+    );
+  };
+
+  const renderMessage = ({ item }: { item: any }) => {
+    const isMe = item.senderId === 'me';
+    return (
+      <View style={[styles.messageContainer, isMe && styles.messageContainerMe]}>
+        <View style={[styles.messageBubble, isMe && styles.messageBubbleMe]}>
+          <Text style={[styles.messageText, isMe && styles.messageTextMe]}>
+            {item.content}
+          </Text>
+          <Text style={[styles.messageTime, isMe && styles.messageTimeMe]}>
+            {formatTime(item.sentAt)}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <KeyboardAvoidingView
+      style={commonStyles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerStyle: { backgroundColor: colors.backgroundLight },
+          headerTintColor: colors.text,
+          headerTitle: 'Sarah',
+          headerRight: () => (
+            <TouchableOpacity onPress={handleEndConversation}>
+              <Text style={styles.endButton}>End</Text>
+            </TouchableOpacity>
+          ),
+        }}
+      />
+
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        renderItem={renderMessage}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.messagesList}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+      />
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Type a message..."
+          placeholderTextColor={colors.textTertiary}
+          value={inputText}
+          onChangeText={setInputText}
+          multiline
+          maxLength={500}
+        />
+        <TouchableOpacity
+          style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
+          onPress={handleSend}
+          disabled={!inputText.trim() || loading}
+        >
+          <IconSymbol
+            ios_icon_name="arrow.up"
+            android_material_icon_name="send"
+            size={20}
+            color={inputText.trim() ? colors.background : colors.textSecondary}
+          />
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
+function formatTime(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backButton: {
-    marginRight: 12,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 17,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  menuButton: {
-    padding: 8,
-  },
-  messagesContainer: {
-    flex: 1,
+  messagesList: {
     padding: 16,
   },
-  messageWrapper: {
+  messageContainer: {
     marginBottom: 16,
-    maxWidth: '80%',
+    alignItems: 'flex-start',
   },
-  sentMessage: {
-    alignSelf: 'flex-end',
-  },
-  receivedMessage: {
-    alignSelf: 'flex-start',
+  messageContainerMe: {
+    alignItems: 'flex-end',
   },
   messageBubble: {
+    backgroundColor: colors.backgroundLight,
+    borderRadius: 16,
     padding: 12,
-    borderRadius: 18,
+    maxWidth: '75%',
   },
-  sentBubble: {
-    backgroundColor: colors.primary,
-  },
-  receivedBubble: {
-    backgroundColor: colors.card,
+  messageBubbleMe: {
+    backgroundColor: colors.accent,
   },
   messageText: {
     fontSize: 16,
-    lineHeight: 20,
+    color: colors.text,
+    marginBottom: 4,
   },
-  sentText: {
-    color: '#fff',
-  },
-  receivedText: {
+  messageTextMe: {
     color: colors.text,
   },
-  timestamp: {
-    fontSize: 12,
+  messageTime: {
+    fontSize: 11,
     color: colors.textSecondary,
-    marginTop: 4,
+  },
+  messageTimeMe: {
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: colors.card,
+    padding: 16,
+    backgroundColor: colors.backgroundLight,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+    alignItems: 'flex-end',
+    gap: 12,
   },
   input: {
     flex: 1,
-    minHeight: 40,
-    maxHeight: 100,
     backgroundColor: colors.background,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 16,
     color: colors.text,
-    marginRight: 8,
+    maxHeight: 100,
   },
   sendButton: {
     width: 40,
@@ -115,237 +238,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  endButton: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.error,
+    marginRight: 16,
   },
 });
-
-export default function ChatScreen() {
-  const params = useLocalSearchParams();
-  const matchId = params.matchId as string;
-  const scrollViewRef = useRef<ScrollView>(null);
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-
-  useEffect(() => {
-    loadMessages();
-  }, [matchId]);
-
-  useEffect(() => {
-    // Scroll to bottom when messages change
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  }, [messages]);
-
-  const loadMessages = async () => {
-    setLoading(true);
-    // TODO: Backend Integration - Fetch messages from the backend API
-    const { data, error } = await api.messages.getMessages(matchId);
-    setLoading(false);
-    
-    if (error) {
-      Alert.alert('Error', 'Failed to load messages');
-      console.error('[Chat] Error loading messages:', error);
-      // Fallback to mock data for now
-      setMessages(mockMessages);
-    } else if (data) {
-      setMessages(data);
-    }
-  };
-
-  const handleSend = async () => {
-    if (message.trim().length < 2) {
-      Alert.alert('Message Too Short', 'Please enter at least 2 characters.');
-      return;
-    }
-
-    const messageText = message.trim();
-    setMessage('');
-    setSending(true);
-
-    // TODO: Backend Integration - Send message to the backend API
-    const { error } = await api.messages.sendMessage(matchId, messageText);
-    setSending(false);
-
-    if (error) {
-      Alert.alert('Error', 'Failed to send message');
-      console.error('[Chat] Error sending message:', error);
-      setMessage(messageText); // Restore message on error
-    } else {
-      // Reload messages to get the new one
-      loadMessages();
-    }
-  };
-
-  const handleEndConversation = () => {
-    Alert.alert(
-      'End Conversation',
-      'Are you sure you want to end this conversation? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'End Conversation',
-          style: 'destructive',
-          onPress: async () => {
-            // TODO: Backend Integration - Call the end conversation API endpoint
-            const { error } = await api.matches.endConversation(matchId);
-            if (error) {
-              Alert.alert('Error', error);
-            } else {
-              router.back();
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleReport = () => {
-    Alert.alert(
-      'Report User',
-      'Please describe the issue:',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Report', style: 'destructive', onPress: () => {
-          // TODO: Backend Integration - Report user
-          Alert.alert('Reported', 'Thank you for your report. We will review it shortly.');
-        }},
-      ]
-    );
-  };
-
-  const handleBlock = () => {
-    Alert.alert(
-      'Block User',
-      'Are you sure you want to block this user? You will no longer see their profile or receive messages from them.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Block',
-          style: 'destructive',
-          onPress: () => {
-            // TODO: Backend Integration - Block user
-            Alert.alert('Blocked', 'User has been blocked.');
-            router.back();
-          },
-        },
-      ]
-    );
-  };
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
-  };
-
-  const otherUser = mockMatches[0]; // TODO: Get from match data
-
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={0}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <IconSymbol
-            ios_icon_name="chevron.left"
-            android_material_icon_name="arrow-back"
-            size={24}
-            color={colors.primary}
-          />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{otherUser.name}</Text>
-        <TouchableOpacity
-          style={styles.menuButton}
-          onPress={() => {
-            Alert.alert('Options', '', [
-              { text: 'End Conversation', onPress: handleEndConversation, style: 'destructive' },
-              { text: 'Report', onPress: handleReport },
-              { text: 'Block', onPress: handleBlock, style: 'destructive' },
-              { text: 'Cancel', style: 'cancel' },
-            ]);
-          }}
-        >
-          <IconSymbol
-            ios_icon_name="ellipsis.circle"
-            android_material_icon_name="more-vert"
-            size={24}
-            color={colors.text}
-          />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.messagesContainer}
-        contentContainerStyle={{ paddingBottom: 20 }}
-      >
-        {messages.map((msg, index) => {
-          const isSent = msg.senderId === CURRENT_USER_ID;
-          return (
-            <View
-              key={index}
-              style={[
-                styles.messageWrapper,
-                isSent ? styles.sentMessage : styles.receivedMessage,
-              ]}
-            >
-              <View
-                style={[
-                  styles.messageBubble,
-                  isSent ? styles.sentBubble : styles.receivedBubble,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.messageText,
-                    isSent ? styles.sentText : styles.receivedText,
-                  ]}
-                >
-                  {msg.content}
-                </Text>
-              </View>
-              <Text style={styles.timestamp}>{formatTime(msg.timestamp)}</Text>
-            </View>
-          );
-        })}
-      </ScrollView>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={message}
-          onChangeText={setMessage}
-          placeholder="Type a message..."
-          placeholderTextColor={colors.textSecondary}
-          multiline
-          maxLength={500}
-        />
-        <TouchableOpacity
-          style={[
-            styles.sendButton,
-            (message.trim().length < 2 || sending) && styles.sendButtonDisabled,
-          ]}
-          onPress={handleSend}
-          disabled={message.trim().length < 2 || sending}
-        >
-          <IconSymbol
-            ios_icon_name="arrow.up"
-            android_material_icon_name="send"
-            size={20}
-            color="#fff"
-          />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
-  );
-}

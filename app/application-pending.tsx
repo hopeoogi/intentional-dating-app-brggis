@@ -2,86 +2,63 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import { colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { supabase } from '@/app/integrations/supabase/client';
+import { StatusBar } from 'expo-status-bar';
 
 export default function ApplicationPendingScreen() {
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.replace('/welcome');
-  };
-
   return (
-    <View style={styles.container}>
+    <View style={commonStyles.centered}>
       <StatusBar style="light" />
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <IconSymbol
-            ios_icon_name="hourglass"
-            android_material_icon_name="hourglass_empty"
-            size={80}
-            color="#FFFFFF"
-          />
-        </View>
+      
+      <IconSymbol
+        ios_icon_name="clock.fill"
+        android_material_icon_name="schedule"
+        size={80}
+        color={colors.accent}
+      />
+      
+      <Text style={styles.title}>Application Submitted!</Text>
+      <Text style={styles.subtitle}>
+        We&apos;re reviewing your application. You&apos;ll hear from us within 24-48 hours.
+      </Text>
 
-        <Text style={styles.title}>Application Submitted!</Text>
-        <Text style={styles.message}>
-          Thank you for applying to join the Intentional community.
-          {'\n\n'}
-          Our team is carefully reviewing your application. We&apos;ll send you an email once your application has been reviewed.
-          {'\n\n'}
-          This typically takes 24-48 hours.
-        </Text>
-
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <Text style={styles.signOutButtonText}>Sign Out</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => router.replace('/welcome')}
+      >
+        <Text style={styles.buttonText}>Back to Home</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  iconContainer: {
-    marginBottom: 32,
-  },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: colors.text,
+    marginTop: 24,
+    marginBottom: 12,
     textAlign: 'center',
-    marginBottom: 24,
   },
-  message: {
+  subtitle: {
     fontSize: 16,
-    color: '#FFFFFF',
-    opacity: 0.8,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 48,
-  },
-  signOutButton: {
-    backgroundColor: '#1C1C1E',
-    paddingVertical: 16,
     paddingHorizontal: 32,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: '#2C2C2E',
+    marginBottom: 32,
   },
-  signOutButtonText: {
-    color: '#FFFFFF',
+  button: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+  },
+  buttonText: {
     fontSize: 16,
     fontWeight: '600',
+    color: colors.background,
   },
 });

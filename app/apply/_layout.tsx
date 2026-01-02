@@ -1,26 +1,16 @@
 
-import React from 'react';
 import { Stack } from 'expo-router';
+import { colors } from '@/styles/commonStyles';
 
 export default function ApplyLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: false,
-        animation: 'slide_from_right',
+        headerShown: true,
+        headerStyle: { backgroundColor: colors.backgroundLight },
+        headerTintColor: colors.text,
+        headerBackTitle: 'Back',
       }}
-    >
-      <Stack.Screen name="step-1" />
-      <Stack.Screen name="step-2" />
-      <Stack.Screen name="step-3" />
-      <Stack.Screen name="step-4" />
-      <Stack.Screen name="step-5" />
-      <Stack.Screen name="step-6" />
-      <Stack.Screen name="step-7" />
-      <Stack.Screen name="step-8" />
-      <Stack.Screen name="step-9" />
-      <Stack.Screen name="step-10" />
-      <Stack.Screen name="submit" />
-    </Stack>
+    />
   );
 }

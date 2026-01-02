@@ -13,107 +13,43 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
-import { supabase } from '@/app/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { colors, commonStyles } from '@/styles/commonStyles';
 import { StatusBar } from 'expo-status-bar';
 import { IconSymbol } from '@/components/IconSymbol';
 
 export default function SignInScreen() {
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
 
-  const handleAuth = async () => {
+  const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      Alert.alert('Error', 'Please enter email and password');
       return;
     }
 
     setLoading(true);
-
     try {
-      if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: 'https://natively.dev/email-confirmed',
-          },
-        });
-
-        if (error) throw error;
-
-        Alert.alert(
-          'Success!',
-          'Please check your email to verify your account before logging in.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                setIsSignUp(false);
-                setPassword('');
-              },
-            },
-          ]
-        );
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          if (error.message.includes('Email not confirmed')) {
-            Alert.alert(
-              'Email Not Verified',
-              'Please check your email and click the verification link before logging in.'
-            );
-          } else {
-            Alert.alert('Error', error.message);
-          }
-          return;
-        }
-
-        // Check if user has completed onboarding
-        const { data: userData } = await supabase
-          .from('users')
-          .select('onboarding_complete')
-          .eq('auth_user_id', data.user.id)
-          .single();
-
-        if (userData?.onboarding_complete) {
-          router.replace('/(tabs)/(home)');
-        } else {
-          // Check if they have a pending application
-          const { data: pendingData } = await supabase
-            .from('pending_users')
-            .select('status')
-            .eq('auth_user_id', data.user.id)
-            .single();
-
-          if (pendingData?.status === 'pending') {
-            router.replace('/application-pending');
-          } else {
-            router.replace('/apply/step-1');
-          }
-        }
-      }
-    } catch (error: any) {
-      console.error('[SignIn] Auth error:', error);
-      Alert.alert('Error', error.message || 'An error occurred');
+      await signIn(email, password);
+      router.replace('/(tabs)/(home)');
+    } catch (error) {
+      console.error('[SignIn] Error:', error);
+      Alert.alert('Error', 'Invalid email or password');
     } finally {
       setLoading(false);
     }
   };
 
+  // TODO: Backend Integration - Implement social sign-in with Google and Apple
+  const handleSocialSignIn = (provider: 'google' | 'apple') => {
+    Alert.alert('Coming Soon', `${provider} sign-in will be available soon`);
+  };
+
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={commonStyles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <StatusBar style="light" />
@@ -121,34 +57,31 @@ export default function SignInScreen() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <IconSymbol
-            ios_icon_name="chevron.left"
-            android_material_icon_name="arrow_back"
-            size={24}
-            color="#FFFFFF"
-          />
-        </TouchableOpacity>
-
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>{isSignUp ? 'Create Account' : 'Welcome Back'}</Text>
-          <Text style={styles.subtitle}>
-            {isSignUp
-              ? 'Sign up to start your application'
-              : 'Sign in to continue'}
-          </Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <IconSymbol
+              ios_icon_name="chevron.left"
+              android_material_icon_name="arrow-back"
+              size={24}
+              color={colors.text}
+            />
+          </TouchableOpacity>
+          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Sign in to continue</Text>
         </View>
 
+        {/* Form */}
         <View style={styles.form}>
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Email</Text>
             <TextInput
               style={styles.input}
               placeholder="your@email.com"
-              placeholderTextColor="#666666"
+              placeholderTextColor={colors.textTertiary}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -161,8 +94,8 @@ export default function SignInScreen() {
             <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
-              placeholder="••••••••"
-              placeholderTextColor="#666666"
+              placeholder="Enter your password"
+              placeholderTextColor={colors.textTertiary}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -172,27 +105,56 @@ export default function SignInScreen() {
 
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={handleAuth}
+            onPress={handleSignIn}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#000000" />
+              <ActivityIndicator color={colors.background} />
             ) : (
-              <Text style={styles.primaryButtonText}>
-                {isSignUp ? 'Sign Up' : 'Sign In'}
-              </Text>
+              <Text style={styles.primaryButtonText}>Sign In</Text>
             )}
           </TouchableOpacity>
 
+          {/* Divider */}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Social Sign In */}
           <TouchableOpacity
-            style={styles.switchButton}
-            onPress={() => setIsSignUp(!isSignUp)}
+            style={styles.socialButton}
+            onPress={() => handleSocialSignIn('google')}
           >
-            <Text style={styles.switchButtonText}>
-              {isSignUp
-                ? 'Already have an account? Sign In'
-                : 'Don&apos;t have an account? Sign Up'}
-            </Text>
+            <IconSymbol
+              ios_icon_name="g.circle.fill"
+              android_material_icon_name="login"
+              size={20}
+              color={colors.text}
+            />
+            <Text style={styles.socialButtonText}>Continue with Google</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.socialButton}
+            onPress={() => handleSocialSignIn('apple')}
+          >
+            <IconSymbol
+              ios_icon_name="apple.logo"
+              android_material_icon_name="login"
+              size={20}
+              color={colors.text}
+            />
+            <Text style={styles.socialButtonText}>Continue with Apple</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Don&apos;t have an account? </Text>
+          <TouchableOpacity onPress={() => router.push('/apply/step-1')}>
+            <Text style={styles.footerLink}>Apply to Join</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -201,76 +163,105 @@ export default function SignInScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
   scrollContent: {
     flexGrow: 1,
+    padding: 24,
     paddingTop: 60,
-    paddingHorizontal: 32,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    marginBottom: 20,
   },
   header: {
     marginBottom: 48,
   },
+  backButton: {
+    marginBottom: 24,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+  },
   title: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#FFFFFF',
-    opacity: 0.7,
+    color: colors.textSecondary,
   },
   form: {
-    flex: 1,
+    gap: 24,
   },
   inputContainer: {
-    marginBottom: 24,
+    gap: 8,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 8,
+    color: colors.text,
   },
   input: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: colors.backgroundLight,
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    padding: 16,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.text,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
+    borderColor: colors.border,
   },
   primaryButton: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 18,
-    borderRadius: 30,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    padding: 18,
     alignItems: 'center',
     marginTop: 8,
   },
   primaryButtonText: {
-    color: '#000000',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
+    color: colors.background,
   },
-  switchButton: {
-    marginTop: 24,
+  divider: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 16,
+    marginVertical: 8,
   },
-  switchButtonText: {
-    color: '#FFFFFF',
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
     fontSize: 14,
-    opacity: 0.7,
+    color: colors.textSecondary,
+  },
+  socialButton: {
+    backgroundColor: colors.backgroundLight,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  socialButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 32,
+  },
+  footerText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  footerLink: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.accent,
   },
 });

@@ -1,55 +1,77 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { colors, commonStyles } from '@/styles/commonStyles';
 import { StatusBar } from 'expo-status-bar';
 
-const { height } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <ImageBackground
-        source={{ uri: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=2070&auto=format&fit=crop' }}
-        style={styles.backgroundImage}
-        resizeMode="cover"
+      
+      <LinearGradient
+        colors={['#000000', '#1a1a1a', '#000000']}
+        style={styles.gradient}
       >
-        <LinearGradient
-          colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.9)']}
-          style={styles.gradient}
-        >
-          <View style={styles.content}>
-            <View style={styles.header}>
-              <Text style={styles.logo}>Intentional</Text>
-              <Text style={styles.tagline}>Where connections matter</Text>
-            </View>
-
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={() => router.push('/apply/step-1')}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.primaryButtonText}>Join the Community</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={() => router.push('/signin')}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.secondaryButtonText}>Login</Text>
-              </TouchableOpacity>
-
-              <Text style={styles.disclaimer}>
-                By continuing, you agree to our Terms of Service and Privacy Policy
-              </Text>
-            </View>
+        <View style={styles.content}>
+          {/* Logo/Title */}
+          <View style={styles.header}>
+            <Text style={styles.title}>Intentional</Text>
+            <Text style={styles.subtitle}>Dating with Purpose</Text>
           </View>
-        </LinearGradient>
-      </ImageBackground>
+
+          {/* Features */}
+          <View style={styles.features}>
+            <FeatureItem 
+              icon="✓" 
+              text="Verified members only"
+            />
+            <FeatureItem 
+              icon="✓" 
+              text="No swiping, real conversations"
+            />
+            <FeatureItem 
+              icon="✓" 
+              text="Quality over quantity"
+            />
+          </View>
+
+          {/* CTA Buttons */}
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => router.push('/signin')}
+            >
+              <Text style={styles.primaryButtonText}>Sign In</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => router.push('/apply/step-1')}
+            >
+              <Text style={styles.secondaryButtonText}>Apply to Join</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Footer */}
+          <Text style={styles.footer}>
+            By continuing, you agree to our Terms of Service and Privacy Policy
+          </Text>
+        </View>
+      </LinearGradient>
+    </View>
+  );
+}
+
+function FeatureItem({ icon, text }: { icon: string; text: string }) {
+  return (
+    <View style={styles.featureItem}>
+      <Text style={styles.featureIcon}>{icon}</Text>
+      <Text style={styles.featureText}>{text}</Text>
     </View>
   );
 }
@@ -57,81 +79,82 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
-  },
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
+    backgroundColor: colors.background,
   },
   gradient: {
     flex: 1,
   },
   content: {
     flex: 1,
+    paddingHorizontal: 32,
     justifyContent: 'space-between',
     paddingTop: height * 0.15,
     paddingBottom: 60,
   },
   header: {
     alignItems: 'center',
-    paddingHorizontal: 32,
   },
-  logo: {
+  title: {
     fontSize: 48,
     fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 1,
-    marginBottom: 12,
+    color: colors.text,
+    letterSpacing: -1,
+    marginBottom: 8,
   },
-  tagline: {
+  subtitle: {
     fontSize: 18,
-    color: '#FFFFFF',
-    opacity: 0.9,
     fontWeight: '400',
+    color: colors.textSecondary,
     letterSpacing: 0.5,
   },
-  buttonContainer: {
-    paddingHorizontal: 32,
+  features: {
+    gap: 24,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  featureIcon: {
+    fontSize: 24,
+    color: colors.accent,
+  },
+  featureText: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: colors.text,
+  },
+  actions: {
+    gap: 16,
   },
   primaryButton: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 18,
-    borderRadius: 30,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    padding: 18,
     alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
   },
   primaryButtonText: {
-    color: '#000000',
     fontSize: 18,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    color: colors.background,
   },
   secondaryButton: {
     backgroundColor: 'transparent',
-    paddingVertical: 18,
-    borderRadius: 30,
+    borderRadius: 12,
+    padding: 18,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
   secondaryButtonText: {
-    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    color: colors.primary,
   },
-  disclaimer: {
+  footer: {
     fontSize: 12,
-    color: '#FFFFFF',
-    opacity: 0.6,
+    color: colors.textTertiary,
     textAlign: 'center',
-    marginTop: 24,
     lineHeight: 18,
   },
 });
