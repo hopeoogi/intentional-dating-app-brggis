@@ -6,16 +6,17 @@ import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 
 // ============================================================================
-// BUILD 164 - PRODUCTION-READY SUPABASE CLIENT WITH ENHANCED ERROR HANDLING
+// BUILD 170 - COMPREHENSIVE API SYNC FIX
 // ============================================================================
 // Hardcoded credentials for production builds (no env vars needed)
 // This ensures the app works in TestFlight without environment variable issues
+// Edge Functions now have comprehensive CORS headers and error handling
 // ============================================================================
 
 const SUPABASE_URL = "https://plnfluykallohjimxnja.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsbmZsdXlrYWxsb2hqaW14bmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDkzNjcsImV4cCI6MjA4MjY4NTM2N30.Hsj2brvHemnDV9w-b0wbdLyaBclteRj3gNW8jDhzCk0";
 
-console.log('[Supabase] Initializing client - BUILD 164');
+console.log('[Supabase] Initializing client - BUILD 170');
 console.log('[Supabase] Platform:', Platform.OS);
 console.log('[Supabase] URL:', SUPABASE_URL);
 console.log('[Supabase] Using native fetch API');
@@ -44,7 +45,7 @@ export const supabase = createClient<Database>(
       fetch: fetch.bind(globalThis),
       headers: {
         'X-Client-Info': `supabase-js-react-native/${Platform.OS}`,
-        'X-Build-Version': '164',
+        'X-Build-Version': '170',
       },
     },
     realtime: {

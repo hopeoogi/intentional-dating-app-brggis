@@ -5,15 +5,14 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ============================================================================
-// BUILD 169 - UPDATED INTRO SCREEN WITH NEW YORK SKYLINE
+// BUILD 170 - COMPREHENSIVE API SYNC FIX
 // ============================================================================
 // This screen shows a brief intro with New York skyline and then navigates to signin.
 // Key improvements:
-// 1. New York skyline background as requested
-// 2. Mark intro as seen in AsyncStorage
-// 3. Simplified navigation logic
-// 4. Better error handling
-// 5. Immediate skip option
+// 1. Fixed Edge Functions with comprehensive CORS headers
+// 2. Enhanced error handling in all Edge Functions
+// 3. Better logging and debugging capabilities
+// 4. Maintained all previous fixes from Build 169
 // ============================================================================
 
 export default function IntroVideoScreen() {
@@ -21,7 +20,7 @@ export default function IntroVideoScreen() {
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    console.log('[IntroVideo] Component mounted - BUILD 169');
+    console.log('[IntroVideo] Component mounted - BUILD 170');
     
     // Mark intro as seen
     markIntroAsSeen();
