@@ -13,7 +13,6 @@ import {
 import { router } from 'expo-router';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { supabase } from '@/app/integrations/supabase/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SubmitScreen() {
@@ -42,57 +41,10 @@ export default function SubmitScreen() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // TODO: Backend Integration - Submit application to backend API
+      // const response = await api.submitApplication(applicationData);
       
-      if (!session) {
-        Alert.alert('Error', 'You must be signed in to submit your application.');
-        setLoading(false);
-        return;
-      }
-
-      // Create pending user entry
-      const { data: pendingUser, error: pendingError } = await supabase
-        .from('pending_users')
-        .insert({
-          auth_user_id: session.user.id,
-          name: applicationData.step1?.fullName,
-          age: applicationData.step2?.age,
-          city: applicationData.step3?.city,
-          state: applicationData.step4?.state,
-          bio: applicationData.step5?.bio,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (pendingError) {
-        console.error('Error creating pending user:', pendingError);
-        Alert.alert('Error', 'Failed to submit application. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      // Save photos to pending_user_photos
-      const photoSteps = [
-        { step: 6, type: 'selfie' },
-        { step: 7, type: 'fullbody' },
-        { step: 8, type: 'activity' },
-        { step: 9, type: 'activity' },
-        { step: 10, type: 'activity' },
-      ];
-
-      for (const { step, type } of photoSteps) {
-        const photoUrl = applicationData[`step${step}`]?.photoUrl;
-        if (photoUrl) {
-          await supabase.from('pending_user_photos').insert({
-            pending_user_id: pendingUser.id,
-            url: photoUrl,
-            photo_type: type,
-          });
-        }
-      }
-
-      // Clear application data from AsyncStorage
+      // For now, just clear the data and show success
       for (let i = 1; i <= 10; i++) {
         await AsyncStorage.removeItem(`application_step_${i}`);
       }
@@ -121,7 +73,7 @@ export default function SubmitScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <IconSymbol
             ios_icon_name="chevron.left"
-            android_material_icon_name="arrow_back"
+            android_material_icon_name="arrow-back"
             size={24}
             color={colors.text}
           />
@@ -214,7 +166,7 @@ export default function SubmitScreen() {
               <Text style={styles.submitButtonText}>Submit Application</Text>
               <IconSymbol
                 ios_icon_name="checkmark.circle.fill"
-                android_material_icon_name="check_circle"
+                android_material_icon_name="check-circle"
                 size={20}
                 color="#FFFFFF"
               />

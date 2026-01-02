@@ -12,7 +12,6 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { supabase } from '@/app/integrations/supabase/client';
 
 interface PhotoUploadProps {
   photoUrl?: string;
@@ -81,22 +80,9 @@ export function PhotoUpload({ photoUrl, onPhotoSelected, photoType }: PhotoUploa
   const uploadImage = async (uri: string) => {
     setUploading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        Alert.alert('Error', 'You must be signed in to upload photos.');
-        return;
-      }
-
-      // For now, we'll use a placeholder URL since we don't have storage bucket set up
-      // In production, you would upload to Supabase Storage
-      const fileName = `${session.user.id}/${photoType}_${Date.now()}.jpg`;
-      
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Use the local URI for now (in production, this would be the storage URL)
+      // TODO: Backend Integration - Upload photo to backend storage
+      // For now, use the local URI
       onPhotoSelected(uri);
-      
       Alert.alert('Success', 'Photo uploaded successfully!');
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -142,7 +128,7 @@ export function PhotoUpload({ photoUrl, onPhotoSelected, photoType }: PhotoUploa
     <TouchableOpacity style={styles.uploadContainer} onPress={showOptions}>
       <IconSymbol
         ios_icon_name="camera.fill"
-        android_material_icon_name="add_a_photo"
+        android_material_icon_name="add-a-photo"
         size={48}
         color={colors.primary}
       />

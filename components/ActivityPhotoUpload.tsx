@@ -15,7 +15,6 @@ import { StatusBar } from 'expo-status-bar';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '@/app/integrations/supabase/client';
 
 interface ActivityPhotoUploadProps {
   stepNumber: number;
@@ -85,27 +84,13 @@ export default function ActivityPhotoUpload({
     setUploading(true);
 
     try {
-      const fileName = `activity${photoNumber}_${Date.now()}.jpg`;
-      const response = await fetch(photoUri);
-      const blob = await response.blob();
-
-      const { data, error } = await supabase.storage
-        .from('profile-photos')
-        .upload(fileName, blob, {
-          contentType: 'image/jpeg',
-        });
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile-photos')
-        .getPublicUrl(fileName);
-
-      await AsyncStorage.setItem(storageKey, publicUrl);
+      // TODO: Backend Integration - Upload photo to backend storage
+      // For now, just save the local URI
+      await AsyncStorage.setItem(storageKey, photoUri);
       router.push(nextRoute);
     } catch (error: any) {
-      console.error(`[ActivityPhoto${photoNumber}] Upload error:`, error);
-      Alert.alert('Upload Failed', 'Please try again');
+      console.error(`[ActivityPhoto${photoNumber}] Save error:`, error);
+      Alert.alert('Save Failed', 'Please try again');
     } finally {
       setUploading(false);
     }
@@ -121,7 +106,7 @@ export default function ActivityPhotoUpload({
         >
           <IconSymbol
             ios_icon_name="chevron.left"
-            android_material_icon_name="arrow_back"
+            android_material_icon_name="arrow-back"
             size={24}
             color="#FFFFFF"
           />
@@ -144,7 +129,7 @@ export default function ActivityPhotoUpload({
             <View style={styles.placeholder}>
               <IconSymbol
                 ios_icon_name="figure.run"
-                android_material_icon_name="directions_run"
+                android_material_icon_name="directions-run"
                 size={80}
                 color="#666666"
               />
@@ -173,7 +158,7 @@ export default function ActivityPhotoUpload({
           <TouchableOpacity style={styles.uploadButton} onPress={takePhoto}>
             <IconSymbol
               ios_icon_name="camera"
-              android_material_icon_name="camera_alt"
+              android_material_icon_name="camera-alt"
               size={24}
               color="#FFFFFF"
             />
@@ -183,7 +168,7 @@ export default function ActivityPhotoUpload({
           <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
             <IconSymbol
               ios_icon_name="photo"
-              android_material_icon_name="photo_library"
+              android_material_icon_name="photo-library"
               size={24}
               color="#FFFFFF"
             />
@@ -203,7 +188,7 @@ export default function ActivityPhotoUpload({
               <Text style={styles.nextButtonText}>Continue</Text>
               <IconSymbol
                 ios_icon_name="arrow.right"
-                android_material_icon_name="arrow_forward"
+                android_material_icon_name="arrow-forward"
                 size={20}
                 color="#000000"
               />

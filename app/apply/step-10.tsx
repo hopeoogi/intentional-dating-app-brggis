@@ -13,7 +13,6 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { IconSymbol } from '@/components/IconSymbol';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '@/app/integrations/supabase/client';
 
 export default function Step10Screen() {
   const [minAge, setMinAge] = useState(18);
@@ -24,86 +23,14 @@ export default function Step10Screen() {
     setSubmitting(true);
 
     try {
-      // Get all onboarding data from AsyncStorage
-      const name = await AsyncStorage.getItem('onboarding_name');
-      const age = await AsyncStorage.getItem('onboarding_age');
-      const city = await AsyncStorage.getItem('onboarding_city');
-      const state = await AsyncStorage.getItem('onboarding_state');
-      const bio = await AsyncStorage.getItem('onboarding_bio');
-      const selfie = await AsyncStorage.getItem('onboarding_selfie');
-      const fullbody = await AsyncStorage.getItem('onboarding_fullbody');
-      const activity1 = await AsyncStorage.getItem('onboarding_activity1');
-      const activity2 = await AsyncStorage.getItem('onboarding_activity2');
-      const activity3 = await AsyncStorage.getItem('onboarding_activity3');
-      const interestedInStr = await AsyncStorage.getItem('onboarding_interested_in');
-      const interestedIn = interestedInStr ? JSON.parse(interestedInStr) : [];
+      // Save age preferences
+      await AsyncStorage.setItem('onboarding_min_age', minAge.toString());
+      await AsyncStorage.setItem('onboarding_max_age', maxAge.toString());
 
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No authenticated user');
-
-      // Create pending user application
-      const { data: pendingUser, error: pendingError } = await supabase
-        .from('pending_users')
-        .insert({
-          auth_user_id: user.id,
-          name,
-          age: parseInt(age || '18'),
-          bio,
-          city,
-          state,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (pendingError) throw pendingError;
-
-      // Upload photos
-      const photos = [
-        { url: selfie, type: 'selfie' },
-        { url: fullbody, type: 'fullbody' },
-        { url: activity1, type: 'activity' },
-        { url: activity2, type: 'activity' },
-        { url: activity3, type: 'activity' },
-      ];
-
-      for (const photo of photos) {
-        if (photo.url) {
-          await supabase.from('pending_user_photos').insert({
-            pending_user_id: pendingUser.id,
-            url: photo.url,
-            photo_type: photo.type,
-          });
-        }
-      }
-
-      // Save preferences
-      await supabase.from('application_responses').insert({
-        pending_user_id: pendingUser.id,
-        auth_user_id: user.id,
-        response_data: {
-          interested_in: interestedIn,
-          min_age: minAge,
-          max_age: maxAge,
-        },
-      });
-
-      // Clear onboarding data
-      await AsyncStorage.multiRemove([
-        'onboarding_name',
-        'onboarding_age',
-        'onboarding_city',
-        'onboarding_state',
-        'onboarding_bio',
-        'onboarding_selfie',
-        'onboarding_fullbody',
-        'onboarding_activity1',
-        'onboarding_activity2',
-        'onboarding_activity3',
-        'onboarding_interested_in',
-      ]);
-
+      // TODO: Backend Integration - Submit complete application to backend API
+      // Get all onboarding data from AsyncStorage and send to backend
+      
+      // For now, just navigate to pending screen
       router.replace('/application-pending');
     } catch (error: any) {
       console.error('[Step10] Submission error:', error);
@@ -123,7 +50,7 @@ export default function Step10Screen() {
         >
           <IconSymbol
             ios_icon_name="chevron.left"
-            android_material_icon_name="arrow_back"
+            android_material_icon_name="arrow-back"
             size={24}
             color="#FFFFFF"
           />

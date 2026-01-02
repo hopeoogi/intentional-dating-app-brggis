@@ -15,7 +15,6 @@ import { StatusBar } from 'expo-status-bar';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '@/app/integrations/supabase/client';
 
 export default function Step5Screen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -69,27 +68,13 @@ export default function Step5Screen() {
     setUploading(true);
 
     try {
-      const fileName = `fullbody_${Date.now()}.jpg`;
-      const response = await fetch(photoUri);
-      const blob = await response.blob();
-
-      const { data, error } = await supabase.storage
-        .from('profile-photos')
-        .upload(fileName, blob, {
-          contentType: 'image/jpeg',
-        });
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile-photos')
-        .getPublicUrl(fileName);
-
-      await AsyncStorage.setItem('onboarding_fullbody', publicUrl);
+      // TODO: Backend Integration - Upload full body photo to backend storage
+      // For now, save locally
+      await AsyncStorage.setItem('onboarding_fullbody', photoUri);
       router.push('/apply/step-6');
     } catch (error: any) {
-      console.error('[Step5] Upload error:', error);
-      Alert.alert('Upload Failed', 'Please try again');
+      console.error('[Step5] Save error:', error);
+      Alert.alert('Save Failed', 'Please try again');
     } finally {
       setUploading(false);
     }
@@ -105,7 +90,7 @@ export default function Step5Screen() {
         >
           <IconSymbol
             ios_icon_name="chevron.left"
-            android_material_icon_name="arrow_back"
+            android_material_icon_name="arrow-back"
             size={24}
             color="#FFFFFF"
           />
@@ -157,7 +142,7 @@ export default function Step5Screen() {
           <TouchableOpacity style={styles.uploadButton} onPress={takePhoto}>
             <IconSymbol
               ios_icon_name="camera"
-              android_material_icon_name="camera_alt"
+              android_material_icon_name="camera-alt"
               size={24}
               color="#FFFFFF"
             />
@@ -167,7 +152,7 @@ export default function Step5Screen() {
           <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
             <IconSymbol
               ios_icon_name="photo"
-              android_material_icon_name="photo_library"
+              android_material_icon_name="photo-library"
               size={24}
               color="#FFFFFF"
             />
@@ -187,7 +172,7 @@ export default function Step5Screen() {
               <Text style={styles.nextButtonText}>Continue</Text>
               <IconSymbol
                 ios_icon_name="arrow.right"
-                android_material_icon_name="arrow_forward"
+                android_material_icon_name="arrow-forward"
                 size={20}
                 color="#000000"
               />
