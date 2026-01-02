@@ -1,30 +1,31 @@
 
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, ImageBackground, Text } from 'react-native';
 import { Redirect } from 'expo-router';
 import { supabase } from '@/app/integrations/supabase/client';
 import { colors } from '@/styles/commonStyles';
 
 // ============================================================================
-// BUILD 163 - ROBUST APP ENTRY POINT
+// BUILD 169 - ROBUST APP ENTRY POINT WITH NEW YORK SKYLINE
 // ============================================================================
 // This is the main entry point of the app. It checks authentication status
 // and redirects to the appropriate screen.
 // 
 // Key improvements:
-// 1. Check auth status before navigation
-// 2. Direct navigation without intermediate screens
-// 3. Better error handling
-// 4. Fallback to signin if anything fails
+// 1. New York skyline loading screen
+// 2. Better error handling
+// 3. Fallback mechanisms
+// 4. Maintained API sync fixes from Build 168
 // ============================================================================
 
 export default function Index() {
   const [isReady, setIsReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    console.log('[Index] App starting - BUILD 163');
+    console.log('[Index] App starting - BUILD 169');
     checkAuthAndIntro();
   }, []);
 
@@ -37,8 +38,16 @@ export default function Index() {
       console.log('[Index] Has seen intro:', hasSeenIntro);
       setShowIntro(!hasSeenIntro);
 
-      // Check authentication
-      const { data: { session }, error } = await supabase.auth.getSession();
+      // Check authentication with timeout
+      const authPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Auth check timeout')), 5000)
+      );
+
+      const { data: { session }, error } = await Promise.race([
+        authPromise,
+        timeoutPromise
+      ]) as any;
       
       if (error) {
         console.error('[Index] Auth check error:', error);
@@ -73,7 +82,27 @@ export default function Index() {
   if (!isReady) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        {!imageError ? (
+          <ImageBackground
+            source={{ uri: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=2070&auto=format&fit=crop' }}
+            style={styles.backgroundImage}
+            resizeMode="cover"
+            onError={() => {
+              console.log('[Index] Failed to load New York skyline image, using fallback');
+              setImageError(true);
+            }}
+          >
+            <View style={styles.overlay}>
+              <ActivityIndicator size="large" color="#FFFFFF" />
+              <Text style={styles.loadingText}>Loading...</Text>
+            </View>
+          </ImageBackground>
+        ) : (
+          <View style={styles.fallbackContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>Loading...</Text>
+          </View>
+        )}
       </View>
     );
   }
@@ -98,8 +127,29 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
+  },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  fallbackContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.background,
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    marginTop: 20,
+    fontWeight: '600',
   },
 });

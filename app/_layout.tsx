@@ -2,13 +2,13 @@
 // CRITICAL: Import URL polyfill FIRST before any other imports
 import 'react-native-url-polyfill/auto';
 import "react-native-reanimated";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useColorScheme, Alert } from "react-native";
+import { useColorScheme, Alert, View, Text, ActivityIndicator } from "react-native";
 import { useNetworkState } from "expo-network";
 import {
   DarkTheme,
@@ -23,31 +23,35 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { initializeSentry } from "@/app/integrations/sentry/client";
 
 // Prevent the splash screen from auto-hiding
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch((error) => {
+  console.error('[App] Failed to prevent splash screen auto-hide:', error);
+});
 
 // ============================================================================
-// BUILD 164 - PRODUCTION-READY APP LAYOUT WITH API SYNC FIX
+// BUILD 169 - CRASH FIX AND NEW YORK SKYLINE LOAD SCREEN
 // ============================================================================
 // Key improvements:
-// 1. Better splash screen handling
-// 2. Simplified initialization
-// 3. Enhanced error boundaries
-// 4. Robust network detection
-// 5. Fixed Edge Function CORS issues
+// 1. Better error handling in initialization
+// 2. Simplified splash screen management
+// 3. Enhanced network detection with fallback
+// 4. Robust font loading with error recovery
+// 5. Maintained API sync fixes from Build 168
 // ============================================================================
 
 console.log('='.repeat(80));
-console.log('[App] Starting app initialization - BUILD 164');
-console.log('[App] Version: 1.2.6');
+console.log('[App] Starting app initialization - BUILD 169');
+console.log('[App] Version: 1.2.7');
 console.log('[App] Platform:', require('react-native').Platform.OS);
 console.log('[App] Production-ready configuration');
 console.log('[App] All HTTP libraries blocked - using native fetch only');
 console.log('[App] Edge Functions CORS issues resolved');
+console.log('[App] New York skyline load screen implemented');
 console.log('='.repeat(80));
 
-// Initialize Sentry for crash reporting
+// Initialize Sentry for crash reporting (non-blocking)
 initializeSentry().catch((error) => {
   console.error('[App] Failed to initialize Sentry:', error);
+  // Don't throw - continue app initialization
 });
 
 export const unstable_settings = {
@@ -57,20 +61,39 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const networkState = useNetworkState();
-  const [loaded] = useFonts({
+  const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+  const [isReady, setIsReady] = useState(false);
 
+  // Handle font loading
   useEffect(() => {
-    if (loaded) {
-      console.log('[App] Fonts loaded, hiding splash screen...');
-      SplashScreen.hideAsync().catch((error) => {
-        console.error('[App] Error hiding splash screen:', error);
-      });
+    if (loaded || error) {
+      console.log('[App] Fonts loaded:', loaded, 'Error:', error);
+      
+      // Hide splash screen after a short delay
+      setTimeout(() => {
+        SplashScreen.hideAsync()
+          .then(() => {
+            console.log('[App] Splash screen hidden successfully');
+            setIsReady(true);
+          })
+          .catch((err) => {
+            console.error('[App] Error hiding splash screen:', err);
+            // Still mark as ready even if splash screen fails to hide
+            setIsReady(true);
+          });
+      }, 500);
     }
-  }, [loaded]);
+  }, [loaded, error]);
 
+  // Handle network state changes
   useEffect(() => {
+    if (!networkState) {
+      console.log('[App] Network state not available yet');
+      return;
+    }
+
     if (networkState.isConnected === false && networkState.isInternetReachable === false) {
       console.log('[App] Network offline detected');
       Alert.alert(
@@ -81,10 +104,22 @@ export default function RootLayout() {
     } else if (networkState.isConnected) {
       console.log('[App] ✅ Network is online');
     }
-  }, [networkState.isConnected, networkState.isInternetReachable]);
+  }, [networkState?.isConnected, networkState?.isInternetReachable]);
 
-  if (!loaded) {
+  // Show loading screen while fonts are loading
+  if (!loaded && !error) {
     return null;
+  }
+
+  // Show error screen if fonts failed to load
+  if (error) {
+    console.error('[App] Font loading error:', error);
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
+        <Text style={{ color: '#fff', fontSize: 18, marginBottom: 20 }}>Failed to load fonts</Text>
+        <Text style={{ color: '#ccc', fontSize: 14 }}>Please restart the app</Text>
+      </View>
+    );
   }
 
   const CustomDefaultTheme: Theme = {

@@ -1,25 +1,27 @@
 
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, Image, TouchableOpacity, ImageBackground } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ============================================================================
-// BUILD 163 - SIMPLIFIED INTRO SCREEN WITH ROBUST NAVIGATION
+// BUILD 169 - UPDATED INTRO SCREEN WITH NEW YORK SKYLINE
 // ============================================================================
-// This screen shows a brief intro and then navigates to signin.
+// This screen shows a brief intro with New York skyline and then navigates to signin.
 // Key improvements:
-// 1. Mark intro as seen in AsyncStorage
-// 2. Simplified navigation logic
-// 3. Better error handling
-// 4. Immediate skip option
+// 1. New York skyline background as requested
+// 2. Mark intro as seen in AsyncStorage
+// 3. Simplified navigation logic
+// 4. Better error handling
+// 5. Immediate skip option
 // ============================================================================
 
 export default function IntroVideoScreen() {
   const [error, setError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    console.log('[IntroVideo] Component mounted - BUILD 163');
+    console.log('[IntroVideo] Component mounted - BUILD 169');
     
     // Mark intro as seen
     markIntroAsSeen();
@@ -80,15 +82,29 @@ export default function IntroVideoScreen() {
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../assets/images/natively-dark.png')}
-        style={styles.image}
-        resizeMode="contain"
-      />
-      <View style={styles.overlay}>
-        <Text style={styles.brandName}>Intentional</Text>
-        <Text style={styles.tagline}>Where connections matter</Text>
-      </View>
+      {!imageError ? (
+        <ImageBackground
+          source={{ uri: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=2070&auto=format&fit=crop' }}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+          onError={() => {
+            console.log('[IntroVideo] Failed to load New York skyline image, using fallback');
+            setImageError(true);
+          }}
+        >
+          <View style={styles.overlay}>
+            <Text style={styles.brandName}>Intentional</Text>
+            <Text style={styles.tagline}>Where connections matter</Text>
+          </View>
+        </ImageBackground>
+      ) : (
+        <View style={styles.fallbackContainer}>
+          <View style={styles.overlay}>
+            <Text style={styles.brandName}>Intentional</Text>
+            <Text style={styles.tagline}>Where connections matter</Text>
+          </View>
+        </View>
+      )}
       <TouchableOpacity 
         style={styles.skipButton}
         onPress={handleSkip}
@@ -104,23 +120,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  image: {
+  backgroundImage: {
+    flex: 1,
     width: '100%',
     height: '100%',
-    position: 'absolute',
   },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  fallbackContainer: {
+    flex: 1,
+    backgroundColor: '#1a1a2e',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   brandName: {
     fontSize: 56,
