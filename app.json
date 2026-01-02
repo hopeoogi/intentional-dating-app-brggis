@@ -1,8 +1,9 @@
+
 {
   "expo": {
     "name": "Intentional Dating",
     "slug": "Intentional Dating",
-    "version": "1.3.0",
+    "version": "1.3.1",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
     "userInterfaceStyle": "automatic",
@@ -15,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.Natively",
-      "buildNumber": "1.3.0",
+      "buildNumber": "174",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload profile pictures.",
@@ -33,7 +34,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.Natively",
-      "versionCode": 25,
+      "versionCode": 174,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
