@@ -1,115 +1,94 @@
 
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, ImageBackground, Text } from 'react-native';
+import { View, ImageBackground, StyleSheet, Animated } from 'react-native';
 import { Redirect } from 'expo-router';
 import { supabase } from '@/app/integrations/supabase/client';
-import { colors } from '@/styles/commonStyles';
 
-// ============================================================================
-// BUILD 172 - WORKING EDGE FUNCTION PATTERN
-// ============================================================================
-// Simplified Edge Functions based on proven working examples
-// ============================================================================
-
-export default function Index() {
+export default function LoadScreen() {
   const [isReady, setIsReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showIntro, setShowIntro] = useState(true);
-  const [imageError, setImageError] = useState(false);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const fadeAnim = useState(new Animated.Value(0))[0];
 
   useEffect(() => {
-    console.log('[Index] App starting - BUILD 172');
-    checkAuthAndIntro();
+    // Fade in animation
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+
+    // Check auth status after 3 seconds
+    const timer = setTimeout(async () => {
+      await checkAuthStatus();
+    }, 3000);
+
+    return () => clearTimeout(timer);
   }, []);
 
-  const checkAuthAndIntro = async () => {
+  const checkAuthStatus = async () => {
     try {
-      console.log('[Index] Checking authentication status...');
+      const { data: { session } } = await supabase.auth.getSession();
       
-      // Check if user has seen intro
-      const hasSeenIntro = await checkIfSeenIntro();
-      console.log('[Index] Has seen intro:', hasSeenIntro);
-      setShowIntro(!hasSeenIntro);
-
-      // Check authentication with timeout
-      const authPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Auth check timeout')), 5000)
-      );
-
-      const { data: { session }, error } = await Promise.race([
-        authPromise,
-        timeoutPromise
-      ]) as any;
-      
-      if (error) {
-        console.error('[Index] Auth check error:', error);
-        setIsAuthenticated(false);
-      } else if (session) {
-        console.log('[Index] User is authenticated');
+      if (session) {
         setIsAuthenticated(true);
-      } else {
-        console.log('[Index] User is not authenticated');
-        setIsAuthenticated(false);
+        
+        // Check if user has completed onboarding
+        const { data: userData } = await supabase
+          .from('users')
+          .select('onboarding_complete')
+          .eq('auth_user_id', session.user.id)
+          .single();
+        
+        if (userData?.onboarding_complete) {
+          setHasCompletedOnboarding(true);
+        } else {
+          // Check if they have a pending application
+          const { data: pendingData } = await supabase
+            .from('pending_users')
+            .select('status')
+            .eq('auth_user_id', session.user.id)
+            .single();
+          
+          if (pendingData?.status === 'pending') {
+            setIsPending(true);
+          }
+        }
       }
     } catch (error) {
-      console.error('[Index] Error checking auth:', error);
-      setIsAuthenticated(false);
-      setShowIntro(false);
+      console.error('[LoadScreen] Error checking auth:', error);
     } finally {
       setIsReady(true);
-    }
-  };
-
-  const checkIfSeenIntro = async (): Promise<boolean> => {
-    try {
-      return false;
-    } catch (error) {
-      console.error('[Index] Error checking intro status:', error);
-      return true;
     }
   };
 
   if (!isReady) {
     return (
       <View style={styles.container}>
-        {!imageError ? (
-          <ImageBackground
-            source={{ uri: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=2070&auto=format&fit=crop' }}
-            style={styles.backgroundImage}
-            resizeMode="cover"
-            onError={() => {
-              console.log('[Index] Failed to load image, using fallback');
-              setImageError(true);
-            }}
-          >
-            <View style={styles.overlay}>
-              <ActivityIndicator size="large" color="#FFFFFF" />
-              <Text style={styles.loadingText}>Loading...</Text>
-            </View>
-          </ImageBackground>
-        ) : (
-          <View style={styles.fallbackContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Loading...</Text>
-          </View>
-        )}
+        <ImageBackground
+          source={{ uri: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=2070&auto=format&fit=crop' }}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        >
+          <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />
+        </ImageBackground>
       </View>
     );
   }
 
+  // Redirect based on auth status
   if (isAuthenticated) {
-    console.log('[Index] Redirecting to home...');
-    return <Redirect href="/(tabs)/(home)/" />;
+    if (hasCompletedOnboarding) {
+      return <Redirect href="/(tabs)/(home)" />;
+    } else if (isPending) {
+      return <Redirect href="/application-pending" />;
+    } else {
+      return <Redirect href="/apply/step-1" />;
+    }
   }
 
-  if (showIntro) {
-    console.log('[Index] Redirecting to intro...');
-    return <Redirect href="/intro-video" />;
-  }
-
-  console.log('[Index] Redirecting to signin...');
-  return <Redirect href="/signin" />;
+  return <Redirect href="/welcome" />;
 }
 
 const styles = StyleSheet.create({
@@ -122,22 +101,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  fallbackContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-  },
   overlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  loadingText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    marginTop: 20,
-    fontWeight: '600',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
 });

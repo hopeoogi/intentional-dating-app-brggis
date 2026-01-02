@@ -17,7 +17,23 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/app/integrations/supabase/client';
 
-export default function Step4Screen() {
+interface ActivityPhotoUploadProps {
+  stepNumber: number;
+  totalSteps: number;
+  photoNumber: number;
+  storageKey: string;
+  nextRoute: string;
+  progressPercent: string;
+}
+
+export default function ActivityPhotoUpload({
+  stepNumber,
+  totalSteps,
+  photoNumber,
+  storageKey,
+  nextRoute,
+  progressPercent,
+}: ActivityPhotoUploadProps) {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -42,7 +58,7 @@ export default function Step4Screen() {
   };
 
   const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status} = await ImagePicker.requestCameraPermissionsAsync();
     
     if (status !== 'granted') {
       Alert.alert('Permission Required', 'We need camera permissions to take photos');
@@ -62,15 +78,14 @@ export default function Step4Screen() {
 
   const handleNext = async () => {
     if (!photoUri) {
-      Alert.alert('Required', 'Please upload a selfie to continue');
+      Alert.alert('Required', `Please upload activity photo ${photoNumber} to continue`);
       return;
     }
 
     setUploading(true);
 
     try {
-      // Upload to Supabase Storage
-      const fileName = `selfie_${Date.now()}.jpg`;
+      const fileName = `activity${photoNumber}_${Date.now()}.jpg`;
       const response = await fetch(photoUri);
       const blob = await response.blob();
 
@@ -86,10 +101,10 @@ export default function Step4Screen() {
         .from('profile-photos')
         .getPublicUrl(fileName);
 
-      await AsyncStorage.setItem('onboarding_selfie', publicUrl);
-      router.push('/apply/step-5');
+      await AsyncStorage.setItem(storageKey, publicUrl);
+      router.push(nextRoute);
     } catch (error: any) {
-      console.error('[Step4] Upload error:', error);
+      console.error(`[ActivityPhoto${photoNumber}] Upload error:`, error);
       Alert.alert('Upload Failed', 'Please try again');
     } finally {
       setUploading(false);
@@ -113,13 +128,13 @@ export default function Step4Screen() {
         </TouchableOpacity>
 
         <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: '40%' }]} />
+          <View style={[styles.progressFill, { width: progressPercent }]} />
         </View>
 
         <View style={styles.header}>
-          <Text style={styles.stepNumber}>Step 4 of 10</Text>
-          <Text style={styles.title}>Upload a selfie</Text>
-          <Text style={styles.subtitle}>No sunglasses, clear face visible</Text>
+          <Text style={styles.stepNumber}>Step {stepNumber} of {totalSteps}</Text>
+          <Text style={styles.title}>Activity photo {photoNumber}</Text>
+          <Text style={styles.subtitle}>Show yourself doing something you love</Text>
         </View>
 
         <View style={styles.photoContainer}>
@@ -128,8 +143,8 @@ export default function Step4Screen() {
           ) : (
             <View style={styles.placeholder}>
               <IconSymbol
-                ios_icon_name="person.crop.circle"
-                android_material_icon_name="account_circle"
+                ios_icon_name="figure.run"
+                android_material_icon_name="directions_run"
                 size={80}
                 color="#666666"
               />
@@ -142,15 +157,15 @@ export default function Step4Screen() {
           <Text style={styles.requirementsTitle}>Requirements:</Text>
           <View style={styles.requirementItem}>
             <Text style={styles.bullet}>•</Text>
-            <Text style={styles.requirementText}>Clear, well-lit photo</Text>
+            <Text style={styles.requirementText}>You doing an activity or hobby</Text>
           </View>
           <View style={styles.requirementItem}>
             <Text style={styles.bullet}>•</Text>
-            <Text style={styles.requirementText}>No sunglasses or face coverings</Text>
+            <Text style={styles.requirementText}>Only you in the photo (no group shots)</Text>
           </View>
           <View style={styles.requirementItem}>
             <Text style={styles.bullet}>•</Text>
-            <Text style={styles.requirementText}>Only you in the photo</Text>
+            <Text style={styles.requirementText}>Clear and well-lit</Text>
           </View>
         </View>
 

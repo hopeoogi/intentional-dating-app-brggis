@@ -8,7 +8,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useColorScheme, Alert, View, Text, ActivityIndicator } from "react-native";
+import { useColorScheme, Alert, View, Text } from "react-native";
 import { useNetworkState } from "expo-network";
 import {
   DarkTheme,
@@ -27,33 +27,17 @@ SplashScreen.preventAutoHideAsync().catch((error) => {
   console.error('[App] Failed to prevent splash screen auto-hide:', error);
 });
 
-// ============================================================================
-// BUILD 171 - DEEP DIVE API SYNC FIX
-// ============================================================================
-// CRITICAL FIXES:
-// 1. Fixed Edge Functions - removed old serve imports
-// 2. Fixed environment variable names (SUPABASE_PUBLISHABLE_OR_ANON_KEY)
-// 3. Enhanced CORS headers on ALL responses including errors
-// 4. Comprehensive error handling with request IDs for debugging
-// 5. Better logging and debugging capabilities
-// 6. Consistent response formats across all APIs
-// 7. Maintained all previous fixes from Build 170
-// ============================================================================
-
 console.log('='.repeat(80));
-console.log('[App] Starting app initialization - BUILD 171');
-console.log('[App] Version: 1.2.9');
-console.log('[App] Platform:', require('react-native').Platform.OS);
-console.log('[App] Production-ready configuration');
-console.log('[App] All HTTP libraries blocked - using native fetch only');
-console.log('[App] Edge Functions API sync issues RESOLVED');
-console.log('[App] New York skyline load screen implemented');
+console.log('[App] Starting Intentional Dating App - Fresh Build');
+console.log('[App] Version: 2.0.0');
+console.log('[App] Clean architecture with Raya-like UI');
+console.log('[App] No likes/swipes - message-first approach');
+console.log('[App] Manual application approval process');
 console.log('='.repeat(80));
 
 // Initialize Sentry for crash reporting (non-blocking)
 initializeSentry().catch((error) => {
   console.error('[App] Failed to initialize Sentry:', error);
-  // Don't throw - continue app initialization
 });
 
 export const unstable_settings = {
@@ -68,12 +52,10 @@ export default function RootLayout() {
   });
   const [isReady, setIsReady] = useState(false);
 
-  // Handle font loading
   useEffect(() => {
     if (loaded || error) {
       console.log('[App] Fonts loaded:', loaded, 'Error:', error);
       
-      // Hide splash screen after a short delay
       setTimeout(() => {
         SplashScreen.hideAsync()
           .then(() => {
@@ -82,14 +64,12 @@ export default function RootLayout() {
           })
           .catch((err) => {
             console.error('[App] Error hiding splash screen:', err);
-            // Still mark as ready even if splash screen fails to hide
             setIsReady(true);
           });
       }, 500);
     }
   }, [loaded, error]);
 
-  // Handle network state changes
   useEffect(() => {
     if (!networkState) {
       console.log('[App] Network state not available yet');
@@ -108,12 +88,10 @@ export default function RootLayout() {
     }
   }, [networkState?.isConnected, networkState?.isInternetReachable]);
 
-  // Show loading screen while fonts are loading
   if (!loaded && !error) {
     return null;
   }
 
-  // Show error screen if fonts failed to load
   if (error) {
     console.error('[App] Font loading error:', error);
     return (
@@ -163,7 +141,7 @@ export default function RootLayout() {
                 <Stack.Screen name="index" options={{ headerShown: false }} />
 
                 {/* Auth & Onboarding */}
-                <Stack.Screen name="intro-video" options={{ headerShown: false }} />
+                <Stack.Screen name="welcome" options={{ headerShown: false }} />
                 <Stack.Screen name="signin" options={{ headerShown: false }} />
                 <Stack.Screen name="application-pending" options={{ headerShown: false }} />
                 <Stack.Screen name="apply" options={{ headerShown: false }} />

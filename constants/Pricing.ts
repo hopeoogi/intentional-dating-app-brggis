@@ -3,6 +3,9 @@ export interface PricingTier {
   id: 'basic' | 'elite' | 'star';
   name: string;
   color: string;
+  dailyMatches: number;
+  dailyConversations: number;
+  maxDistance: number;
   features: string[];
   plans: {
     monthly: {
@@ -30,14 +33,16 @@ export interface PricingTier {
 export const PRICING_TIERS: PricingTier[] = [
   {
     id: 'basic',
-    name: 'Basic Package',
+    name: 'Basic',
     color: '#6A5ACD',
+    dailyMatches: 3,
+    dailyConversations: 3,
+    maxDistance: 50,
     features: [
-      'One (1) verification badge in blue',
-      'Maximum match range of 50 miles',
       '3 matches per day',
-      'Basic status matches only',
       '3 new conversations per day',
+      'Maximum match range of 50 miles',
+      'Basic filters',
     ],
     plans: {
       monthly: {
@@ -63,15 +68,17 @@ export const PRICING_TIERS: PricingTier[] = [
   },
   {
     id: 'elite',
-    name: 'Elite Package',
+    name: 'Elite',
     color: '#9370DB',
+    dailyMatches: 15,
+    dailyConversations: 15,
+    maxDistance: 100,
     features: [
-      'Up to three (3) verification badges in purple',
-      'Maximum match range of 100 miles',
       '15 matches per day',
-      'Access to Elite status matches',
       '15 new conversations per day',
+      'Maximum match range of 100 miles',
       'Advanced filters (height, body, ethnicity)',
+      'Priority support',
     ],
     plans: {
       monthly: {
@@ -97,16 +104,18 @@ export const PRICING_TIERS: PricingTier[] = [
   },
   {
     id: 'star',
-    name: 'Star Package',
+    name: 'Star',
     color: '#FFD700',
+    dailyMatches: 23,
+    dailyConversations: 23,
+    maxDistance: 200,
     features: [
-      'Up to six (6) verification badges in gold',
-      'Maximum match range of 200 miles',
       '23 matches per day',
-      'Access to Elite and Star status matches',
       '23 new conversations per day',
+      'Maximum match range of 200 miles',
       'All advanced filters',
       'Priority support',
+      'Early access to new features',
     ],
     plans: {
       monthly: {

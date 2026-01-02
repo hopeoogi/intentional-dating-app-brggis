@@ -6,146 +6,185 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   Alert,
-  Image,
+  ActivityIndicator,
 } from 'react-native';
-import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
-import { mockUsers } from '@/data/mockData';
+import { router, useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { IconSymbol } from '@/components/IconSymbol';
-import { router } from 'expo-router';
+import { supabase } from '@/app/integrations/supabase/client';
+
+const MIN_MESSAGE_LENGTH = 36;
 
 export default function StartConversationScreen() {
+  const { userId } = useLocalSearchParams();
   const [message, setMessage] = useState('');
-  const selectedUser = mockUsers[0];
-  const MIN_CHARS = 36;
+  const [sending, setSending] = useState(false);
 
-  const handleSend = () => {
-    if (message.trim().length < MIN_CHARS) {
+  const handleSend = async () => {
+    if (message.trim().length < MIN_MESSAGE_LENGTH) {
       Alert.alert(
         'Message Too Short',
-        `Your message must be at least ${MIN_CHARS} characters to show genuine interest.`
+        `Please write at least ${MIN_MESSAGE_LENGTH} characters to start a meaningful conversation.`
       );
       return;
     }
 
-    Alert.alert(
-      'Conversation Started!',
-      `Your message has been sent to ${selectedUser.name}. They will be notified and must respond within 24 hours.`,
-      [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]
-    );
+    setSending(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Get current user's profile
+      const { data: currentUserData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .single();
+
+      if (!currentUserData) throw new Error('User profile not found');
+
+      // Create match
+      const { data: matchData, error: matchError } = await supabase
+        .from('matches')
+        .insert({
+          user_id: currentUserData.id,
+          matched_user_id: userId,
+          conversation_started: true,
+          pending_response_from: userId,
+        })
+        .select()
+        .single();
+
+      if (matchError) throw matchError;
+
+      // Send first message
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          match_id: matchData.id,
+          sender_id: currentUserData.id,
+          receiver_id: userId,
+          content: message.trim(),
+        });
+
+      if (messageError) throw messageError;
+
+      Alert.alert(
+        'Message Sent!',
+        'Your message has been sent. You&apos;ll be notified when they respond.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.error('[StartConversation] Error:', error);
+      Alert.alert('Error', 'Failed to send message. Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
-  const mainPhoto = selectedUser.photos.find((p) => p.type === 'selfie') || selectedUser.photos[0];
-  const charsRemaining = MIN_CHARS - message.length;
+  const remainingChars = MIN_MESSAGE_LENGTH - message.length;
 
   return (
     <KeyboardAvoidingView
-      style={commonStyles.container}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+      <StatusBar style="light" />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <IconSymbol
             ios_icon_name="chevron.left"
             android_material_icon_name="arrow_back"
             size={24}
-            color={colors.text}
+            color="#FFFFFF"
           />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Start Conversation</Text>
-        <View style={{ width: 24 }} />
-      </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.userCard}>
-          <Image source={{ uri: mainPhoto?.url }} style={styles.userPhoto} />
-          <Text style={styles.userName}>{selectedUser.name}, {selectedUser.age}</Text>
-          <Text style={styles.userLocation}>
-            {selectedUser.location.city}, {selectedUser.location.state}
+        <View style={styles.header}>
+          <Text style={styles.title}>Start a conversation</Text>
+          <Text style={styles.subtitle}>
+            Write a thoughtful message to introduce yourself
           </Text>
         </View>
 
-        <View style={styles.infoCard}>
-          <IconSymbol
-            ios_icon_name="lightbulb.fill"
-            android_material_icon_name="lightbulb"
-            size={24}
-            color={colors.primary}
-          />
-          <View style={styles.infoContent}>
-            <Text style={styles.infoTitle}>Make it meaningful</Text>
-            <Text style={styles.infoText}>
-              Write a thoughtful message (minimum {MIN_CHARS} characters) to start a genuine conversation. 
-              This is like approaching someone in real life - make it count!
+        <View style={styles.form}>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Write your message here..."
+              placeholderTextColor="#666666"
+              value={message}
+              onChangeText={setMessage}
+              multiline
+              numberOfLines={8}
+              textAlignVertical="top"
+              autoFocus
+            />
+            <View style={styles.charCountContainer}>
+              <Text
+                style={[
+                  styles.charCount,
+                  remainingChars <= 0 && styles.charCountValid,
+                ]}
+              >
+                {remainingChars > 0
+                  ? `${remainingChars} more characters needed`
+                  : `${message.length} characters`}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.tipContainer}>
+            <IconSymbol
+              ios_icon_name="lightbulb.fill"
+              android_material_icon_name="lightbulb"
+              size={20}
+              color="#FFD700"
+            />
+            <Text style={styles.tipText}>
+              Tip: Mention something from their profile to show you&apos;re genuinely interested
             </Text>
           </View>
-        </View>
-
-        <View style={styles.inputSection}>
-          <Text style={styles.inputLabel}>Your Message</Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder={`Write a thoughtful message (min ${MIN_CHARS} characters)...`}
-            placeholderTextColor={colors.textSecondary}
-            value={message}
-            onChangeText={setMessage}
-            multiline
-            maxLength={500}
-            textAlignVertical="top"
-          />
-          <View style={styles.charCounter}>
-            <Text
-              style={[
-                styles.charCounterText,
-                charsRemaining <= 0 && styles.charCounterValid,
-              ]}
-            >
-              {charsRemaining > 0
-                ? `${charsRemaining} more characters needed`
-                : `${message.length} / 500 characters`}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.examplesCard}>
-          <Text style={styles.examplesTitle}>Good conversation starters:</Text>
-          <Text style={styles.exampleText}>
-            • Ask about something specific in their profile
-          </Text>
-          <Text style={styles.exampleText}>
-            • Share a genuine compliment about their interests
-          </Text>
-          <Text style={styles.exampleText}>
-            • Suggest a specific activity you could do together
-          </Text>
-          <Text style={styles.exampleText}>
-            • Ask an open-ended question about their passions
-          </Text>
         </View>
 
         <TouchableOpacity
           style={[
-            buttonStyles.primary,
             styles.sendButton,
-            message.trim().length < MIN_CHARS && styles.sendButtonDisabled,
+            (message.trim().length < MIN_MESSAGE_LENGTH || sending) &&
+              styles.sendButtonDisabled,
           ]}
           onPress={handleSend}
-          disabled={message.trim().length < MIN_CHARS}
+          disabled={message.trim().length < MIN_MESSAGE_LENGTH || sending}
         >
-          <Text style={commonStyles.buttonText}>Send Message</Text>
+          {sending ? (
+            <ActivityIndicator color="#000000" />
+          ) : (
+            <>
+              <Text style={styles.sendButtonText}>Send Message</Text>
+              <IconSymbol
+                ios_icon_name="paperplane.fill"
+                android_material_icon_name="send"
+                size={20}
+                color="#000000"
+              />
+            </>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -153,136 +192,97 @@ export default function StartConversationScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 16,
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  scrollView: {
+  container: {
     flex: 1,
+    backgroundColor: '#000000',
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 24,
+    flexGrow: 1,
+    paddingTop: 60,
+    paddingHorizontal: 32,
     paddingBottom: 40,
   },
-  userCard: {
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 24,
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
     marginBottom: 20,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
-    elevation: 2,
   },
-  userPhoto: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 12,
+  header: {
+    marginBottom: 32,
   },
-  userName: {
-    fontSize: 22,
+  title: {
+    fontSize: 32,
     fontWeight: '700',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  userLocation: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    backgroundColor: colors.accent,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-    alignItems: 'flex-start',
-  },
-  infoContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  infoText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
-  inputSection: {
-    marginBottom: 24,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
+    color: '#FFFFFF',
     marginBottom: 8,
   },
-  textInput: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    padding: 16,
+  subtitle: {
     fontSize: 16,
-    color: colors.text,
-    minHeight: 150,
-    textAlignVertical: 'top',
+    color: '#FFFFFF',
+    opacity: 0.7,
   },
-  charCounter: {
+  form: {
+    flex: 1,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  input: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#2C2C2E',
+    height: 200,
+    paddingTop: 16,
+  },
+  charCountContainer: {
     marginTop: 8,
     alignItems: 'flex-end',
   },
-  charCounterText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  charCounterValid: {
-    color: colors.success,
-  },
-  examplesCard: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
-    elevation: 2,
-  },
-  examplesTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 12,
-  },
-  exampleText: {
+  charCount: {
     fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 22,
-    marginBottom: 6,
+    color: '#FF6B6B',
+    fontWeight: '500',
+  },
+  charCountValid: {
+    color: '#4CAF50',
+  },
+  tipContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+  },
+  tipText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.8,
+    lineHeight: 20,
   },
   sendButton: {
-    width: '100%',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 18,
+    borderRadius: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 24,
   },
   sendButtonDisabled: {
     opacity: 0.5,
+  },
+  sendButtonText: {
+    color: '#000000',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });

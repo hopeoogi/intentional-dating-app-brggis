@@ -1,133 +1,191 @@
 
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, Platform } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Alert,
+} from 'react-native';
 import { router } from 'expo-router';
-import { ApplicationStep } from '@/components/ApplicationStep';
-import { colors } from '@/styles/commonStyles';
-import { supabase } from '@/app/integrations/supabase/client';
+import { StatusBar } from 'expo-status-bar';
+import { IconSymbol } from '@/components/IconSymbol';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function Step2Screen() {
-  const [dateOfBirth, setDateOfBirth] = useState(new Date());
-  const [showPicker, setShowPicker] = useState(Platform.OS === 'ios');
-
-  useEffect(() => {
-    loadSavedData();
-  }, []);
-
-  const loadSavedData = async () => {
-    try {
-      const saved = await AsyncStorage.getItem('application_step_2');
-      if (saved) {
-        const data = JSON.parse(saved);
-        if (data.dateOfBirth) {
-          setDateOfBirth(new Date(data.dateOfBirth));
-        }
-      }
-    } catch (error) {
-      console.error('Error loading saved data:', error);
-    }
-  };
-
-  const calculateAge = (birthDate: Date) => {
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
 
   const handleNext = async () => {
-    const age = calculateAge(dateOfBirth);
-
-    if (age < 18) {
-      Alert.alert('Age Requirement', 'You must be at least 18 years old to join Intentional.');
+    if (!city.trim() || !state.trim()) {
+      Alert.alert('Required', 'Please enter both city and state');
       return;
     }
 
-    if (age > 100) {
-      Alert.alert('Invalid Date', 'Please enter a valid date of birth.');
-      return;
-    }
+    await AsyncStorage.setItem('onboarding_city', city);
+    await AsyncStorage.setItem('onboarding_state', state);
 
-    try {
-      await AsyncStorage.setItem(
-        'application_step_2',
-        JSON.stringify({ dateOfBirth: dateOfBirth.toISOString(), age })
-      );
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: questionData } = await supabase
-          .from('application_questions')
-          .select('id')
-          .eq('question_order', 2)
-          .single();
-
-        if (questionData) {
-          await supabase.from('application_responses').upsert({
-            auth_user_id: session.user.id,
-            question_id: questionData.id,
-            response_value: dateOfBirth.toISOString(),
-            response_data: { age },
-          });
-        }
-      }
-
-      router.push('/apply/step-3');
-    } catch (error) {
-      console.error('Error saving data:', error);
-      Alert.alert('Error', 'Failed to save your response. Please try again.');
-    }
+    router.push('/apply/step-3');
   };
-
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowPicker(false);
-    }
-    if (selectedDate) {
-      setDateOfBirth(selectedDate);
-    }
-  };
-
-  const age = calculateAge(dateOfBirth);
-  const isValidAge = age >= 18 && age <= 100;
 
   return (
-    <ApplicationStep
-      stepNumber={2}
-      totalSteps={10}
-      title="What is your date of birth?"
-      subtitle="You must be at least 18 years old to join"
-      onNext={handleNext}
-      onBack={() => router.back()}
-      nextButtonDisabled={!isValidAge}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.pickerContainer}>
-        {(showPicker || Platform.OS === 'ios') && (
-          <DateTimePicker
-            value={dateOfBirth}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleDateChange}
-            maximumDate={new Date()}
-            minimumDate={new Date(1924, 0, 1)}
-            textColor={colors.text}
+      <StatusBar style="light" />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <IconSymbol
+            ios_icon_name="chevron.left"
+            android_material_icon_name="arrow_back"
+            size={24}
+            color="#FFFFFF"
           />
-        )}
-      </View>
-    </ApplicationStep>
+        </TouchableOpacity>
+
+        <View style={styles.progressBar}>
+          <View style={[styles.progressFill, { width: '20%' }]} />
+        </View>
+
+        <View style={styles.header}>
+          <Text style={styles.stepNumber}>Step 2 of 10</Text>
+          <Text style={styles.title}>Where are you located?</Text>
+          <Text style={styles.subtitle}>This helps us find matches near you</Text>
+        </View>
+
+        <View style={styles.form}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>City</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your city"
+              placeholderTextColor="#666666"
+              value={city}
+              onChangeText={setCity}
+              autoCapitalize="words"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>State</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your state"
+              placeholderTextColor="#666666"
+              value={state}
+              onChangeText={setState}
+              autoCapitalize="words"
+            />
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+          <Text style={styles.nextButtonText}>Continue</Text>
+          <IconSymbol
+            ios_icon_name="arrow.right"
+            android_material_icon_name="arrow_forward"
+            size={20}
+            color="#000000"
+          />
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  pickerContainer: {
-    backgroundColor: colors.card,
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingTop: 60,
+    paddingHorizontal: 32,
+    paddingBottom: 40,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#1C1C1E',
+    borderRadius: 2,
+    marginBottom: 32,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 2,
+  },
+  header: {
+    marginBottom: 48,
+  },
+  stepNumber: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.6,
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    opacity: 0.7,
+  },
+  form: {
+    flex: 1,
+  },
+  inputContainer: {
+    marginBottom: 24,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#1C1C1E',
     borderRadius: 12,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#2C2C2E',
+  },
+  nextButton: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 18,
+    borderRadius: 30,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  nextButtonText: {
+    color: '#000000',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
