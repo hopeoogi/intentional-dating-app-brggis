@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.Natively",
-      "buildNumber": "177",
+      "buildNumber": "178",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload profile pictures.",
@@ -34,7 +34,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.Natively",
-      "versionCode": 177,
+      "versionCode": 178,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
@@ -70,7 +70,9 @@
       },
       "eas": {
         "projectId": "plnfluykallohjimxnja"
-      }
+      },
+      "supabaseUrl": "https://plnfluykallohjimxnja.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsbmZsdXlrYWxsb2hqaW14bmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDkzNjcsImV4cCI6MjA4MjY4NTM2N30.Hsj2brvHemnDV9w-b0wbdLyaBclteRj3gNW8jDhzCk0"
     },
     "runtimeVersion": {
       "policy": "appVersion"
