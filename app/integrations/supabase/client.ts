@@ -6,11 +6,11 @@ import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 
 // ============================================================================
-// BUILD 174 - FIXED API SYNC ERROR
+// BUILD 175 - FIXED SUPABASE QUERY ERROR
 // ============================================================================
 // Simplified Supabase client configuration
 // Native fetch is enforced - no HTTP library conflicts
-// Removed verbose logging that could interfere with builds
+// Fixed silent connection test - Supabase queries return objects, not Promises
 // ============================================================================
 
 const SUPABASE_URL = "https://plnfluykallohjimxnja.supabase.co";
@@ -49,6 +49,11 @@ export const supabase = createClient<Database>(
 );
 
 // Silent connection test (non-blocking, no console spam)
-setTimeout(() => {
-  supabase.from('users').select('count', { count: 'exact', head: true }).catch(() => {});
+// Supabase queries return objects, not Promises - must await them
+setTimeout(async () => {
+  try {
+    await supabase.from('users').select('count', { count: 'exact', head: true });
+  } catch (error) {
+    // Silent error handling - connection test only
+  }
 }, 2000);
