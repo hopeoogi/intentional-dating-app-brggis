@@ -6,11 +6,12 @@ import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 
 // ============================================================================
-// BUILD 175 - FIXED SUPABASE QUERY ERROR
+// BUILD 176 - REMOVED PROBLEMATIC CONNECTION TEST
 // ============================================================================
 // Simplified Supabase client configuration
 // Native fetch is enforced - no HTTP library conflicts
-// Fixed silent connection test - Supabase queries return objects, not Promises
+// Removed silent connection test to eliminate query errors
+// Connection will be tested naturally when the app makes its first query
 // ============================================================================
 
 const SUPABASE_URL = "https://plnfluykallohjimxnja.supabase.co";
@@ -48,12 +49,6 @@ export const supabase = createClient<Database>(
   }
 );
 
-// Silent connection test (non-blocking, no console spam)
-// Supabase queries return objects, not Promises - must await them
-setTimeout(async () => {
-  try {
-    await supabase.from('users').select('count', { count: 'exact', head: true });
-  } catch (error) {
-    // Silent error handling - connection test only
-  }
-}, 2000);
+// Connection will be tested naturally when the app makes its first query
+// No need for artificial connection tests that can cause errors
+console.log('[Supabase] Client initialized successfully');
