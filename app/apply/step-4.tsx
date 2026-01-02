@@ -15,7 +15,7 @@ import { StatusBar } from 'expo-status-bar';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '@/app/integrations/supabase/client';
+import { api } from '@/lib/api-client';
 
 export default function Step4Screen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -69,24 +69,22 @@ export default function Step4Screen() {
     setUploading(true);
 
     try {
-      // Upload to Supabase Storage
-      const fileName = `selfie_${Date.now()}.jpg`;
-      const response = await fetch(photoUri);
-      const blob = await response.blob();
+      // TODO: Backend Integration - Upload selfie photo to backend storage API
+      const formData = new FormData();
+      formData.append('file', {
+        uri: photoUri,
+        type: 'image/jpeg',
+        name: `selfie_${Date.now()}.jpg`,
+      } as any);
+      formData.append('type', 'selfie');
 
-      const { data, error } = await supabase.storage
-        .from('profile-photos')
-        .upload(fileName, blob, {
-          contentType: 'image/jpeg',
-        });
+      const response = await api.post('/upload/profile-photo', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile-photos')
-        .getPublicUrl(fileName);
-
-      await AsyncStorage.setItem('onboarding_selfie', publicUrl);
+      await AsyncStorage.setItem('onboarding_selfie', response.data.url);
       router.push('/apply/step-5');
     } catch (error: any) {
       console.error('[Step4] Upload error:', error);

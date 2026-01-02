@@ -2,22 +2,53 @@
 import { createAuthClient } from 'better-auth/react';
 import { expoClient } from '@better-auth/expo/client';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
-// Get backend URL from app.json extra config or use Supabase URL as fallback
-const backendUrl = Constants.expoConfig?.extra?.backendUrl || 'https://plnfluykallohjimxnja.supabase.co';
+// Get backend URL from app.json extra config
+const API_URL = Constants.expoConfig?.extra?.backendUrl || '';
+const BEARER_TOKEN_KEY = 'intentional_bearer_token';
 
-console.log('[Auth Client] Initializing BetterAuth with backend:', backendUrl);
+console.log('[Auth Client] Initializing BetterAuth with backend:', API_URL);
+
+// Platform-specific storage
+const storage = Platform.OS === 'web'
+  ? {
+      getItem: (key: string) => localStorage.getItem(key),
+      setItem: (key: string, value: string) => localStorage.setItem(key, value),
+      deleteItem: (key: string) => localStorage.removeItem(key),
+    }
+  : SecureStore;
 
 export const authClient = createAuthClient({
-  baseURL: backendUrl,
+  baseURL: API_URL,
   plugins: [
     expoClient({
-      scheme: 'natively',
+      scheme: 'intentional',
       storagePrefix: 'intentional',
-      storage: SecureStore,
+      storage,
     }),
   ],
+  ...(Platform.OS === 'web' && {
+    fetchOptions: {
+      auth: {
+        type: 'Bearer' as const,
+        token: () => localStorage.getItem(BEARER_TOKEN_KEY) || '',
+      },
+    },
+  }),
 });
+
+export function storeWebBearerToken(token: string) {
+  if (Platform.OS === 'web') {
+    localStorage.setItem(BEARER_TOKEN_KEY, token);
+  }
+}
+
+export function clearAuthTokens() {
+  if (Platform.OS === 'web') {
+    localStorage.removeItem(BEARER_TOKEN_KEY);
+  }
+}
 
 console.log('[Auth Client] ✅ BetterAuth client initialized');

@@ -15,7 +15,7 @@ import { colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { router } from 'expo-router';
 import * as Notifications from 'expo-notifications';
-import { supabase } from '@/app/integrations/supabase/client';
+import { api } from '@/lib/api-client';
 
 interface NotificationTemplate {
   id: string;
@@ -40,14 +40,9 @@ export default function NotificationManagement() {
 
   const loadTemplates = async () => {
     try {
-      const { data, error } = await supabase
-        .from('notification_templates')
-        .select('*')
-        .order('category', { ascending: true });
-
-      if (error) throw error;
-
-      setTemplates(data || []);
+      // TODO: Backend Integration - Fetch notification templates from backend API
+      const response = await api.get('/admin/notification-templates');
+      setTemplates(response.data || []);
     } catch (error) {
       console.error('Error loading templates:', error);
       Alert.alert('Error', 'Failed to load notification templates');
@@ -58,12 +53,10 @@ export default function NotificationManagement() {
 
   const handleToggleTemplate = async (id: string, currentEnabled: boolean) => {
     try {
-      const { error } = await supabase
-        .from('notification_templates')
-        .update({ enabled: !currentEnabled, updated_at: new Date().toISOString() })
-        .eq('id', id);
-
-      if (error) throw error;
+      // TODO: Backend Integration - Toggle notification template via backend API
+      await api.patch(`/admin/notification-templates/${id}`, {
+        enabled: !currentEnabled,
+      });
 
       setTemplates((prev) =>
         prev.map((t) => (t.id === id ? { ...t, enabled: !currentEnabled } : t))
@@ -76,12 +69,11 @@ export default function NotificationManagement() {
 
   const handleUpdateTemplate = async (id: string, title: string, body: string) => {
     try {
-      const { error } = await supabase
-        .from('notification_templates')
-        .update({ title, body, updated_at: new Date().toISOString() })
-        .eq('id', id);
-
-      if (error) throw error;
+      // TODO: Backend Integration - Update notification template via backend API
+      await api.patch(`/admin/notification-templates/${id}`, {
+        title,
+        body,
+      });
 
       Alert.alert('Success', 'Template updated successfully');
       loadTemplates();
@@ -99,30 +91,17 @@ export default function NotificationManagement() {
 
     setSending(true);
     try {
-      // Get current user (admin)
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        Alert.alert('Error', 'You must be logged in to schedule notifications');
-        return;
-      }
-
-      // Create scheduled notification in database
+      // TODO: Backend Integration - Schedule notification via backend API
       const scheduledFor = scheduleTime 
         ? new Date(scheduleTime).toISOString()
         : new Date().toISOString();
 
-      const { error } = await supabase
-        .from('scheduled_notifications')
-        .insert({
-          template_id: null, // Custom notification
-          scheduled_for: scheduledFor,
-          target_audience: { all: true },
-          status: 'pending',
-          created_by: user.id,
-        });
-
-      if (error) throw error;
+      await api.post('/admin/scheduled-notifications', {
+        title: scheduledTitle,
+        body: scheduledBody,
+        scheduled_for: scheduledFor,
+        target_audience: { all: true },
+      });
 
       // For demo purposes, also schedule a local notification
       await Notifications.scheduleNotificationAsync({
@@ -360,7 +339,7 @@ export default function NotificationManagement() {
             1. Create a Firebase project and add your Android app{'\n'}
             2. Download google-services.json{'\n'}
             3. Enable Cloud Messaging API in Google Cloud Console{'\n\n'}
-            Notifications are sent via Supabase Edge Functions to all users with push_notifications_enabled = true.
+            Notifications are sent via backend API to all users with push_notifications_enabled = true.
           </Text>
         </View>
       </ScrollView>

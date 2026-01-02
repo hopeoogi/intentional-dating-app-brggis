@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert,
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { router } from 'expo-router';
-import { supabase } from '@/app/integrations/supabase/client';
+import { api } from '@/lib/api-client';
 
 interface PromoCode {
   id: string;
@@ -41,13 +41,9 @@ export default function PromoCodesScreen() {
 
   const loadPromoCodes = async () => {
     try {
-      const { data, error } = await supabase
-        .from('promo_codes')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setPromoCodes(data || []);
+      // TODO: Backend Integration - Fetch promo codes from backend API
+      const response = await api.get('/admin/promo-codes');
+      setPromoCodes(response.data || []);
     } catch (err) {
       console.error('Error loading promo codes:', err);
       Alert.alert('Error', 'Failed to load promo codes');
@@ -63,7 +59,8 @@ export default function PromoCodesScreen() {
     }
 
     try {
-      const { error } = await supabase.from('promo_codes').insert({
+      // TODO: Backend Integration - Create promo code via backend API
+      await api.post('/admin/promo-codes', {
         code: formData.code.toUpperCase(),
         description: formData.description,
         discount_type: formData.discount_type,
@@ -73,8 +70,6 @@ export default function PromoCodesScreen() {
         valid_until: formData.valid_until || null,
         active: true,
       });
-
-      if (error) throw error;
 
       Alert.alert('Success', 'Promo code created successfully');
       setShowCreateForm(false);
@@ -96,12 +91,10 @@ export default function PromoCodesScreen() {
 
   const handleToggleActive = async (id: string, currentActive: boolean) => {
     try {
-      const { error } = await supabase
-        .from('promo_codes')
-        .update({ active: !currentActive })
-        .eq('id', id);
-
-      if (error) throw error;
+      // TODO: Backend Integration - Toggle promo code status via backend API
+      await api.patch(`/admin/promo-codes/${id}`, {
+        active: !currentActive,
+      });
       loadPromoCodes();
     } catch (err) {
       console.error('Error toggling promo code:', err);
@@ -120,12 +113,8 @@ export default function PromoCodesScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const { error } = await supabase
-                .from('promo_codes')
-                .delete()
-                .eq('id', id);
-
-              if (error) throw error;
+              // TODO: Backend Integration - Delete promo code via backend API
+              await api.delete(`/admin/promo-codes/${id}`);
               loadPromoCodes();
             } catch (err) {
               console.error('Error deleting promo code:', err);

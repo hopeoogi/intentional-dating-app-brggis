@@ -6,19 +6,16 @@ const path = require('path');
 const config = getDefaultConfig(__dirname);
 
 // ============================================================================
-// BUILD 177 - VERIFIED METRO CONFIGURATION
+// BUILD 178 - BETTERAUTH COMPATIBLE METRO CONFIGURATION
 // ============================================================================
-// Based on successful Build 174 fix
+// Enables package exports for BetterAuth module resolution
 // Simplified config without aggressive module blocking
-// Native fetch is enforced in Supabase client
-// This configuration has been proven to work with expo launch
 // ============================================================================
 
-console.log('[Metro] Starting Metro bundler - BUILD 177');
-console.log('[Metro] Configuration: Simplified, no module blocking');
-console.log('[Metro] Native fetch: Enforced in Supabase client');
+console.log('[Metro] Starting Metro bundler - BUILD 178');
+console.log('[Metro] Configuration: BetterAuth compatible with package exports');
 
-// Enable package exports for better module resolution
+// CRITICAL: Enable package exports for BetterAuth
 config.resolver.unstable_enablePackageExports = true;
 config.resolver.unstable_enableSymlinks = false;
 
@@ -71,7 +68,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
-console.log('[Metro] ✅ Configuration complete - BUILD 177');
+console.log('[Metro] ✅ Configuration complete - BUILD 178');
+console.log('[Metro] ✅ Package exports enabled for BetterAuth');
 console.log('[Metro] ✅ Ready for bundling');
 
 module.exports = config;

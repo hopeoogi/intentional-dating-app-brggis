@@ -15,7 +15,7 @@ import {
 import { router } from 'expo-router';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { supabase } from '@/app/integrations/supabase/client';
+import { api } from '@/lib/api-client';
 
 interface IntroVideoSettings {
   url: string;
@@ -38,23 +38,13 @@ export default function IntroVideoManagementScreen() {
 
   const loadSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from('app_settings')
-        .select('setting_value')
-        .eq('setting_key', 'intro_video')
-        .single();
-
-      if (error) {
-        console.error('Error loading settings:', error);
-        Alert.alert('Error', 'Failed to load intro video settings.');
-        return;
-      }
-
-      if (data) {
-        setSettings(data.setting_value as IntroVideoSettings);
+      // TODO: Backend Integration - Fetch intro video settings from backend API
+      const response = await api.get('/admin/settings/intro-video');
+      if (response.data) {
+        setSettings(response.data);
       }
     } catch (error) {
-      console.error('Error in loadSettings:', error);
+      console.error('Error loading settings:', error);
       Alert.alert('Error', 'Failed to load intro video settings.');
     } finally {
       setLoading(false);
@@ -74,23 +64,8 @@ export default function IntroVideoManagementScreen() {
 
     setSaving(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const { error } = await supabase
-        .from('app_settings')
-        .update({
-          setting_value: settings,
-          updated_at: new Date().toISOString(),
-          updated_by: session?.user.id,
-        })
-        .eq('setting_key', 'intro_video');
-
-      if (error) {
-        console.error('Error saving settings:', error);
-        Alert.alert('Error', 'Failed to save intro video settings.');
-        return;
-      }
-
+      // TODO: Backend Integration - Save intro video settings via backend API
+      await api.put('/admin/settings/intro-video', settings);
       Alert.alert('Success', 'Intro video settings saved successfully!');
     } catch (error) {
       console.error('Error in handleSave:', error);
