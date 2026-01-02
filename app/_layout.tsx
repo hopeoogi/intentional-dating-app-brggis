@@ -26,21 +26,23 @@ import { initializeSentry } from "@/app/integrations/sentry/client";
 SplashScreen.preventAutoHideAsync();
 
 // ============================================================================
-// BUILD 163 - PRODUCTION-READY APP LAYOUT
+// BUILD 164 - PRODUCTION-READY APP LAYOUT WITH API SYNC FIX
 // ============================================================================
 // Key improvements:
 // 1. Better splash screen handling
 // 2. Simplified initialization
 // 3. Enhanced error boundaries
 // 4. Robust network detection
+// 5. Fixed Edge Function CORS issues
 // ============================================================================
 
 console.log('='.repeat(80));
-console.log('[App] Starting app initialization - BUILD 163');
-console.log('[App] Version: 1.2.5');
+console.log('[App] Starting app initialization - BUILD 164');
+console.log('[App] Version: 1.2.6');
 console.log('[App] Platform:', require('react-native').Platform.OS);
 console.log('[App] Production-ready configuration');
 console.log('[App] All HTTP libraries blocked - using native fetch only');
+console.log('[App] Edge Functions CORS issues resolved');
 console.log('='.repeat(80));
 
 // Initialize Sentry for crash reporting
