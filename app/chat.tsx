@@ -15,119 +15,186 @@ import { colors, commonStyles } from '@/styles/commonStyles';
 import { mockMessages, mockMatches } from '@/data/mockData';
 import { Message } from '@/types/User';
 import { IconSymbol } from '@/components/IconSymbol';
-import { router } from 'expo-router';
-import { supabase } from '@/app/integrations/supabase/client';
+import { router, useLocalSearchParams } from 'expo-router';
+import { api } from '@/lib/api-client';
 
-const CURRENT_USER_ID = '550e8400-e29b-41d4-a716-446655440001';
+const CURRENT_USER_ID = 'current-user-id';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backButton: {
+    marginRight: 12,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  menuButton: {
+    padding: 8,
+  },
+  messagesContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  messageWrapper: {
+    marginBottom: 16,
+    maxWidth: '80%',
+  },
+  sentMessage: {
+    alignSelf: 'flex-end',
+  },
+  receivedMessage: {
+    alignSelf: 'flex-start',
+  },
+  messageBubble: {
+    padding: 12,
+    borderRadius: 18,
+  },
+  sentBubble: {
+    backgroundColor: colors.primary,
+  },
+  receivedBubble: {
+    backgroundColor: colors.card,
+  },
+  messageText: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  sentText: {
+    color: '#fff',
+  },
+  receivedText: {
+    color: colors.text,
+  },
+  timestamp: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: colors.card,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  input: {
+    flex: 1,
+    minHeight: 40,
+    maxHeight: 100,
+    backgroundColor: colors.background,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: colors.text,
+    marginRight: 8,
+  },
+  sendButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sendButtonDisabled: {
+    backgroundColor: colors.border,
+  },
+});
 
 export default function ChatScreen() {
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
-  const [inputText, setInputText] = useState('');
-  const [canSend, setCanSend] = useState(true);
+  const params = useLocalSearchParams();
+  const matchId = params.matchId as string;
   const scrollViewRef = useRef<ScrollView>(null);
-  const match = mockMatches[0];
-  const otherUser = match.matchedUser;
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    scrollViewRef.current?.scrollToEnd({ animated: true });
+    loadMessages();
+  }, [matchId]);
+
+  useEffect(() => {
+    // Scroll to bottom when messages change
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
   }, [messages]);
 
-  // Check if user can send (no double messaging)
-  useEffect(() => {
-    if (messages.length === 0) {
-      setCanSend(true);
-      return;
+  const loadMessages = async () => {
+    setLoading(true);
+    // TODO: Backend Integration - Fetch messages from the backend API
+    const { data, error } = await api.messages.getMessages(matchId);
+    setLoading(false);
+    
+    if (error) {
+      Alert.alert('Error', 'Failed to load messages');
+      console.error('[Chat] Error loading messages:', error);
+      // Fallback to mock data for now
+      setMessages(mockMessages);
+    } else if (data) {
+      setMessages(data);
     }
-
-    const lastMessage = messages[messages.length - 1];
-    // User can send if the last message was from the other user
-    setCanSend(lastMessage.senderId !== CURRENT_USER_ID);
-  }, [messages]);
+  };
 
   const handleSend = async () => {
-    if (inputText.trim().length < 2) {
+    if (message.trim().length < 2) {
       Alert.alert('Message Too Short', 'Please enter at least 2 characters.');
       return;
     }
 
-    if (!canSend) {
-      Alert.alert(
-        'Wait for Response',
-        'Please wait for the other person to respond before sending another message.'
-      );
-      return;
-    }
+    const messageText = message.trim();
+    setMessage('');
+    setSending(true);
 
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      matchId: match.id,
-      senderId: CURRENT_USER_ID,
-      receiverId: otherUser.id,
-      content: inputText.trim(),
-      timestamp: new Date(),
-      read: false,
-    };
+    // TODO: Backend Integration - Send message to the backend API
+    const { error } = await api.messages.sendMessage(matchId, messageText);
+    setSending(false);
 
-    try {
-      // In production, save to Supabase
-      const { error } = await supabase.from('messages').insert({
-        match_id: match.id,
-        sender_id: CURRENT_USER_ID,
-        receiver_id: otherUser.id,
-        content: inputText.trim(),
-      });
-
-      if (error) throw error;
-
-      // Update match to set pending response
-      await supabase
-        .from('matches')
-        .update({
-          pending_response_from: otherUser.id,
-          response_deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          last_message_date: new Date().toISOString(),
-        })
-        .eq('id', match.id);
-
-      setMessages([...messages, newMessage]);
-      setInputText('');
-    } catch (err) {
-      console.error('Error sending message:', err);
-      Alert.alert('Error', 'Failed to send message. Please try again.');
+    if (error) {
+      Alert.alert('Error', 'Failed to send message');
+      console.error('[Chat] Error sending message:', error);
+      setMessage(messageText); // Restore message on error
+    } else {
+      // Reload messages to get the new one
+      loadMessages();
     }
   };
 
   const handleEndConversation = () => {
     Alert.alert(
       'End Conversation',
-      `Are you sure you want to end this conversation with ${otherUser.name}? They will be notified: "This person no longer wants to talk. It&apos;s time to move on."`,
+      'Are you sure you want to end this conversation? This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'End Conversation',
           style: 'destructive',
           onPress: async () => {
-            try {
-              const { error } = await supabase
-                .from('matches')
-                .update({
-                  conversation_ended: true,
-                  ended_by: CURRENT_USER_ID,
-                  ended_at: new Date().toISOString(),
-                  ended_reason: 'user_initiated',
-                })
-                .eq('id', match.id);
-
-              if (error) throw error;
-
-              Alert.alert(
-                'Conversation Ended',
-                'The conversation has been ended respectfully. The other person has been notified.'
-              );
+            // TODO: Backend Integration - Call the end conversation API endpoint
+            const { error } = await api.matches.endConversation(matchId);
+            if (error) {
+              Alert.alert('Error', error);
+            } else {
               router.back();
-            } catch (err) {
-              console.error('Error ending conversation:', err);
-              Alert.alert('Error', 'Failed to end conversation. Please try again.');
             }
           },
         },
@@ -138,27 +205,13 @@ export default function ChatScreen() {
   const handleReport = () => {
     Alert.alert(
       'Report User',
-      'What would you like to report?',
+      'Please describe the issue:',
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Inappropriate Content',
-          onPress: () => {
-            Alert.alert('Reported', 'Thank you for your report. Our team will review it.');
-          },
-        },
-        {
-          text: 'Harassment',
-          onPress: () => {
-            Alert.alert('Reported', 'Thank you for your report. Our team will review it.');
-          },
-        },
-        {
-          text: 'Spam',
-          onPress: () => {
-            Alert.alert('Reported', 'Thank you for your report. Our team will review it.');
-          },
-        },
+        { text: 'Report', style: 'destructive', onPress: () => {
+          // TODO: Backend Integration - Report user
+          Alert.alert('Reported', 'Thank you for your report. We will review it shortly.');
+        }},
       ]
     );
   };
@@ -166,14 +219,15 @@ export default function ChatScreen() {
   const handleBlock = () => {
     Alert.alert(
       'Block User',
-      `Are you sure you want to block ${otherUser.name}? You will no longer see each other.`,
+      'Are you sure you want to block this user? You will no longer see their profile or receive messages from them.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Block',
           style: 'destructive',
           onPress: () => {
-            Alert.alert('User Blocked', `${otherUser.name} has been blocked.`);
+            // TODO: Backend Integration - Block user
+            Alert.alert('Blocked', 'User has been blocked.');
             router.back();
           },
         },
@@ -189,31 +243,43 @@ export default function ChatScreen() {
     });
   };
 
+  const otherUser = mockMatches[0]; // TODO: Get from match data
+
   return (
     <KeyboardAvoidingView
-      style={commonStyles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={0}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <IconSymbol
             ios_icon_name="chevron.left"
-            android_material_icon_name="arrow_back"
+            android_material_icon_name="arrow-back"
             size={24}
-            color={colors.text}
+            color={colors.primary}
           />
         </TouchableOpacity>
-        <View style={styles.headerInfo}>
-          <Text style={styles.headerName}>{otherUser.name}</Text>
-          <Text style={styles.headerStatus}>Active now</Text>
-        </View>
-        <TouchableOpacity onPress={handleReport}>
+        <Text style={styles.headerTitle}>{otherUser.name}</Text>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => {
+            Alert.alert('Options', '', [
+              { text: 'End Conversation', onPress: handleEndConversation, style: 'destructive' },
+              { text: 'Report', onPress: handleReport },
+              { text: 'Block', onPress: handleBlock, style: 'destructive' },
+              { text: 'Cancel', style: 'cancel' },
+            ]);
+          }}
+        >
           <IconSymbol
-            ios_icon_name="exclamationmark.triangle"
-            android_material_icon_name="report"
+            ios_icon_name="ellipsis.circle"
+            android_material_icon_name="more-vert"
             size={24}
-            color={colors.warning}
+            color={colors.text}
           />
         </TouchableOpacity>
       </View>
@@ -221,238 +287,65 @@ export default function ChatScreen() {
       <ScrollView
         ref={scrollViewRef}
         style={styles.messagesContainer}
-        contentContainerStyle={styles.messagesContent}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
       >
-        {messages.map((message, index) => {
-          const isCurrentUser = message.senderId === CURRENT_USER_ID;
+        {messages.map((msg, index) => {
+          const isSent = msg.senderId === CURRENT_USER_ID;
           return (
-            <React.Fragment key={index}>
+            <View
+              key={index}
+              style={[
+                styles.messageWrapper,
+                isSent ? styles.sentMessage : styles.receivedMessage,
+              ]}
+            >
               <View
                 style={[
                   styles.messageBubble,
-                  isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble,
+                  isSent ? styles.sentBubble : styles.receivedBubble,
                 ]}
               >
                 <Text
                   style={[
                     styles.messageText,
-                    isCurrentUser ? styles.currentUserText : styles.otherUserText,
+                    isSent ? styles.sentText : styles.receivedText,
                   ]}
                 >
-                  {message.content}
-                </Text>
-                <Text
-                  style={[
-                    styles.messageTime,
-                    isCurrentUser ? styles.currentUserTime : styles.otherUserTime,
-                  ]}
-                >
-                  {formatTime(message.timestamp)}
+                  {msg.content}
                 </Text>
               </View>
-            </React.Fragment>
+              <Text style={styles.timestamp}>{formatTime(msg.timestamp)}</Text>
+            </View>
           );
         })}
       </ScrollView>
 
       <View style={styles.inputContainer}>
-        {!canSend && (
-          <View style={styles.warningBanner}>
-            <IconSymbol
-              ios_icon_name="info.circle"
-              android_material_icon_name="info"
-              size={16}
-              color={colors.warning}
-            />
-            <Text style={styles.warningText}>
-              Wait for {otherUser.name} to respond before sending another message
-            </Text>
-          </View>
-        )}
-
-        <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleEndConversation}>
-            <IconSymbol
-              ios_icon_name="xmark.circle"
-              android_material_icon_name="cancel"
-              size={20}
-              color={colors.error}
-            />
-            <Text style={styles.actionButtonText}>End Conversation</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton} onPress={handleBlock}>
-            <IconSymbol
-              ios_icon_name="hand.raised"
-              android_material_icon_name="block"
-              size={20}
-              color={colors.textSecondary}
-            />
-            <Text style={styles.actionButtonText}>Block</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.inputRow}>
-          <TextInput
-            style={styles.input}
-            placeholder="Type a message (min 2 characters)..."
-            placeholderTextColor={colors.textSecondary}
-            value={inputText}
-            onChangeText={setInputText}
-            multiline
-            maxLength={500}
-            editable={canSend}
+        <TextInput
+          style={styles.input}
+          value={message}
+          onChangeText={setMessage}
+          placeholder="Type a message..."
+          placeholderTextColor={colors.textSecondary}
+          multiline
+          maxLength={500}
+        />
+        <TouchableOpacity
+          style={[
+            styles.sendButton,
+            (message.trim().length < 2 || sending) && styles.sendButtonDisabled,
+          ]}
+          onPress={handleSend}
+          disabled={message.trim().length < 2 || sending}
+        >
+          <IconSymbol
+            ios_icon_name="arrow.up"
+            android_material_icon_name="send"
+            size={20}
+            color="#fff"
           />
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              (!canSend || inputText.trim().length < 2) && styles.sendButtonDisabled,
-            ]}
-            onPress={handleSend}
-            disabled={!canSend || inputText.trim().length < 2}
-          >
-            <IconSymbol
-              ios_icon_name="arrow.up.circle.fill"
-              android_material_icon_name="send"
-              size={32}
-              color={canSend && inputText.trim().length >= 2 ? colors.primary : colors.textSecondary}
-            />
-          </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 16,
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backButton: {
-    marginRight: 12,
-  },
-  headerInfo: {
-    flex: 1,
-  },
-  headerName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  headerStatus: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  messagesContainer: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  messagesContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  messageBubble: {
-    maxWidth: '75%',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginBottom: 12,
-  },
-  currentUserBubble: {
-    alignSelf: 'flex-end',
-    backgroundColor: colors.primary,
-  },
-  otherUserBubble: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.card,
-  },
-  messageText: {
-    fontSize: 16,
-    lineHeight: 22,
-    marginBottom: 4,
-  },
-  currentUserText: {
-    color: '#FFFFFF',
-  },
-  otherUserText: {
-    color: colors.text,
-  },
-  messageTime: {
-    fontSize: 11,
-  },
-  currentUserTime: {
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  otherUserTime: {
-    color: colors.textSecondary,
-  },
-  inputContainer: {
-    backgroundColor: colors.card,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 20,
-  },
-  warningBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF3E0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 12,
-  },
-  warningText: {
-    fontSize: 12,
-    color: '#E65100',
-    marginLeft: 8,
-    flex: 1,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-  },
-  actionButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.textSecondary,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-  },
-  input: {
-    flex: 1,
-    backgroundColor: colors.background,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: colors.text,
-    maxHeight: 100,
-    marginRight: 8,
-  },
-  sendButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sendButtonDisabled: {
-    opacity: 0.5,
-  },
-});

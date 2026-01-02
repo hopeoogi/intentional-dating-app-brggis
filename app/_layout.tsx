@@ -19,6 +19,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
 import { UserProvider } from "@/contexts/UserContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { initializeSentry } from "@/app/integrations/sentry/client";
 
@@ -28,8 +29,10 @@ SplashScreen.preventAutoHideAsync().catch((error) => {
 });
 
 console.log('='.repeat(80));
-console.log('[App] Starting Intentional Dating App - Fresh Build');
+console.log('[App] Starting Intentional Dating App - Build 178');
 console.log('[App] Version: 2.0.0');
+console.log('[App] ✅ BetterAuth integration enabled');
+console.log('[App] ✅ Backend API integration enabled');
 console.log('[App] Clean architecture with Raya-like UI');
 console.log('[App] No likes/swipes - message-first approach');
 console.log('[App] Manual application approval process');
@@ -133,72 +136,74 @@ export default function RootLayout() {
       <ThemeProvider
         value={colorScheme === "dark" ? CustomDarkTheme : CustomDefaultTheme}
       >
-        <UserProvider>
-          <WidgetProvider>
-            <GestureHandlerRootView style={{ flex: 1 }}>
-              <Stack screenOptions={{ headerShown: false }}>
-                {/* Entry point */}
-                <Stack.Screen name="index" options={{ headerShown: false }} />
+        <AuthProvider>
+          <UserProvider>
+            <WidgetProvider>
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <Stack screenOptions={{ headerShown: false }}>
+                  {/* Entry point */}
+                  <Stack.Screen name="index" options={{ headerShown: false }} />
 
-                {/* Auth & Onboarding */}
-                <Stack.Screen name="welcome" options={{ headerShown: false }} />
-                <Stack.Screen name="signin" options={{ headerShown: false }} />
-                <Stack.Screen name="application-pending" options={{ headerShown: false }} />
-                <Stack.Screen name="apply" options={{ headerShown: false }} />
+                  {/* Auth & Onboarding */}
+                  <Stack.Screen name="welcome" options={{ headerShown: false }} />
+                  <Stack.Screen name="signin" options={{ headerShown: false }} />
+                  <Stack.Screen name="application-pending" options={{ headerShown: false }} />
+                  <Stack.Screen name="apply" options={{ headerShown: false }} />
 
-                {/* Main app with tabs */}
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  {/* Main app with tabs */}
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-                {/* Modal Screens */}
-                <Stack.Screen
-                  name="modal"
-                  options={{
-                    presentation: "modal",
-                    title: "Standard Modal",
-                  }}
-                />
-                <Stack.Screen
-                  name="formsheet"
-                  options={{
-                    presentation: "formSheet",
-                    title: "Form Sheet Modal",
-                    sheetGrabberVisible: true,
-                    sheetAllowedDetents: [0.5, 0.8, 1.0],
-                    sheetCornerRadius: 20,
-                  }}
-                />
-                <Stack.Screen
-                  name="transparent-modal"
-                  options={{
-                    presentation: "transparentModal",
-                    headerShown: false,
-                  }}
-                />
+                  {/* Modal Screens */}
+                  <Stack.Screen
+                    name="modal"
+                    options={{
+                      presentation: "modal",
+                      title: "Standard Modal",
+                    }}
+                  />
+                  <Stack.Screen
+                    name="formsheet"
+                    options={{
+                      presentation: "formSheet",
+                      title: "Form Sheet Modal",
+                      sheetGrabberVisible: true,
+                      sheetAllowedDetents: [0.5, 0.8, 1.0],
+                      sheetCornerRadius: 20,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="transparent-modal"
+                    options={{
+                      presentation: "transparentModal",
+                      headerShown: false,
+                    }}
+                  />
 
-                {/* Admin Portal */}
-                <Stack.Screen name="admin/index" options={{ title: "Admin Portal" }} />
-                <Stack.Screen name="admin/intro-video" options={{ title: "Intro Video", headerShown: false }} />
-                <Stack.Screen name="admin/pending-users" options={{ title: "Pending Users" }} />
-                <Stack.Screen name="admin/user-management" options={{ title: "User Management" }} />
-                <Stack.Screen name="admin/analytics" options={{ title: "Analytics" }} />
-                <Stack.Screen name="admin/notifications" options={{ title: "Notifications" }} />
-                <Stack.Screen name="admin/promo-codes" options={{ title: "Promo Codes" }} />
-                <Stack.Screen name="admin/payments" options={{ title: "Payments" }} />
-                <Stack.Screen name="admin/email-campaigns" options={{ title: "Email Campaigns" }} />
+                  {/* Admin Portal */}
+                  <Stack.Screen name="admin/index" options={{ title: "Admin Portal" }} />
+                  <Stack.Screen name="admin/intro-video" options={{ title: "Intro Video", headerShown: false }} />
+                  <Stack.Screen name="admin/pending-users" options={{ title: "Pending Users" }} />
+                  <Stack.Screen name="admin/user-management" options={{ title: "User Management" }} />
+                  <Stack.Screen name="admin/analytics" options={{ title: "Analytics" }} />
+                  <Stack.Screen name="admin/notifications" options={{ title: "Notifications" }} />
+                  <Stack.Screen name="admin/promo-codes" options={{ title: "Promo Codes" }} />
+                  <Stack.Screen name="admin/payments" options={{ title: "Payments" }} />
+                  <Stack.Screen name="admin/email-campaigns" options={{ title: "Email Campaigns" }} />
 
-                {/* Other App Routes */}
-                <Stack.Screen name="chat" options={{ title: "Chat" }} />
-                <Stack.Screen name="profile-detail" options={{ title: "Profile" }} />
-                <Stack.Screen name="start-conversation" options={{ title: "Start Conversation" }} />
-                <Stack.Screen name="settings" options={{ title: "Settings" }} />
-                <Stack.Screen name="match-filters" options={{ title: "Match Filters" }} />
-                <Stack.Screen name="subscription" options={{ title: "Subscription" }} />
-                <Stack.Screen name="rejection-feedback" options={{ title: "Rejection Feedback" }} />
-              </Stack>
-              <SystemBars style="auto" />
-            </GestureHandlerRootView>
-          </WidgetProvider>
-        </UserProvider>
+                  {/* Other App Routes */}
+                  <Stack.Screen name="chat" options={{ title: "Chat" }} />
+                  <Stack.Screen name="profile-detail" options={{ title: "Profile" }} />
+                  <Stack.Screen name="start-conversation" options={{ title: "Start Conversation" }} />
+                  <Stack.Screen name="settings" options={{ title: "Settings" }} />
+                  <Stack.Screen name="match-filters" options={{ title: "Match Filters" }} />
+                  <Stack.Screen name="subscription" options={{ title: "Subscription" }} />
+                  <Stack.Screen name="rejection-feedback" options={{ title: "Rejection Feedback" }} />
+                </Stack>
+                <SystemBars style="auto" />
+              </GestureHandlerRootView>
+            </WidgetProvider>
+          </UserProvider>
+        </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

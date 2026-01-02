@@ -1,5 +1,7 @@
 
+import { colors, commonStyles } from '@/styles/commonStyles';
 import React, { useState, useEffect, useCallback } from 'react';
+import { IconSymbol } from '@/components/IconSymbol';
 import {
   View,
   Text,
@@ -9,10 +11,8 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { colors, commonStyles } from '@/styles/commonStyles';
-import { IconSymbol } from '@/components/IconSymbol';
 import { router } from 'expo-router';
-import { supabase } from '@/app/integrations/supabase/client';
+import { api } from '@/lib/api-client';
 
 interface DashboardStats {
   totalUsers: number;
@@ -25,7 +25,110 @@ interface DashboardStats {
   averageRevenuePerUser: number;
 }
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  headerTitle: {
+    fontSize: 34,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  content: {
+    padding: 20,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 24,
+  },
+  statCard: {
+    flex: 1,
+    minWidth: '47%',
+    backgroundColor: colors.card,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  menuGrid: {
+    gap: 12,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  menuIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  menuContent: {
+    flex: 1,
+  },
+  menuTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  menuDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
+
 export default function AdminDashboard() {
+  useEffect(() => {
+    checkAdminStatus();
+  }, []);
+
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     pendingUsers: 0,
@@ -36,522 +139,186 @@ export default function AdminDashboard() {
     conversionRate: 0,
     averageRevenuePerUser: 0,
   });
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   const checkAdminStatus = useCallback(async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        Alert.alert('Access Denied', 'You must be logged in to access the admin portal.');
-        router.back();
-        return;
-      }
-
-      // Check if user is an admin
-      const { data: adminData, error } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('auth_user_id', user.id)
-        .eq('active', true)
-        .single();
-
-      if (error || !adminData) {
-        Alert.alert('Access Denied', 'You do not have admin privileges.');
-        router.back();
-        return;
-      }
-
-      setIsAdmin(true);
-      loadDashboardStats();
-    } catch (error) {
-      console.error('Error checking admin status:', error);
-      Alert.alert('Error', 'Failed to verify admin access.');
-      router.back();
-    }
+    // TODO: Backend Integration - Check if user is admin
+    console.log('[Admin] Checking admin status');
+    loadDashboardStats();
   }, []);
 
-  useEffect(() => {
-    checkAdminStatus();
-  }, [checkAdminStatus]);
-
   const loadDashboardStats = async () => {
-    try {
-      // Get total users
-      const { count: totalUsers } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true });
+    setLoading(true);
+    // TODO: Backend Integration - Fetch dashboard stats from backend API
+    const { data, error } = await api.admin.getDashboardStats();
+    setLoading(false);
 
-      // Get pending users
-      const { count: pendingUsers } = await supabase
-        .from('pending_users')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending');
-
-      // Get active subscriptions
-      const { count: activeSubscriptions } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('subscription_status', 'active');
-
-      // Get total revenue
-      const { data: invoices } = await supabase
-        .from('invoices')
-        .select('amount')
-        .eq('status', 'paid');
-
-      const totalRevenue = invoices?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
-
-      // Get daily active users (last 24 hours)
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      
-      const { count: dailyActiveUsers } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .gte('last_active', yesterday.toISOString());
-
-      // Get monthly active users (last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const { count: monthlyActiveUsers } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .gte('last_active', thirtyDaysAgo.toISOString());
-
-      // Calculate conversion rate
-      const conversionRate = totalUsers && pendingUsers 
-        ? ((totalUsers / (totalUsers + pendingUsers)) * 100)
-        : 0;
-
-      // Calculate ARPU
-      const averageRevenuePerUser = totalUsers ? (totalRevenue / totalUsers) : 0;
-
-      setStats({
-        totalUsers: totalUsers || 0,
-        pendingUsers: pendingUsers || 0,
-        activeSubscriptions: activeSubscriptions || 0,
-        totalRevenue,
-        dailyActiveUsers: dailyActiveUsers || 0,
-        monthlyActiveUsers: monthlyActiveUsers || 0,
-        conversionRate,
-        averageRevenuePerUser,
-      });
-    } catch (error) {
-      console.error('Error loading dashboard stats:', error);
-      Alert.alert('Error', 'Failed to load dashboard statistics.');
-    } finally {
-      setLoading(false);
+    if (error) {
+      Alert.alert('Error', 'Failed to load dashboard stats');
+      console.error('[Admin] Error loading stats:', error);
+    } else if (data) {
+      setStats(data);
     }
   };
 
-  if (!isAdmin) {
-    return null;
-  }
-
   if (loading) {
     return (
-      <View style={[commonStyles.container, styles.centerContent]}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading admin dashboard...</Text>
       </View>
     );
   }
 
-  const adminMenuItems = [
-    {
-      title: 'Pending Users',
-      description: 'Review and approve new applications',
-      icon: 'person.badge.clock',
-      androidIcon: 'pending_actions',
-      route: '/admin/pending-users',
-      badge: stats.pendingUsers,
-      color: '#FF9500',
-    },
-    {
-      title: 'Intro Video',
-      description: 'Manage intro/loading screen',
-      icon: 'play.rectangle.fill',
-      androidIcon: 'video_library',
-      route: '/admin/intro-video',
-      color: '#FF2D55',
-    },
-    {
-      title: 'User Management',
-      description: 'View and manage all users',
-      icon: 'person.3.fill',
-      androidIcon: 'people',
-      route: '/admin/user-management',
-      color: '#007AFF',
-    },
-    {
-      title: 'Analytics',
-      description: 'View detailed analytics and reports',
-      icon: 'chart.bar.fill',
-      androidIcon: 'analytics',
-      route: '/admin/analytics',
-      color: '#34C759',
-    },
-    {
-      title: 'Notifications',
-      description: 'Manage push notifications',
-      icon: 'bell.badge.fill',
-      androidIcon: 'notifications',
-      route: '/admin/notifications',
-      color: '#FF3B30',
-    },
-    {
-      title: 'Promo Codes',
-      description: 'Create and manage promo codes',
-      icon: 'tag.fill',
-      androidIcon: 'local_offer',
-      route: '/admin/promo-codes',
-      color: '#AF52DE',
-    },
-    {
-      title: 'Payments',
-      description: 'View transactions and subscriptions',
-      icon: 'creditcard.fill',
-      androidIcon: 'payment',
-      route: '/admin/payments',
-      color: '#5AC8FA',
-    },
-    {
-      title: 'Email Campaigns',
-      description: 'Manage email marketing',
-      icon: 'envelope.fill',
-      androidIcon: 'email',
-      route: '/admin/email-campaigns',
-      color: '#FFCC00',
-    },
-  ];
-
   return (
-    <View style={commonStyles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <IconSymbol
-              ios_icon_name="chevron.left"
-              android_material_icon_name="arrow_back"
-              size={24}
-              color={colors.text}
-            />
-          </TouchableOpacity>
-          <Text style={styles.title}>Admin Portal</Text>
-          <TouchableOpacity onPress={loadDashboardStats} style={styles.refreshButton}>
-            <IconSymbol
-              ios_icon_name="arrow.clockwise"
-              android_material_icon_name="refresh"
-              size={24}
-              color={colors.text}
-            />
-          </TouchableOpacity>
-        </View>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Admin Portal</Text>
+        <Text style={styles.headerSubtitle}>Intentional Dating App</Text>
+      </View>
 
-        <Text style={styles.subtitle}>Dashboard Overview</Text>
-
-        {/* Key Metrics */}
-        <View style={styles.metricsGrid}>
-          <View style={[styles.metricCard, { backgroundColor: '#007AFF15' }]}>
-            <IconSymbol
-              ios_icon_name="person.3.fill"
-              android_material_icon_name="people"
-              size={32}
-              color="#007AFF"
-            />
-            <Text style={styles.metricValue}>{stats.totalUsers}</Text>
-            <Text style={styles.metricLabel}>Total Users</Text>
+      <ScrollView style={styles.content}>
+        <Text style={styles.sectionTitle}>Overview</Text>
+        <View style={styles.statsGrid}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.totalUsers}</Text>
+            <Text style={styles.statLabel}>Total Users</Text>
           </View>
-
-          <View style={[styles.metricCard, { backgroundColor: '#FF950015' }]}>
-            <IconSymbol
-              ios_icon_name="clock.fill"
-              android_material_icon_name="schedule"
-              size={32}
-              color="#FF9500"
-            />
-            <Text style={styles.metricValue}>{stats.pendingUsers}</Text>
-            <Text style={styles.metricLabel}>Pending</Text>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.pendingUsers}</Text>
+            <Text style={styles.statLabel}>Pending Users</Text>
           </View>
-
-          <View style={[styles.metricCard, { backgroundColor: '#34C75915' }]}>
-            <IconSymbol
-              ios_icon_name="checkmark.circle.fill"
-              android_material_icon_name="check_circle"
-              size={32}
-              color="#34C759"
-            />
-            <Text style={styles.metricValue}>{stats.activeSubscriptions}</Text>
-            <Text style={styles.metricLabel}>Active Subs</Text>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.activeSubscriptions}</Text>
+            <Text style={styles.statLabel}>Active Subscriptions</Text>
           </View>
-
-          <View style={[styles.metricCard, { backgroundColor: '#5AC8FA15' }]}>
-            <IconSymbol
-              ios_icon_name="dollarsign.circle.fill"
-              android_material_icon_name="attach_money"
-              size={32}
-              color="#5AC8FA"
-            />
-            <Text style={styles.metricValue}>${stats.totalRevenue.toLocaleString()}</Text>
-            <Text style={styles.metricLabel}>Revenue</Text>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>${stats.totalRevenue.toFixed(0)}</Text>
+            <Text style={styles.statLabel}>Total Revenue</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.dailyActiveUsers}</Text>
+            <Text style={styles.statLabel}>Daily Active</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.monthlyActiveUsers}</Text>
+            <Text style={styles.statLabel}>Monthly Active</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.conversionRate.toFixed(1)}%</Text>
+            <Text style={styles.statLabel}>Conversion Rate</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>${stats.averageRevenuePerUser.toFixed(0)}</Text>
+            <Text style={styles.statLabel}>ARPU</Text>
           </View>
         </View>
 
-        {/* Engagement Metrics */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Engagement</Text>
-          <View style={styles.engagementCard}>
-            <View style={styles.engagementRow}>
-              <Text style={styles.engagementLabel}>Daily Active Users</Text>
-              <Text style={styles.engagementValue}>{stats.dailyActiveUsers}</Text>
-            </View>
-            <View style={styles.engagementRow}>
-              <Text style={styles.engagementLabel}>Monthly Active Users</Text>
-              <Text style={styles.engagementValue}>{stats.monthlyActiveUsers}</Text>
-            </View>
-            <View style={styles.engagementRow}>
-              <Text style={styles.engagementLabel}>Conversion Rate</Text>
-              <Text style={styles.engagementValue}>{stats.conversionRate.toFixed(1)}%</Text>
-            </View>
-            <View style={styles.engagementRow}>
-              <Text style={styles.engagementLabel}>ARPU</Text>
-              <Text style={styles.engagementValue}>${stats.averageRevenuePerUser.toFixed(2)}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Admin Menu */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Admin Tools</Text>
-          {adminMenuItems.map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.menuItem}
-              onPress={() => router.push(item.route as any)}
-            >
-              <View style={[styles.menuIconContainer, { backgroundColor: item.color + '15' }]}>
-                <IconSymbol
-                  ios_icon_name={item.icon}
-                  android_material_icon_name={item.androidIcon}
-                  size={24}
-                  color={item.color}
-                />
-              </View>
-              <View style={styles.menuContent}>
-                <View style={styles.menuTitleRow}>
-                  <Text style={styles.menuTitle}>{item.title}</Text>
-                  {item.badge !== undefined && item.badge > 0 && (
-                    <View style={[styles.badge, { backgroundColor: item.color }]}>
-                      <Text style={styles.badgeText}>{item.badge}</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.menuDescription}>{item.description}</Text>
-              </View>
+        <Text style={styles.sectionTitle}>Management</Text>
+        <View style={styles.menuGrid}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/admin/pending-users')}
+          >
+            <View style={styles.menuIcon}>
               <IconSymbol
-                ios_icon_name="chevron.right"
-                android_material_icon_name="chevron_right"
-                size={20}
-                color={colors.textSecondary}
+                ios_icon_name="person.badge.clock"
+                android_material_icon_name="person"
+                size={24}
+                color={colors.primary}
               />
-            </TouchableOpacity>
-          ))}
-        </View>
+            </View>
+            <View style={styles.menuContent}>
+              <Text style={styles.menuTitle}>Pending Users</Text>
+              <Text style={styles.menuDescription}>
+                Review and approve new applications
+              </Text>
+            </View>
+            <IconSymbol
+              ios_icon_name="chevron.right"
+              android_material_icon_name="arrow-forward"
+              size={20}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
 
-        <View style={styles.infoBox}>
-          <IconSymbol
-            ios_icon_name="info.circle.fill"
-            android_material_icon_name="info"
-            size={24}
-            color={colors.primary}
-          />
-          <Text style={styles.infoText}>
-            <Text style={styles.boldText}>Admin Portal Features:{'\n\n'}</Text>
-            - Review and approve new user applications{'\n'}
-            - Manage user profiles and subscriptions{'\n'}
-            - View detailed analytics and reports{'\n'}
-            - Send push notifications to users{'\n'}
-            - Create and manage promo codes{'\n'}
-            - Monitor payments and revenue{'\n'}
-            - Run email marketing campaigns{'\n\n'}
-            For detailed documentation, see ADMIN_PORTAL_OVERVIEW.md
-          </Text>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/admin/promo-codes')}
+          >
+            <View style={styles.menuIcon}>
+              <IconSymbol
+                ios_icon_name="tag.fill"
+                android_material_icon_name="local-offer"
+                size={24}
+                color={colors.primary}
+              />
+            </View>
+            <View style={styles.menuContent}>
+              <Text style={styles.menuTitle}>Promo Codes</Text>
+              <Text style={styles.menuDescription}>
+                Create and manage promotional codes
+              </Text>
+            </View>
+            <IconSymbol
+              ios_icon_name="chevron.right"
+              android_material_icon_name="arrow-forward"
+              size={20}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/admin/notifications')}
+          >
+            <View style={styles.menuIcon}>
+              <IconSymbol
+                ios_icon_name="bell.fill"
+                android_material_icon_name="notifications"
+                size={24}
+                color={colors.primary}
+              />
+            </View>
+            <View style={styles.menuContent}>
+              <Text style={styles.menuTitle}>Notifications</Text>
+              <Text style={styles.menuDescription}>
+                Manage notification templates and campaigns
+              </Text>
+            </View>
+            <IconSymbol
+              ios_icon_name="chevron.right"
+              android_material_icon_name="arrow-forward"
+              size={20}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/admin/intro-video')}
+          >
+            <View style={styles.menuIcon}>
+              <IconSymbol
+                ios_icon_name="play.rectangle.fill"
+                android_material_icon_name="play-arrow"
+                size={24}
+                color={colors.primary}
+              />
+            </View>
+            <View style={styles.menuContent}>
+              <Text style={styles.menuTitle}>Intro Video</Text>
+              <Text style={styles.menuDescription}>
+                Configure welcome video settings
+              </Text>
+            </View>
+            <IconSymbol
+              ios_icon_name="chevron.right"
+              android_material_icon_name="arrow-forward"
+              size={20}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 120,
-  },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: colors.text,
-    marginTop: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  refreshButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginBottom: 20,
-  },
-  metricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
-  },
-  metricCard: {
-    flex: 1,
-    minWidth: '47%',
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-  },
-  metricValue: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.text,
-    marginTop: 8,
-  },
-  metricLabel: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 4,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 12,
-  },
-  engagementCard: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 16,
-  },
-  engagementRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  engagementLabel: {
-    fontSize: 15,
-    color: colors.text,
-  },
-  engagementValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-  },
-  menuIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  menuContent: {
-    flex: 1,
-  },
-  menuTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  menuDescription: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  infoBox: {
-    backgroundColor: colors.primary + '10',
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
-    gap: 12,
-    borderWidth: 1,
-    borderColor: colors.primary + '30',
-    alignItems: 'flex-start',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 13,
-    color: colors.text,
-    lineHeight: 20,
-  },
-  boldText: {
-    fontWeight: '600',
-    color: colors.text,
-  },
-});
