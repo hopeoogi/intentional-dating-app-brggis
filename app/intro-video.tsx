@@ -5,14 +5,17 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ============================================================================
-// BUILD 170 - COMPREHENSIVE API SYNC FIX
+// BUILD 171 - DEEP DIVE API SYNC FIX
 // ============================================================================
 // This screen shows a brief intro with New York skyline and then navigates to signin.
-// Key improvements:
-// 1. Fixed Edge Functions with comprehensive CORS headers
-// 2. Enhanced error handling in all Edge Functions
-// 3. Better logging and debugging capabilities
-// 4. Maintained all previous fixes from Build 169
+// 
+// CRITICAL FIXES:
+// 1. Fixed Edge Functions - removed old serve imports
+// 2. Fixed environment variable names in Edge Functions
+// 3. Enhanced CORS headers on ALL responses
+// 4. Comprehensive error handling with request IDs
+// 5. Better logging and debugging capabilities
+// 6. Maintained all previous fixes from Build 170
 // ============================================================================
 
 export default function IntroVideoScreen() {
@@ -20,7 +23,7 @@ export default function IntroVideoScreen() {
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    console.log('[IntroVideo] Component mounted - BUILD 170');
+    console.log('[IntroVideo] Component mounted - BUILD 171');
     
     // Mark intro as seen
     markIntroAsSeen();

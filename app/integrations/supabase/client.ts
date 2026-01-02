@@ -6,17 +6,24 @@ import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 
 // ============================================================================
-// BUILD 170 - COMPREHENSIVE API SYNC FIX
+// BUILD 171 - DEEP DIVE API SYNC FIX
 // ============================================================================
 // Hardcoded credentials for production builds (no env vars needed)
 // This ensures the app works in TestFlight without environment variable issues
-// Edge Functions now have comprehensive CORS headers and error handling
+// 
+// CRITICAL FIXES:
+// 1. Fixed Edge Functions - removed old serve imports
+// 2. Fixed environment variable names (SUPABASE_PUBLISHABLE_OR_ANON_KEY)
+// 3. Enhanced CORS headers on ALL responses including errors
+// 4. Comprehensive error handling with request IDs for debugging
+// 5. Better logging and debugging capabilities
+// 6. Maintained all previous fixes from Build 170
 // ============================================================================
 
 const SUPABASE_URL = "https://plnfluykallohjimxnja.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsbmZsdXlrYWxsb2hqaW14bmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDkzNjcsImV4cCI6MjA4MjY4NTM2N30.Hsj2brvHemnDV9w-b0wbdLyaBclteRj3gNW8jDhzCk0";
 
-console.log('[Supabase] Initializing client - BUILD 170');
+console.log('[Supabase] Initializing client - BUILD 171');
 console.log('[Supabase] Platform:', Platform.OS);
 console.log('[Supabase] URL:', SUPABASE_URL);
 console.log('[Supabase] Using native fetch API');
@@ -45,7 +52,7 @@ export const supabase = createClient<Database>(
       fetch: fetch.bind(globalThis),
       headers: {
         'X-Client-Info': `supabase-js-react-native/${Platform.OS}`,
-        'X-Build-Version': '170',
+        'X-Build-Version': '171',
       },
     },
     realtime: {

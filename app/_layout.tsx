@@ -28,23 +28,25 @@ SplashScreen.preventAutoHideAsync().catch((error) => {
 });
 
 // ============================================================================
-// BUILD 170 - COMPREHENSIVE API SYNC FIX
+// BUILD 171 - DEEP DIVE API SYNC FIX
 // ============================================================================
-// Key improvements:
-// 1. Fixed Edge Functions with comprehensive CORS headers
-// 2. Enhanced error handling in all Edge Functions
-// 3. Better logging and debugging capabilities
-// 4. Consistent response formats across all APIs
-// 5. Maintained all previous fixes from Build 169
+// CRITICAL FIXES:
+// 1. Fixed Edge Functions - removed old serve imports
+// 2. Fixed environment variable names (SUPABASE_PUBLISHABLE_OR_ANON_KEY)
+// 3. Enhanced CORS headers on ALL responses including errors
+// 4. Comprehensive error handling with request IDs for debugging
+// 5. Better logging and debugging capabilities
+// 6. Consistent response formats across all APIs
+// 7. Maintained all previous fixes from Build 170
 // ============================================================================
 
 console.log('='.repeat(80));
-console.log('[App] Starting app initialization - BUILD 170');
-console.log('[App] Version: 1.2.8');
+console.log('[App] Starting app initialization - BUILD 171');
+console.log('[App] Version: 1.2.9');
 console.log('[App] Platform:', require('react-native').Platform.OS);
 console.log('[App] Production-ready configuration');
 console.log('[App] All HTTP libraries blocked - using native fetch only');
-console.log('[App] Edge Functions CORS issues resolved');
+console.log('[App] Edge Functions API sync issues RESOLVED');
 console.log('[App] New York skyline load screen implemented');
 console.log('='.repeat(80));
 
