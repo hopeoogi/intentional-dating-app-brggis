@@ -11,14 +11,60 @@ const BEARER_TOKEN_KEY = 'intentional_bearer_token';
 
 console.log('[Auth Client] Initializing BetterAuth with backend:', API_URL);
 
-// Platform-specific storage
-const storage = Platform.OS === 'web'
-  ? {
-      getItem: (key: string) => localStorage.getItem(key),
-      setItem: (key: string, value: string) => localStorage.setItem(key, value),
-      deleteItem: (key: string) => localStorage.removeItem(key),
-    }
-  : SecureStore;
+// Platform-specific storage implementation
+const createStorage = () => {
+  if (Platform.OS === 'web') {
+    return {
+      get: async (key: string) => {
+        try {
+          return localStorage.getItem(key);
+        } catch (error) {
+          console.error('[Auth Client] Storage get error:', error);
+          return null;
+        }
+      },
+      set: async (key: string, value: string) => {
+        try {
+          localStorage.setItem(key, value);
+        } catch (error) {
+          console.error('[Auth Client] Storage set error:', error);
+        }
+      },
+      remove: async (key: string) => {
+        try {
+          localStorage.removeItem(key);
+        } catch (error) {
+          console.error('[Auth Client] Storage remove error:', error);
+        }
+      },
+    };
+  } else {
+    return {
+      get: async (key: string) => {
+        try {
+          return await SecureStore.getItemAsync(key);
+        } catch (error) {
+          console.error('[Auth Client] SecureStore get error:', error);
+          return null;
+        }
+      },
+      set: async (key: string, value: string) => {
+        try {
+          await SecureStore.setItemAsync(key, value);
+        } catch (error) {
+          console.error('[Auth Client] SecureStore set error:', error);
+        }
+      },
+      remove: async (key: string) => {
+        try {
+          await SecureStore.deleteItemAsync(key);
+        } catch (error) {
+          console.error('[Auth Client] SecureStore remove error:', error);
+        }
+      },
+    };
+  }
+};
 
 export const authClient = createAuthClient({
   baseURL: API_URL,
@@ -26,28 +72,28 @@ export const authClient = createAuthClient({
     expoClient({
       scheme: 'intentional',
       storagePrefix: 'intentional',
-      storage,
+      storage: createStorage(),
     }),
   ],
-  ...(Platform.OS === 'web' && {
-    fetchOptions: {
-      auth: {
-        type: 'Bearer' as const,
-        token: () => localStorage.getItem(BEARER_TOKEN_KEY) || '',
-      },
-    },
-  }),
 });
 
 export function storeWebBearerToken(token: string) {
   if (Platform.OS === 'web') {
-    localStorage.setItem(BEARER_TOKEN_KEY, token);
+    try {
+      localStorage.setItem(BEARER_TOKEN_KEY, token);
+    } catch (error) {
+      console.error('[Auth Client] Failed to store bearer token:', error);
+    }
   }
 }
 
 export function clearAuthTokens() {
   if (Platform.OS === 'web') {
-    localStorage.removeItem(BEARER_TOKEN_KEY);
+    try {
+      localStorage.removeItem(BEARER_TOKEN_KEY);
+    } catch (error) {
+      console.error('[Auth Client] Failed to clear bearer token:', error);
+    }
   }
 }
 

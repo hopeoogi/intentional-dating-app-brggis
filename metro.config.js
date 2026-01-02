@@ -5,71 +5,37 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
-// ============================================================================
-// BUILD 178 - BETTERAUTH COMPATIBLE METRO CONFIGURATION
-// ============================================================================
-// Enables package exports for BetterAuth module resolution
-// Simplified config without aggressive module blocking
-// ============================================================================
-
-console.log('[Metro] Starting Metro bundler - BUILD 178');
-console.log('[Metro] Configuration: BetterAuth compatible with package exports');
-
-// CRITICAL: Enable package exports for BetterAuth
+// Enable package exports for better-auth
 config.resolver.unstable_enablePackageExports = true;
-config.resolver.unstable_enableSymlinks = false;
 
-// Set condition names for proper module resolution
-config.resolver.unstable_conditionNames = [
-  'react-native',
-  'browser',
-  'require',
-];
+// Ensure proper resolution of better-auth modules
+config.resolver.sourceExts = ['js', 'jsx', 'json', 'ts', 'tsx', 'cjs', 'mjs'];
 
-// Configure cache
-config.cacheStores = [
-  new FileStore({ 
-    root: path.join(__dirname, 'node_modules', '.cache', 'metro') 
-  }),
-];
-
-// Source extensions
-config.resolver.sourceExts = [
-  'tsx',
-  'ts',
-  'jsx',
-  'js',
-  'json',
-  'mjs',
-  'cjs',
-];
-
-// Asset extensions
-config.resolver.assetExts = [
-  ...config.resolver.assetExts.filter(ext => !['mjs', 'cjs'].includes(ext)),
-  'css',
-  'db',
-  'mp3',
-  'ttf',
-  'obj',
-  'png',
-  'jpg',
-];
-
-// Simple resolver for native tabs CSS
+// Add resolveRequest to handle better-auth module resolution
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  if (moduleName.includes('native-tabs.module.css')) {
+  // Handle better-auth/react imports
+  if (moduleName === 'better-auth/react') {
     return {
-      filePath: path.resolve(__dirname, 'assets/native-tabs.module.css'),
+      filePath: path.resolve(__dirname, 'node_modules/better-auth/dist/client/react/index.js'),
       type: 'sourceFile',
     };
   }
   
+  // Handle @better-auth/expo/client imports
+  if (moduleName === '@better-auth/expo/client') {
+    return {
+      filePath: path.resolve(__dirname, 'node_modules/@better-auth/expo/dist/client.js'),
+      type: 'sourceFile',
+    };
+  }
+
+  // Default resolver
   return context.resolveRequest(context, moduleName, platform);
 };
 
-console.log('[Metro] ✅ Configuration complete - BUILD 178');
-console.log('[Metro] ✅ Package exports enabled for BetterAuth');
-console.log('[Metro] ✅ Ready for bundling');
+// Use file cache for better performance
+config.cacheStores = [
+  new FileStore({ root: path.join(__dirname, 'node_modules', '.cache', 'metro') }),
+];
 
 module.exports = config;
