@@ -6,32 +6,29 @@ import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 
 // ============================================================================
-// BUILD 171 - DEEP DIVE API SYNC FIX
+// BUILD 172 - WORKING EDGE FUNCTION PATTERN
 // ============================================================================
-// Hardcoded credentials for production builds (no env vars needed)
-// This ensures the app works in TestFlight without environment variable issues
+// Simplified Edge Functions based on proven working examples from knowledge base
 // 
-// CRITICAL FIXES:
-// 1. Fixed Edge Functions - removed old serve imports
-// 2. Fixed environment variable names (SUPABASE_PUBLISHABLE_OR_ANON_KEY)
-// 3. Enhanced CORS headers on ALL responses including errors
-// 4. Comprehensive error handling with request IDs for debugging
-// 5. Better logging and debugging capabilities
-// 6. Maintained all previous fixes from Build 170
+// KEY FIXES:
+// 1. Simplified Edge Functions - removed verbose logging
+// 2. Used proven working pattern from knowledge base
+// 3. Proper CORS headers on all responses
+// 4. Consistent error handling
+// 5. No unnecessary complexity
 // ============================================================================
 
 const SUPABASE_URL = "https://plnfluykallohjimxnja.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsbmZsdXlrYWxsb2hqaW14bmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDkzNjcsImV4cCI6MjA4MjY4NTM2N30.Hsj2brvHemnDV9w-b0wbdLyaBclteRj3gNW8jDhzCk0";
 
-console.log('[Supabase] Initializing client - BUILD 171');
+console.log('[Supabase] Initializing client - BUILD 172');
 console.log('[Supabase] Platform:', Platform.OS);
-console.log('[Supabase] URL:', SUPABASE_URL);
 console.log('[Supabase] Using native fetch API');
 
 // Verify fetch is available
 if (typeof fetch === 'undefined') {
   console.error('[Supabase] ❌ CRITICAL: fetch is not available!');
-  throw new Error('fetch is not available - this should never happen in React Native');
+  throw new Error('fetch is not available');
 }
 
 console.log('[Supabase] ✅ Native fetch is available');
@@ -52,7 +49,7 @@ export const supabase = createClient<Database>(
       fetch: fetch.bind(globalThis),
       headers: {
         'X-Client-Info': `supabase-js-react-native/${Platform.OS}`,
-        'X-Build-Version': '171',
+        'X-Build-Version': '172',
       },
     },
     realtime: {
@@ -70,12 +67,11 @@ setTimeout(() => {
   console.log('[Supabase] Testing connection...');
   
   supabase.from('users').select('count', { count: 'exact', head: true })
-    .then(({ error, count }) => {
+    .then(({ error }) => {
       if (error) {
         console.error('[Supabase] ❌ Connection test failed:', error.message);
       } else {
         console.log('[Supabase] ✅ Connection test successful');
-        console.log('[Supabase] Database is reachable');
       }
     })
     .catch((error) => {

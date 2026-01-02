@@ -1,21 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, Image, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, ImageBackground } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ============================================================================
-// BUILD 171 - DEEP DIVE API SYNC FIX
+// BUILD 172 - WORKING EDGE FUNCTION PATTERN
 // ============================================================================
-// This screen shows a brief intro with New York skyline and then navigates to signin.
-// 
-// CRITICAL FIXES:
-// 1. Fixed Edge Functions - removed old serve imports
-// 2. Fixed environment variable names in Edge Functions
-// 3. Enhanced CORS headers on ALL responses
-// 4. Comprehensive error handling with request IDs
-// 5. Better logging and debugging capabilities
-// 6. Maintained all previous fixes from Build 170
+// Simplified Edge Functions based on proven working examples
 // ============================================================================
 
 export default function IntroVideoScreen() {
@@ -23,12 +15,10 @@ export default function IntroVideoScreen() {
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    console.log('[IntroVideo] Component mounted - BUILD 171');
+    console.log('[IntroVideo] Component mounted - BUILD 172');
     
-    // Mark intro as seen
     markIntroAsSeen();
     
-    // Auto-navigate after 3 seconds
     const timer = setTimeout(() => {
       console.log('[IntroVideo] Auto-navigating to signin...');
       navigateToSignIn();
@@ -90,7 +80,7 @@ export default function IntroVideoScreen() {
           style={styles.backgroundImage}
           resizeMode="cover"
           onError={() => {
-            console.log('[IntroVideo] Failed to load New York skyline image, using fallback');
+            console.log('[IntroVideo] Failed to load image, using fallback');
             setImageError(true);
           }}
         >

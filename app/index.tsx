@@ -6,18 +6,9 @@ import { supabase } from '@/app/integrations/supabase/client';
 import { colors } from '@/styles/commonStyles';
 
 // ============================================================================
-// BUILD 171 - DEEP DIVE API SYNC FIX
+// BUILD 172 - WORKING EDGE FUNCTION PATTERN
 // ============================================================================
-// This is the main entry point of the app. It checks authentication status
-// and redirects to the appropriate screen.
-// 
-// CRITICAL FIXES:
-// 1. Fixed Edge Functions - removed old serve imports
-// 2. Fixed environment variable names in Edge Functions
-// 3. Enhanced CORS headers on ALL responses
-// 4. Comprehensive error handling with request IDs
-// 5. Better logging and debugging capabilities
-// 6. Maintained all previous fixes from Build 170
+// Simplified Edge Functions based on proven working examples
 // ============================================================================
 
 export default function Index() {
@@ -27,7 +18,7 @@ export default function Index() {
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    console.log('[Index] App starting - BUILD 171');
+    console.log('[Index] App starting - BUILD 172');
     checkAuthAndIntro();
   }, []);
 
@@ -64,7 +55,7 @@ export default function Index() {
     } catch (error) {
       console.error('[Index] Error checking auth:', error);
       setIsAuthenticated(false);
-      setShowIntro(false); // Skip intro on error
+      setShowIntro(false);
     } finally {
       setIsReady(true);
     }
@@ -72,12 +63,10 @@ export default function Index() {
 
   const checkIfSeenIntro = async (): Promise<boolean> => {
     try {
-      // For now, always show intro on first launch
-      // You can implement AsyncStorage check here if needed
       return false;
     } catch (error) {
       console.error('[Index] Error checking intro status:', error);
-      return true; // Skip intro on error
+      return true;
     }
   };
 
@@ -90,7 +79,7 @@ export default function Index() {
             style={styles.backgroundImage}
             resizeMode="cover"
             onError={() => {
-              console.log('[Index] Failed to load New York skyline image, using fallback');
+              console.log('[Index] Failed to load image, using fallback');
               setImageError(true);
             }}
           >
@@ -109,19 +98,16 @@ export default function Index() {
     );
   }
 
-  // If authenticated, go to home
   if (isAuthenticated) {
     console.log('[Index] Redirecting to home...');
     return <Redirect href="/(tabs)/(home)/" />;
   }
 
-  // If should show intro, go to intro
   if (showIntro) {
     console.log('[Index] Redirecting to intro...');
     return <Redirect href="/intro-video" />;
   }
 
-  // Default: go to signin
   console.log('[Index] Redirecting to signin...');
   return <Redirect href="/signin" />;
 }
